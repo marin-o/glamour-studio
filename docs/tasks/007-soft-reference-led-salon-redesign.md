@@ -1,6 +1,6 @@
 # Soft reference-led salon redesign
 
-Status: TODO
+Status: DONE
 Depends on: None
 Owner: AI-assisted implementation
 
@@ -118,24 +118,24 @@ like a full restart or a copy of either reference.
 
 ## Acceptance criteria
 
-- [ ] The page clearly shows a soft-to-moderate redesign, not a full reset.
-- [ ] The redesign visibly draws from Hagi's cinematic restraint and Ever's
+- [x] The page clearly shows a soft-to-moderate redesign, not a full reset.
+- [x] The redesign visibly draws from Hagi's cinematic restraint and Ever's
       beauty-service structure while retaining Glamour Studio's own design
       contract.
-- [ ] The page remains a single-page salon draft aligned with
+- [x] The page remains a single-page salon draft aligned with
       `docs/product-spec.md` and `DESIGN.md`.
-- [ ] Missing media, contact details, prices, staff, address, hours, and booking
+- [x] Missing media, contact details, prices, staff, address, hours, and booking
       remain clearly pending.
-- [ ] No fake availability, fake testimonials, fake awards, fake review counts,
+- [x] No fake availability, fake testimonials, fake awards, fake review counts,
       fake staff claims, fake service details, fake address, fake hours, or fake
       prices are introduced.
-- [ ] The persistent contact/status CTA remains accessible and does not cover
+- [x] The persistent contact/status CTA remains accessible and does not cover
       essential content.
-- [ ] Accessibility basics are preserved: semantic regions, readable contrast,
+- [x] Accessibility basics are preserved: semantic regions, readable contrast,
       keyboard focus, usable contact path, and reduced-motion behavior.
-- [ ] `docs/agent-handoff.md` reflects the current state and next owner
+- [x] `docs/agent-handoff.md` reflects the current state and next owner
       decision.
-- [ ] Validation results are recorded in this task.
+- [x] Validation results are recorded in this task.
 
 ## Non-goals
 
@@ -178,6 +178,43 @@ like a full restart or a copy of either reference.
 ## Completion notes
 
 - Completed:
+  - Initialized a Git repository before continuing implementation and created
+    baseline commit `12262e5` (`Initial project baseline`) from the restored
+    pre-task project state.
+  - Reworked `src/app/page.jsx` into a soft reference-led salon composition:
+    cinematic media-led hero, sparse navigation, honest launch-status cues,
+    intentional media sequence, service-index rows, practical contact/status
+    section, and persistent bottom status CTA.
+  - Reworked `src/app/globals.css` around the same structure: warmer editorial
+    hero framing, staggered media panels, calmer service rows, restrained
+    warm-brown contact surface, mobile breakpoints, focus states, and
+    reduced-motion behavior.
+  - Preserved the current one-page IA and all product-truth boundaries for
+    missing contact, address, hours, prices, staff, real media, final
+    Macedonian copy, and live booking.
+  - Did not update `DESIGN.md`; the task applied the existing visual-system
+    contract rather than creating a new durable rule.
 - Validation:
+  - `npm run build` passed with Next.js 16.2.10.
+  - Sitewright Doctor passed while task 007 was active and reported
+    `IMPLEMENTATION_READY`.
+  - After closing task 007, Sitewright Doctor reported `PLANNING_REQUIRED`
+    because no executable task is active. This is the expected next-state
+    warning after completing the task.
+  - Source scan found no `design-taste-frontend`, `FontTester`, `FontLoader`,
+    runtime font-lab, or disabled-form references in `src/app`.
+  - Fake-claim scan found no testimonials, awards, review counts, live
+    availability, confirmed appointments, real-time booking, address labels,
+    hours labels, or prices in `src/app`; matches were limited to explicit
+    pending-language boundaries in page metadata and page copy.
+  - Manually inspected the changed source against the task's reference notes,
+    acceptance criteria, product spec, and design contract.
 - Deviations:
+  - Did not run browser, viewport, screenshot, Playwright, visual, animation,
+    or interaction validation, per the conservative validation policy and task
+    non-goals.
+  - Did not use stock, generated, or non-owner-approved replacement imagery.
 - Follow-up:
+  - Next owner decision is to choose the next active task, review the redesign
+    direction, or provide real salon contact details, media, final Macedonian
+    copy, service details, pricing, address, hours, and booking destination.
