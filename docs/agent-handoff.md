@@ -22,10 +22,14 @@
   inner furrow streaks, faint flyaway bristles, and stacked translucent halo
   polygons. All stroke randomness is seeded sine noise (deterministic).
 - Performance-critical (task 016): the stroke uses NO SVG filters, and the
-  draw-on is chunked — the artwork is split into ~150–190px arc-length chunks
-  whose opacities fade individually as ScrollTrigger progress passes their
-  thresholds, so scroll frames repaint only the fading tip chunks. Do not
-  reintroduce filters, dashoffset scrubbing, full-layer masks, or clip-path
+  draw-on is chunked — the artwork is split into ~48–56px arc-length chunks
+  whose opacities fade individually (smoothstep, window ≈ 4.5 chunks) as
+  ScrollTrigger progress passes their thresholds, so scroll frames repaint
+  only the fading tip chunks. The layer stack is split across two chunk sets
+  staggered by half a chunk (core drawn as two half-opacity copies) so
+  transverse cut seams stay invisible — keep chunks smaller than the stroke
+  width and keep the stagger if retuning. Do not reintroduce filters,
+  dashoffset scrubbing, full-layer masks, seam-cover strokes, or clip-path
   text reveals; text reveals are transform/opacity only. Local light-color
   inversion over the dark contact band and reduced-motion/no-JS fallbacks that
   keep text visible are preserved.

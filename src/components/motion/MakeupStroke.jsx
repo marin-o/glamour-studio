@@ -23,7 +23,7 @@ const MakeupStrokeContext = createContext({
   setRevealedIds: () => {},
 });
 
-const SAMPLES_PER_SEGMENT = 36;
+const SAMPLES_PER_SEGMENT = 48;
 
 // Deterministic bristle definitions: drift is in core half-widths, width in
 // core widths. Seeded sines instead of Math.random so SSR, hydration, and
@@ -332,15 +332,32 @@ function buildStrandPath(samples, strokeWidth, strand) {
 // of one dash-scrubbed mask. Scrubbing a dashoffset invalidates the entire
 // path's paint on every scroll frame; fading small chunks keeps repaint
 // damage local to the stroke tip so scrolling stays compositor-driven.
-function buildChunks(samples, strokeWidth, isNarrow) {
-  const totalLength = samples[samples.length - 1].travelled;
-  const targetLength = isNarrow ? 150 : 190;
-  const count = clamp(Math.round(totalLength / targetLength), 8, 80);
+//
+// Chunks must be smaller than the stroke is wide and the fade window must
+// span several of them, or the draw-on reads as segments popping in instead
+// of a continuous tip. Transverse cuts through translucent fills leave a
+// faint antialiasing seam, so the layer stack is split across TWO chunk sets
+// whose boundaries are offset by half a chunk: every seam in one set sits
+// under the continuous middle of the other set, and the core is drawn as two
+// stacked half-opacity copies (one per set) so no single seam ever cuts the
+// full core density.
+function buildChunkSet(samples, strokeWidth, count, half, layers) {
+  const cuts = [];
+
+  for (let k = 0; k < count; k += 1) {
+    const cut = (k + half) / count;
+
+    if (cut > 0 && cut < 1) {
+      cuts.push(cut);
+    }
+  }
+
+  cuts.push(1);
+
   const chunks = [];
   let startIndex = 0;
 
-  for (let chunkIndex = 1; chunkIndex <= count; chunkIndex += 1) {
-    const limit = chunkIndex / count;
+  cuts.forEach((limit) => {
     let endIndex = startIndex;
 
     while (endIndex < samples.length - 1 && samples[endIndex].t < limit) {
@@ -348,7 +365,7 @@ function buildChunks(samples, strokeWidth, isNarrow) {
     }
 
     if (endIndex - startIndex < 1) {
-      continue;
+      return;
     }
 
     const slice = samples.slice(startIndex, endIndex + 1);
@@ -362,23 +379,45 @@ function buildChunks(samples, strokeWidth, isNarrow) {
 
     chunks.push({
       corePath: buildCorePath(slice, strokeWidth),
-      haloPaths: [
-        buildCorePath(slice, strokeWidth * 2.1),
-        buildCorePath(slice, strokeWidth * 1.5),
-      ],
-      innerPath: buildCorePath(slice, strokeWidth * 0.58),
+      haloPath: buildCorePath(slice, strokeWidth * layers.haloScale),
+      innerPath: layers.inner
+        ? buildCorePath(slice, strokeWidth * 0.58)
+        : null,
       maxY: maxY + strokeWidth * 1.2,
       minY: minY - strokeWidth * 1.2,
-      strandPaths: BRISTLE_STRANDS.map((strand) =>
-        buildStrandPath(slice, strokeWidth, strand),
-      ),
+      strandPaths: layers.strandIndices.map((strandIndex) => ({
+        d: buildStrandPath(slice, strokeWidth, BRISTLE_STRANDS[strandIndex]),
+        strandIndex,
+      })),
       threshold: slice[0].t,
     });
 
     startIndex = endIndex;
-  }
+  });
 
   return chunks;
+}
+
+function buildChunkSets(samples, strokeWidth, isNarrow) {
+  const totalLength = samples[samples.length - 1].travelled;
+  const targetLength = isNarrow ? 56 : 48;
+  const count = clamp(Math.round(totalLength / targetLength), 12, 220);
+
+  return {
+    count,
+    sets: [
+      buildChunkSet(samples, strokeWidth, count, 0, {
+        haloScale: 2.1,
+        inner: false,
+        strandIndices: [0, 2, 4],
+      }),
+      buildChunkSet(samples, strokeWidth, count, 0.5, {
+        haloScale: 1.5,
+        inner: true,
+        strandIndices: [1, 3, 5],
+      }),
+    ],
+  };
 }
 
 function getRouteProgressAtY(routePoints, cumulativeDistances, totalDistance, y) {
@@ -495,11 +534,11 @@ function getGeometry(root) {
   const segments = buildSegments(routePoints, isNarrow);
   const samples = sampleSegments(segments);
   const strokeWidth = isNarrow ? 30 : 58;
-  const chunks = buildChunks(samples, strokeWidth, isNarrow);
+  const chunkSets = buildChunkSets(samples, strokeWidth, isNarrow);
 
   return {
-    chunkFade: 1.6 / Math.max(chunks.length, 1),
-    chunks,
+    chunkFade: 4.5 / chunkSets.count,
+    chunkSets: chunkSets.sets,
     darkBand: getDarkBand(root, rootRect, width, height),
     height,
     strokeWidth,
@@ -513,13 +552,16 @@ function geometryChanged(previous, next) {
     return previous !== next;
   }
 
+  const previousChunks = previous.chunkSets[0];
+  const nextChunks = next.chunkSets[0];
+
   return (
     previous.width !== next.width ||
     previous.height !== next.height ||
-    previous.chunks.length !== next.chunks.length ||
-    previous.chunks[0]?.corePath !== next.chunks[0]?.corePath ||
-    previous.chunks[previous.chunks.length - 1]?.corePath !==
-      next.chunks[next.chunks.length - 1]?.corePath ||
+    previousChunks.length !== nextChunks.length ||
+    previousChunks[0]?.corePath !== nextChunks[0]?.corePath ||
+    previousChunks[previousChunks.length - 1]?.corePath !==
+      nextChunks[nextChunks.length - 1]?.corePath ||
     JSON.stringify(previous.darkBand) !== JSON.stringify(next.darkBand) ||
     JSON.stringify(previous.thresholds) !== JSON.stringify(next.thresholds)
   );
@@ -568,61 +610,68 @@ export function useMakeupStrokeReveal(id) {
 
 // Flat fills and strokes only — no SVG filters. Filtered groups are
 // re-rasterized on the CPU whenever their paint is invalidated, which is what
-// made scrolling drop frames.
-function BrushChunk({ chunk, core, haloColor, haloOpacities, inner, strands }) {
+// made scrolling drop frames. Core opacities are per-copy: the two staggered
+// chunk sets each draw the core once, compositing to the intended density
+// (1 - (1 - a)^2).
+function BrushChunk({ chunk, palette, setIndex, strokeWidth }) {
   return (
     <>
-      {chunk.haloPaths.map((d, index) => (
-        <path
-          d={d}
-          fill={haloColor}
-          key={d.slice(0, 24)}
-          opacity={haloOpacities[index]}
-          stroke={haloColor}
-          strokeWidth="1"
-        />
-      ))}
+      <path
+        d={chunk.haloPath}
+        fill={palette.haloColor}
+        opacity={palette.haloOpacities[setIndex]}
+      />
       <path
         d={chunk.corePath}
-        fill={core.color}
-        opacity={core.opacity}
-        stroke={core.color}
-        strokeWidth="1"
+        fill={palette.coreColor}
+        opacity={palette.coreOpacity}
       />
-      <path
-        d={chunk.innerPath}
-        fill={inner.color}
-        opacity={inner.opacity}
-        stroke={inner.color}
-        strokeWidth="1"
-      />
-      {BRISTLE_STRANDS.map((strand, index) => (
+      {chunk.innerPath ? (
         <path
-          d={chunk.strandPaths[index]}
-          fill="none"
-          key={strand.seed}
-          opacity={strand.opacity * strands.opacityScale}
-          stroke={strands.color}
-          strokeDasharray={strand.dash}
-          strokeWidth={strands.strokeWidth * strand.width}
+          d={chunk.innerPath}
+          fill={palette.innerColor}
+          opacity={palette.innerOpacity}
         />
-      ))}
+      ) : null}
+      {chunk.strandPaths.map(({ d, strandIndex }) => {
+        const strand = BRISTLE_STRANDS[strandIndex];
+
+        return (
+          <path
+            d={d}
+            fill="none"
+            key={strand.seed}
+            opacity={strand.opacity * palette.strandOpacityScale}
+            stroke={palette.strandColor}
+            strokeDasharray={strand.dash}
+            strokeWidth={strokeWidth * strand.width}
+          />
+        );
+      })}
     </>
   );
 }
 
-const MAIN_COLORS = {
-  core: { color: "var(--color-accent)", opacity: 0.5 },
+const MAIN_PALETTE = {
+  coreColor: "var(--color-accent)",
+  coreOpacity: 0.293,
   haloColor: "var(--color-blush)",
   haloOpacities: [0.08, 0.12],
-  inner: { color: "var(--color-accent-deep)", opacity: 0.2 },
+  innerColor: "var(--color-accent-deep)",
+  innerOpacity: 0.2,
+  strandColor: "var(--color-accent-deep)",
+  strandOpacityScale: 1,
 };
 
-const LIGHT_COLORS = {
-  core: { color: "var(--color-surface)", opacity: 0.72 },
+const LIGHT_PALETTE = {
+  coreColor: "var(--color-surface)",
+  coreOpacity: 0.471,
   haloColor: "var(--color-peach)",
   haloOpacities: [0.06, 0.1],
-  inner: { color: "var(--color-surface)", opacity: 0.35 },
+  innerColor: "var(--color-surface)",
+  innerOpacity: 0.35,
+  strandColor: "var(--color-peach)",
+  strandOpacityScale: 0.9,
 };
 
 export default function MakeupStroke() {
@@ -731,7 +780,10 @@ export default function MakeupStroke() {
             0,
             1,
           );
-          const value = Math.round(raw * 100) / 100;
+          // Smoothstep so the tip's leading edge dies off gently instead of
+          // showing a linear patchwork of part-faded chunks.
+          const eased = raw * raw * (3 - 2 * raw);
+          const value = Math.round(eased * 100) / 100;
 
           if (value !== item.lastValue) {
             item.lastValue = value;
@@ -791,10 +843,13 @@ export default function MakeupStroke() {
   }
 
   const darkBand = geometry.darkBand;
-  const lightChunks = darkBand
-    ? geometry.chunks.filter(
-        (chunk) =>
-          chunk.maxY >= darkBand.y && chunk.minY <= darkBand.y + darkBand.height,
+  const lightChunkSets = darkBand
+    ? geometry.chunkSets.map((chunks) =>
+        chunks.filter(
+          (chunk) =>
+            chunk.maxY >= darkBand.y &&
+            chunk.minY <= darkBand.y + darkBand.height,
+        ),
       )
     : [];
 
@@ -828,28 +883,9 @@ export default function MakeupStroke() {
           </defs>
         ) : null}
 
-        {geometry.chunks.map((chunk) => (
-          <g
-            data-stroke-chunk="true"
-            data-stroke-threshold={chunk.threshold}
-            key={chunk.threshold}
-            style={{ opacity: 0 }}
-          >
-            <BrushChunk
-              chunk={chunk}
-              {...MAIN_COLORS}
-              strands={{
-                color: "var(--color-accent-deep)",
-                opacityScale: 1,
-                strokeWidth: geometry.strokeWidth,
-              }}
-            />
-          </g>
-        ))}
-
-        {darkBand ? (
-          <g clipPath={`url(#${svgId}-dark-band)`}>
-            {lightChunks.map((chunk) => (
+        {geometry.chunkSets.map((chunks, setIndex) => (
+          <g key={setIndex}>
+            {chunks.map((chunk) => (
               <g
                 data-stroke-chunk="true"
                 data-stroke-threshold={chunk.threshold}
@@ -858,13 +894,34 @@ export default function MakeupStroke() {
               >
                 <BrushChunk
                   chunk={chunk}
-                  {...LIGHT_COLORS}
-                  strands={{
-                    color: "var(--color-peach)",
-                    opacityScale: 0.9,
-                    strokeWidth: geometry.strokeWidth,
-                  }}
+                  palette={MAIN_PALETTE}
+                  setIndex={setIndex}
+                  strokeWidth={geometry.strokeWidth}
                 />
+              </g>
+            ))}
+          </g>
+        ))}
+
+        {darkBand ? (
+          <g clipPath={`url(#${svgId}-dark-band)`}>
+            {lightChunkSets.map((chunks, setIndex) => (
+              <g key={setIndex}>
+                {chunks.map((chunk) => (
+                  <g
+                    data-stroke-chunk="true"
+                    data-stroke-threshold={chunk.threshold}
+                    key={chunk.threshold}
+                    style={{ opacity: 0 }}
+                  >
+                    <BrushChunk
+                      chunk={chunk}
+                      palette={LIGHT_PALETTE}
+                      setIndex={setIndex}
+                      strokeWidth={geometry.strokeWidth}
+                    />
+                  </g>
+                ))}
               </g>
             ))}
           </g>
