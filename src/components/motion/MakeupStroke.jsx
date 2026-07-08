@@ -492,13 +492,37 @@ function getGeometry(root) {
   const samples = sampleSegments(segments);
   const strokeWidth = isNarrow ? 30 : 58;
   const chunkSets = buildChunkSets(samples, strokeWidth, isNarrow);
-  const lead = window.innerHeight * 0.75;
+  const viewportHeight = window.innerHeight;
+  const lead = viewportHeight * 0.75;
   const endY = samples[samples.length - 1].y;
   const denominator = Math.max(endY - lead, 1);
 
+  // Intro ramp: at progress 0 the stroke is undrawn. Over the first ~1.2
+  // viewports of scrolling the front sweeps from the path's start slightly
+  // faster than the scroll until it catches the 0.75-viewport tracking line,
+  // then follows it. The two mappings meet exactly at catchY, so the
+  // handoff is continuous.
+  const pathStartY = samples[0].y;
+  const scrollable = Math.max(height - viewportHeight, 1);
+  const rampProgress = clamp((viewportHeight * 1.2) / scrollable, 0.02, 0.35);
+  const catchY = lead + rampProgress * denominator;
+  const chunkThreshold = (y) => {
+    if (y <= pathStartY + 1) {
+      return 0;
+    }
+
+    if (y < catchY) {
+      return (
+        (rampProgress * (y - pathStartY)) / Math.max(catchY - pathStartY, 1)
+      );
+    }
+
+    return progressAtY(y, lead, denominator);
+  };
+
   chunkSets.sets.forEach((chunks) => {
     chunks.forEach((chunk) => {
-      chunk.threshold = progressAtY(chunk.startY, lead, denominator);
+      chunk.threshold = chunkThreshold(chunk.startY);
     });
   });
 

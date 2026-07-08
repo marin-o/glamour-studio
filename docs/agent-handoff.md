@@ -4,9 +4,10 @@
 
 - Sitewright is initialized. Tasks
   `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`,
-  `docs/tasks/015-bristled-brushstroke-texture.md`, and
-  `docs/tasks/016-fix-scroll-jank-in-stroke-and-reveals.md` are complete; no
-  follow-on implementation task is currently open.
+  `docs/tasks/015-bristled-brushstroke-texture.md`,
+  `docs/tasks/016-fix-scroll-jank-in-stroke-and-reveals.md`, and
+  `docs/tasks/017-stroke-intro-ramp-and-lenis.md` are complete; no follow-on
+  implementation task is currently open.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
 - Root `DESIGN.md` is the authoritative visual-system contract.
 - Styling is Tailwind CSS v4: tokens live in the `@theme` block of
@@ -34,7 +35,15 @@
   smaller than ~48px measurably drop frames (28px and 38px tested and
   rejected). Do not reintroduce filters, dashoffset scrubbing, full-layer
   masks, seam-cover strokes, or clip-path text reveals; text reveals are
-  transform/opacity only. Local light-color
+  transform/opacity only.
+- Task 017: the stroke starts undrawn and ramps in from the path's top over
+  the first ~1.2 viewports of scrolling before locking onto the tracking
+  line (piecewise chunk thresholds, continuous at the catch point; text
+  thresholds unchanged so above-fold copy renders at load). Lenis smooth
+  scrolling is active site-wide via `src/components/motion/SmoothScroll.jsx`
+  (GSAP-ticker driven, `ScrollTrigger.update` on scroll, `anchors: true`,
+  skipped under prefers-reduced-motion) — owner-approved exception recorded
+  in `DESIGN.md`. Local light-color
   inversion over the dark contact band and reduced-motion/no-JS fallbacks that
   keep text visible are preserved.
 - Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first

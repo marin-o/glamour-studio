@@ -160,6 +160,11 @@ Motion must be progressive enhancement:
 - keep contact and service discovery usable without scroll-linked effects;
 - avoid motion that blocks reading, tapping, or page performance.
 
+Owner-approved exception: Lenis smooth scrolling is active site-wide, driven
+by the GSAP ticker so scroll-linked motion stays in sync. It must be skipped
+under prefers-reduced-motion (native scrolling untouched) and must never
+break anchors, focus behavior, or keyboard access.
+
 Do not fake video presence with unrelated generic stock glamour. If real video
 is missing, use an explicit placeholder treatment until media is available.
 

@@ -21,6 +21,7 @@ common work so agents can inspect the smallest relevant file set.
 - `src/components/TypographySalonPage.jsx`: shared server component for `/` and `/typography`.
 - `src/components/motion/MakeupStroke.jsx`: client-only measured SVG bristled-brushstroke layer (sampled tapered core, furrow/flyaway strands, filter-free, chunked opacity draw-on for scroll performance), GSAP ScrollTrigger progress, reveal timing provider, reduced-motion/static fallback.
 - `src/components/motion/Reveal.jsx`: client-only Framer Motion primitive for semantic text/list reveal wrappers driven by the makeup stroke provider.
+- `src/components/motion/SmoothScroll.jsx`: client-only site-wide Lenis smooth scrolling driven by the GSAP ticker; skipped under reduced motion.
 - `src/lib/`: shared helpers and product-facing data utilities when needed.
 - `docs/`: durable product intent, design constraints, implementation plan, tasks, ADRs, and handoff.
 - `docs/owner-content-media-intake.md`: owner-facing intake checklist for launch facts, copy, media, permissions, privacy, and replacement surfaces.
@@ -29,6 +30,7 @@ common work so agents can inspect the smallest relevant file set.
 - `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`: completed scroll-scrubbed makeup stroke and synced text reveals.
 - `docs/tasks/015-bristled-brushstroke-texture.md`: completed bristled-brushstroke rework of the stroke rendering.
 - `docs/tasks/016-fix-scroll-jank-in-stroke-and-reveals.md`: completed scroll-jank fix (no SVG filters, chunked stroke reveal, transform/opacity-only text reveals).
+- `docs/tasks/017-stroke-intro-ramp-and-lenis.md`: completed stroke intro ramp and site-wide Lenis smooth scrolling.
 
 ## Cross-file invariants
 

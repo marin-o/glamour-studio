@@ -1,5 +1,7 @@
 import "./globals.css";
 
+import SmoothScroll from "../components/motion/SmoothScroll";
+
 export const metadata = {
   title: "Glamour Studio | Radovish Salon Draft",
   description:
@@ -25,7 +27,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="mk">
-      <body>{children}</body>
+      <body>
+        <SmoothScroll />
+        {children}
+      </body>
     </html>
   );
 }
