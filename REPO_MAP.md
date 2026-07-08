@@ -15,12 +15,14 @@ common work so agents can inspect the smallest relevant file set.
 - `src/app/typography/page.jsx`: comparison alias for the typography-led homepage.
 - `src/app/old/page.jsx`: preserved task 007 image-led homepage backup.
 - `src/app/lookbook/page.jsx`: media/lookbook planning route with honest placeholder states.
-- `src/app/globals.css`: global tokens, route styles, responsive rules, focus states, and shared primitives.
+- `src/app/globals.css`: Tailwind v4 entry with `@theme` design tokens and a small base layer; route layout lives in JSX utility classes.
+- `postcss.config.mjs`: PostCSS pipeline loading the Tailwind v4 plugin.
 - `src/components/TypographySalonPage.jsx`: shared server component for `/` and `/typography`.
 - `src/lib/`: shared helpers and product-facing data utilities when needed.
 - `docs/`: durable product intent, design constraints, implementation plan, tasks, ADRs, and handoff.
 - `docs/owner-content-media-intake.md`: owner-facing intake checklist for launch facts, copy, media, permissions, privacy, and replacement surfaces.
 - `docs/tasks/012-prepare-owner-content-and-media-intake.md`: completed task for creating the owner content and media intake artifact.
+- `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`: completed Tailwind v4 migration and mobile editorial-rhythm fix.
 
 ## Cross-file invariants
 
@@ -34,8 +36,9 @@ common work so agents can inspect the smallest relevant file set.
 ## Change recipes
 
 - Product slice: start with `docs/product-spec.md`, active task, route file, and relevant shared component.
-- Typography homepage refinement: start with `DESIGN.md`, `docs/tasks/011-mobile-first-responsive-site-refinement.md`, `src/components/TypographySalonPage.jsx`, and `src/app/globals.css`.
-- Lookbook refinement: start with `DESIGN.md`, `public/media/README.md`, `src/app/lookbook/page.jsx`, and `src/app/globals.css`.
+- Typography homepage refinement: start with `DESIGN.md`, `src/components/TypographySalonPage.jsx`, and the `@theme` tokens in `src/app/globals.css`.
+- Lookbook refinement: start with `DESIGN.md`, `public/media/README.md`, and `src/app/lookbook/page.jsx`.
+- Styling changes: use Tailwind utilities in the route/component JSX; add or adjust tokens only in the `@theme` block of `src/app/globals.css`.
 - Backup route changes: start with `src/app/old/page.jsx` and preserve comparison intent unless the owner asks to remove it.
 - Content/media replacement: start with `docs/owner-content-media-intake.md`, `docs/product-spec.md`, `public/media/README.md`, current route copy, and metadata.
 - Planning or scope change: start with `docs/implementation-plan.md`, `docs/tasks/`, and `docs/agent-handoff.md`.

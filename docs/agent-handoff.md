@@ -2,14 +2,18 @@
 
 ## Current state
 
-- Sitewright is initialized. `docs/tasks/012-prepare-owner-content-and-media-intake.md`
+- Sitewright is initialized. `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`
   is complete; until a new task is created, Doctor may report
   `PLANNING_REQUIRED` because there is no active executable task.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
 - Root `DESIGN.md` is the authoritative visual-system contract.
-- Public routes `/`, `/typography`, `/old`, and `/lookbook` have mobile-first
-  responsive polish for heading bounds, collapsed section rhythm, media block
-  sizing, and fixed CTA clearance.
+- Styling is Tailwind CSS v4: tokens live in the `@theme` block of
+  `src/app/globals.css`, layout lives in utility classes on the JSX. Do not
+  reintroduce hand-rolled global class systems.
+- Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first
+  with fluid clamp-based heading scales and a deliberate left/right/left
+  editorial stagger on phones (offset copy blocks, indented service rows,
+  shifted media cards), matching the desktop typography-led flow.
 - Content completion remains intentionally deferred. Address, hours, phone,
   prices, staff names, final Macedonian copy, real photos, and video are still
   owner decisions.
@@ -32,8 +36,10 @@
 
 ## Active task
 
-- No active implementation task. Task 012 is complete and recorded in
-  `docs/tasks/012-prepare-owner-content-and-media-intake.md`.
+- No active implementation task. Task 013 is complete and recorded in
+  `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`. The open
+  verification step is an owner visual pass of the mobile rhythm on a real
+  phone.
 
 ## Durable gotchas
 
