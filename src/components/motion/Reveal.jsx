@@ -16,14 +16,15 @@ const motionTags = {
   span: motion.span,
 };
 
+// Transform and opacity only — animating clip-path here forced per-frame
+// paint work on every revealing element and broke the documented
+// progressive-enhancement invariant.
 const revealVariants = {
   hidden: {
-    clipPath: "inset(0 0 18% 0)",
     opacity: 0,
-    y: 18,
+    y: 22,
   },
   visible: {
-    clipPath: "inset(0 0 0% 0)",
     opacity: 1,
     y: 0,
   },

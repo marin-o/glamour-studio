@@ -19,7 +19,7 @@ common work so agents can inspect the smallest relevant file set.
 - `postcss.config.mjs`: PostCSS pipeline loading the Tailwind v4 plugin.
 - `.gitignore`: ignores build output, dependencies, environment files, logs, and local validation artifacts.
 - `src/components/TypographySalonPage.jsx`: shared server component for `/` and `/typography`.
-- `src/components/motion/MakeupStroke.jsx`: client-only measured SVG bristled-brushstroke layer (sampled tapered core, furrow/flyaway strands, mask-based draw-on), GSAP ScrollTrigger scrub, reveal timing provider, reduced-motion/static fallback.
+- `src/components/motion/MakeupStroke.jsx`: client-only measured SVG bristled-brushstroke layer (sampled tapered core, furrow/flyaway strands, filter-free, chunked opacity draw-on for scroll performance), GSAP ScrollTrigger progress, reveal timing provider, reduced-motion/static fallback.
 - `src/components/motion/Reveal.jsx`: client-only Framer Motion primitive for semantic text/list reveal wrappers driven by the makeup stroke provider.
 - `src/lib/`: shared helpers and product-facing data utilities when needed.
 - `docs/`: durable product intent, design constraints, implementation plan, tasks, ADRs, and handoff.
@@ -28,6 +28,7 @@ common work so agents can inspect the smallest relevant file set.
 - `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`: completed Tailwind v4 migration and mobile editorial-rhythm fix.
 - `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`: completed scroll-scrubbed makeup stroke and synced text reveals.
 - `docs/tasks/015-bristled-brushstroke-texture.md`: completed bristled-brushstroke rework of the stroke rendering.
+- `docs/tasks/016-fix-scroll-jank-in-stroke-and-reveals.md`: completed scroll-jank fix (no SVG filters, chunked stroke reveal, transform/opacity-only text reveals).
 
 ## Cross-file invariants
 

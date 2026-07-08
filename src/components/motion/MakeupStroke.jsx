@@ -23,7 +23,7 @@ const MakeupStrokeContext = createContext({
   setRevealedIds: () => {},
 });
 
-const SAMPLES_PER_SEGMENT = 22;
+const SAMPLES_PER_SEGMENT = 36;
 
 // Deterministic bristle definitions: drift is in core half-widths, width in
 // core widths. Seeded sines instead of Math.random so SSR, hydration, and
@@ -187,20 +187,6 @@ function buildSegments(points, isNarrow) {
   return segments;
 }
 
-function buildMaskPath(segments) {
-  const [first] = segments;
-
-  return segments.reduce(
-    (path, segment) =>
-      `${path} C ${segment.controlOne.x.toFixed(1)} ${segment.controlOne.y.toFixed(
-        1,
-      )}, ${segment.controlTwo.x.toFixed(1)} ${segment.controlTwo.y.toFixed(
-        1,
-      )}, ${segment.to.x.toFixed(1)} ${segment.to.y.toFixed(1)}`,
-    `M ${first.from.x.toFixed(1)} ${first.from.y.toFixed(1)}`,
-  );
-}
-
 function cubicPoint(segment, t) {
   const u = 1 - t;
   const a = u * u * u;
@@ -276,9 +262,10 @@ function sampleSegments(segments) {
 
 function edgeNoise(t, seed) {
   return (
-    Math.sin(t * 31 + seed * 2.7) * 0.5 +
-    Math.sin(t * 73 + seed * 5.3) * 0.3 +
-    Math.sin(t * 12 + seed) * 0.2
+    Math.sin(t * 31 + seed * 2.7) * 0.42 +
+    Math.sin(t * 73 + seed * 5.3) * 0.26 +
+    Math.sin(t * 12 + seed) * 0.16 +
+    Math.sin(t * 214 + seed * 1.7) * 0.16
   );
 }
 
@@ -339,6 +326,59 @@ function buildStrandPath(samples, strokeWidth, strand) {
   });
 
   return `M ${points[0]} L ${points.slice(1).join(" L ")}`;
+}
+
+// The stroke is rendered as independently fadeable arc-length chunks instead
+// of one dash-scrubbed mask. Scrubbing a dashoffset invalidates the entire
+// path's paint on every scroll frame; fading small chunks keeps repaint
+// damage local to the stroke tip so scrolling stays compositor-driven.
+function buildChunks(samples, strokeWidth, isNarrow) {
+  const totalLength = samples[samples.length - 1].travelled;
+  const targetLength = isNarrow ? 150 : 190;
+  const count = clamp(Math.round(totalLength / targetLength), 8, 80);
+  const chunks = [];
+  let startIndex = 0;
+
+  for (let chunkIndex = 1; chunkIndex <= count; chunkIndex += 1) {
+    const limit = chunkIndex / count;
+    let endIndex = startIndex;
+
+    while (endIndex < samples.length - 1 && samples[endIndex].t < limit) {
+      endIndex += 1;
+    }
+
+    if (endIndex - startIndex < 1) {
+      continue;
+    }
+
+    const slice = samples.slice(startIndex, endIndex + 1);
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    slice.forEach((sample) => {
+      minY = Math.min(minY, sample.y);
+      maxY = Math.max(maxY, sample.y);
+    });
+
+    chunks.push({
+      corePath: buildCorePath(slice, strokeWidth),
+      haloPaths: [
+        buildCorePath(slice, strokeWidth * 2.1),
+        buildCorePath(slice, strokeWidth * 1.5),
+      ],
+      innerPath: buildCorePath(slice, strokeWidth * 0.58),
+      maxY: maxY + strokeWidth * 1.2,
+      minY: minY - strokeWidth * 1.2,
+      strandPaths: BRISTLE_STRANDS.map((strand) =>
+        buildStrandPath(slice, strokeWidth, strand),
+      ),
+      threshold: slice[0].t,
+    });
+
+    startIndex = endIndex;
+  }
+
+  return chunks;
 }
 
 function getRouteProgressAtY(routePoints, cumulativeDistances, totalDistance, y) {
@@ -455,17 +495,13 @@ function getGeometry(root) {
   const segments = buildSegments(routePoints, isNarrow);
   const samples = sampleSegments(segments);
   const strokeWidth = isNarrow ? 30 : 58;
+  const chunks = buildChunks(samples, strokeWidth, isNarrow);
 
   return {
-    corePath: buildCorePath(samples, strokeWidth),
+    chunkFade: 1.6 / Math.max(chunks.length, 1),
+    chunks,
     darkBand: getDarkBand(root, rootRect, width, height),
-    haloPath: buildCorePath(samples, strokeWidth * 1.9),
     height,
-    innerCorePath: buildCorePath(samples, strokeWidth * 0.58),
-    maskPath: buildMaskPath(segments),
-    strandPaths: BRISTLE_STRANDS.map((strand) =>
-      buildStrandPath(samples, strokeWidth, strand),
-    ),
     strokeWidth,
     thresholds: buildThresholds(measuredPoints, routePoints, window.innerHeight),
     width,
@@ -478,10 +514,12 @@ function geometryChanged(previous, next) {
   }
 
   return (
-    previous.corePath !== next.corePath ||
-    previous.maskPath !== next.maskPath ||
     previous.width !== next.width ||
     previous.height !== next.height ||
+    previous.chunks.length !== next.chunks.length ||
+    previous.chunks[0]?.corePath !== next.chunks[0]?.corePath ||
+    previous.chunks[previous.chunks.length - 1]?.corePath !==
+      next.chunks[next.chunks.length - 1]?.corePath ||
     JSON.stringify(previous.darkBand) !== JSON.stringify(next.darkBand) ||
     JSON.stringify(previous.thresholds) !== JSON.stringify(next.thresholds)
   );
@@ -493,14 +531,6 @@ function sameIds(previous, nextIds) {
   }
 
   return nextIds.every((id) => previous.has(id));
-}
-
-function getPathLength(path) {
-  if (!path || typeof path.getTotalLength !== "function") {
-    return 1;
-  }
-
-  return Math.max(path.getTotalLength(), 1);
 }
 
 export function MakeupStrokeProvider({ children }) {
@@ -536,15 +566,39 @@ export function useMakeupStrokeReveal(id) {
   return !motionActive || revealedIds.has(id);
 }
 
-function BrushArtwork({ core, halo, inner, strands, smudgeFilter, haloFilter }) {
+// Flat fills and strokes only — no SVG filters. Filtered groups are
+// re-rasterized on the CPU whenever their paint is invalidated, which is what
+// made scrolling drop frames.
+function BrushChunk({ chunk, core, haloColor, haloOpacities, inner, strands }) {
   return (
     <>
-      <path d={halo.d} fill={halo.color} filter={haloFilter} opacity={halo.opacity} />
-      <path d={core.d} fill={core.color} filter={smudgeFilter} opacity={core.opacity} />
-      <path d={inner.d} fill={inner.color} filter={smudgeFilter} opacity={inner.opacity} />
+      {chunk.haloPaths.map((d, index) => (
+        <path
+          d={d}
+          fill={haloColor}
+          key={d.slice(0, 24)}
+          opacity={haloOpacities[index]}
+          stroke={haloColor}
+          strokeWidth="1"
+        />
+      ))}
+      <path
+        d={chunk.corePath}
+        fill={core.color}
+        opacity={core.opacity}
+        stroke={core.color}
+        strokeWidth="1"
+      />
+      <path
+        d={chunk.innerPath}
+        fill={inner.color}
+        opacity={inner.opacity}
+        stroke={inner.color}
+        strokeWidth="1"
+      />
       {BRISTLE_STRANDS.map((strand, index) => (
         <path
-          d={strands.paths[index]}
+          d={chunk.strandPaths[index]}
           fill="none"
           key={strand.seed}
           opacity={strand.opacity * strands.opacityScale}
@@ -557,9 +611,22 @@ function BrushArtwork({ core, halo, inner, strands, smudgeFilter, haloFilter }) 
   );
 }
 
+const MAIN_COLORS = {
+  core: { color: "var(--color-accent)", opacity: 0.5 },
+  haloColor: "var(--color-blush)",
+  haloOpacities: [0.08, 0.12],
+  inner: { color: "var(--color-accent-deep)", opacity: 0.2 },
+};
+
+const LIGHT_COLORS = {
+  core: { color: "var(--color-surface)", opacity: 0.72 },
+  haloColor: "var(--color-peach)",
+  haloOpacities: [0.06, 0.1],
+  inner: { color: "var(--color-surface)", opacity: 0.35 },
+};
+
 export default function MakeupStroke() {
   const layerRef = useRef(null);
-  const maskPathRef = useRef(null);
   const [geometry, setGeometry] = useState(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const { setMotionActive, setRevealedIds } = useContext(MakeupStrokeContext);
@@ -640,32 +707,50 @@ export default function MakeupStroke() {
 
   useGSAP(
     () => {
-      const root = layerRef.current?.closest("[data-makeup-root]");
-      const maskPath = maskPathRef.current;
+      const layer = layerRef.current;
+      const root = layer?.closest("[data-makeup-root]");
 
       setMotionActive(false);
 
-      if (!root || !geometry || !maskPath) {
+      if (!root || !geometry || !layer) {
         return undefined;
       }
 
-      const length = getPathLength(maskPath);
-      // Pad the dash pattern so no dash/gap boundary sits exactly at the path
-      // start when fully undrawn — a zero-length dash with round caps renders
-      // as a stray dot at the stroke tip.
-      const pad = geometry.strokeWidth * 2;
+      const chunkItems = Array.from(
+        layer.querySelectorAll("[data-stroke-chunk]"),
+      ).map((element) => ({
+        element,
+        lastValue: null,
+        threshold: Number.parseFloat(element.dataset.strokeThreshold || "0"),
+      }));
 
-      gsap.set(maskPath, {
-        strokeDasharray: `${length + pad} ${length + pad * 2}`,
-        strokeDashoffset: prefersReducedMotion ? 0 : length + pad * 1.5,
-        visibility: "visible",
-      });
+      const setChunkOpacities = (progress) => {
+        chunkItems.forEach((item) => {
+          const raw = clamp(
+            (progress + 0.002 - item.threshold) / geometry.chunkFade,
+            0,
+            1,
+          );
+          const value = Math.round(raw * 100) / 100;
+
+          if (value !== item.lastValue) {
+            item.lastValue = value;
+            item.element.style.opacity = String(value);
+          }
+        });
+      };
 
       if (prefersReducedMotion) {
+        chunkItems.forEach((item) => {
+          item.element.style.opacity = "1";
+        });
+
         return undefined;
       }
 
       const applyProgress = (progress) => {
+        setChunkOpacities(progress);
+
         const visibleIds = geometry.thresholds
           .filter(({ threshold }) => progress + 0.004 >= threshold)
           .map(({ id }) => id);
@@ -673,31 +758,24 @@ export default function MakeupStroke() {
         setRevealedIds(visibleIds);
       };
 
-      const tween = gsap.to(maskPath, {
-        ease: "none",
-        scrollTrigger: {
-          end: "bottom bottom",
-          invalidateOnRefresh: true,
-          onRefresh: (self) => {
-            applyProgress(self.progress);
-          },
-          onUpdate: (self) => {
-            applyProgress(self.progress);
-          },
-          scrub: 0.32,
-          start: "top top",
-          trigger: root,
+      const trigger = ScrollTrigger.create({
+        end: "bottom bottom",
+        invalidateOnRefresh: true,
+        onRefresh: (self) => {
+          applyProgress(self.progress);
         },
-        strokeDashoffset: 0,
+        onUpdate: (self) => {
+          applyProgress(self.progress);
+        },
+        start: "top top",
+        trigger: root,
       });
 
-      ScrollTrigger.refresh();
-      applyProgress(tween.scrollTrigger?.progress || 0);
+      applyProgress(trigger.progress || 0);
       setMotionActive(true);
 
       return () => {
-        tween.scrollTrigger?.kill();
-        tween.kill();
+        trigger.kill();
         setMotionActive(false);
       };
     },
@@ -712,11 +790,19 @@ export default function MakeupStroke() {
     return <div ref={layerRef} aria-hidden="true" />;
   }
 
+  const darkBand = geometry.darkBand;
+  const lightChunks = darkBand
+    ? geometry.chunks.filter(
+        (chunk) =>
+          chunk.maxY >= darkBand.y && chunk.minY <= darkBand.y + darkBand.height,
+      )
+    : [];
+
   return (
     <div
       ref={layerRef}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-[1] overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 top-0 z-[1] transform-gpu overflow-hidden will-change-transform"
       style={{ height: `${geometry.height}px` }}
     >
       <svg
@@ -726,132 +812,61 @@ export default function MakeupStroke() {
         viewBox={`0 0 ${geometry.width} ${geometry.height}`}
         width={geometry.width}
       >
-        <defs>
-          <filter
-            id={`${svgId}-smudge`}
-            x="-10%"
-            y="-10%"
-            width="120%"
-            height="120%"
-          >
-            <feTurbulence
-              baseFrequency="0.009 0.055"
-              numOctaves="2"
-              result="texture"
-              seed="14"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="texture"
-              result="displaced"
-              scale={geometry.strokeWidth * 0.13}
-            />
-            <feGaussianBlur
-              in="displaced"
-              stdDeviation={geometry.strokeWidth * 0.02}
-            />
-          </filter>
-          <filter
-            id={`${svgId}-halo`}
-            x="-15%"
-            y="-15%"
-            width="130%"
-            height="130%"
-          >
-            <feGaussianBlur stdDeviation={geometry.strokeWidth * 0.4} />
-          </filter>
-          {geometry.darkBand ? (
+        {darkBand ? (
+          <defs>
             <clipPath
               id={`${svgId}-dark-band`}
               clipPathUnits="userSpaceOnUse"
             >
               <rect
-                height={geometry.darkBand.height}
-                width={geometry.darkBand.width}
-                x={geometry.darkBand.x}
-                y={geometry.darkBand.y}
+                height={darkBand.height}
+                width={darkBand.width}
+                x={darkBand.x}
+                y={darkBand.y}
               />
             </clipPath>
-          ) : null}
-          <mask
-            id={`${svgId}-draw`}
-            maskUnits="userSpaceOnUse"
-            x="0"
-            y="0"
-            width={geometry.width}
-            height={geometry.height}
-          >
-            <path
-              ref={maskPathRef}
-              d={geometry.maskPath}
-              fill="none"
-              stroke="#fff"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={geometry.strokeWidth * 3.4}
-              style={{ visibility: "hidden" }}
-            />
-          </mask>
-        </defs>
+          </defs>
+        ) : null}
 
-        <g mask={`url(#${svgId}-draw)`}>
-          <BrushArtwork
-            core={{
-              color: "var(--color-accent)",
-              d: geometry.corePath,
-              opacity: 0.5,
-            }}
-            halo={{
-              color: "var(--color-blush)",
-              d: geometry.haloPath,
-              opacity: 0.2,
-            }}
-            haloFilter={`url(#${svgId}-halo)`}
-            inner={{
-              color: "var(--color-accent-deep)",
-              d: geometry.innerCorePath,
-              opacity: 0.2,
-            }}
-            smudgeFilter={`url(#${svgId}-smudge)`}
-            strands={{
-              color: "var(--color-accent-deep)",
-              opacityScale: 1,
-              paths: geometry.strandPaths,
-              strokeWidth: geometry.strokeWidth,
-            }}
-          />
-        </g>
-
-        {geometry.darkBand ? (
+        {geometry.chunks.map((chunk) => (
           <g
-            clipPath={`url(#${svgId}-dark-band)`}
-            mask={`url(#${svgId}-draw)`}
+            data-stroke-chunk="true"
+            data-stroke-threshold={chunk.threshold}
+            key={chunk.threshold}
+            style={{ opacity: 0 }}
           >
-            <BrushArtwork
-              core={{
-                color: "var(--color-surface)",
-                d: geometry.corePath,
-                opacity: 0.72,
-              }}
-              halo={{
-                color: "var(--color-peach)",
-                d: geometry.haloPath,
-                opacity: 0.16,
-              }}
-              haloFilter={`url(#${svgId}-halo)`}
-              inner={{
-                color: "var(--color-surface)",
-                d: geometry.innerCorePath,
-                opacity: 0.35,
-              }}
-              smudgeFilter={`url(#${svgId}-smudge)`}
+            <BrushChunk
+              chunk={chunk}
+              {...MAIN_COLORS}
               strands={{
-                color: "var(--color-peach)",
-                opacityScale: 0.9,
-                paths: geometry.strandPaths,
+                color: "var(--color-accent-deep)",
+                opacityScale: 1,
                 strokeWidth: geometry.strokeWidth,
               }}
             />
+          </g>
+        ))}
+
+        {darkBand ? (
+          <g clipPath={`url(#${svgId}-dark-band)`}>
+            {lightChunks.map((chunk) => (
+              <g
+                data-stroke-chunk="true"
+                data-stroke-threshold={chunk.threshold}
+                key={chunk.threshold}
+                style={{ opacity: 0 }}
+              >
+                <BrushChunk
+                  chunk={chunk}
+                  {...LIGHT_COLORS}
+                  strands={{
+                    color: "var(--color-peach)",
+                    opacityScale: 0.9,
+                    strokeWidth: geometry.strokeWidth,
+                  }}
+                />
+              </g>
+            ))}
           </g>
         ) : null}
       </svg>

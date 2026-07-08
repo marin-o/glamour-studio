@@ -143,6 +143,12 @@ band, and at most faint flyaway bristles outside it. Hair connotations are
 welcome only as multiple flowing strands within one gesture; nothing may read
 as a single stray hair lying on the page.
 
+Motion must hold scroll framerate. The stroke layer must not use SVG filters,
+and no scroll-driven effect may invalidate the whole stroke's paint on every
+frame (no dashoffset scrubbing or full-layer animated masks); reveal the
+stroke in small localized pieces instead. Text reveals animate transform and
+opacity only.
+
 A future scroll-scrubbed hero video of real salon hair movement remains an
 owner-gated direction. If that media exists later, it may join or replace the
 stroke, but generic stock video must not be used as a substitute.

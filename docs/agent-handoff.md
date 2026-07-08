@@ -3,9 +3,10 @@
 ## Current state
 
 - Sitewright is initialized. Tasks
-  `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md` and
-  `docs/tasks/015-bristled-brushstroke-texture.md` are complete; no follow-on
-  implementation task is currently open.
+  `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`,
+  `docs/tasks/015-bristled-brushstroke-texture.md`, and
+  `docs/tasks/016-fix-scroll-jank-in-stroke-and-reveals.md` are complete; no
+  follow-on implementation task is currently open.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
 - Root `DESIGN.md` is the authoritative visual-system contract.
 - Styling is Tailwind CSS v4: tokens live in the `@theme` block of
@@ -18,11 +19,16 @@
   The stroke uses measured anchors grouped into a simplified spline route and
   renders as a bristled brushstroke (task 015): the route is sampled
   mathematically into a tapered filled core polygon with pressure-varied width,
-  inner furrow streaks, faint flyaway bristles, and a blurred halo, revealed by
-  GSAP scrubbing the dashoffset of a fat mask stroke along the route. Local
-  light-color inversion over the dark contact band and reduced-motion/no-JS
-  fallbacks that keep text visible are preserved. All stroke randomness is
-  seeded sine noise (deterministic).
+  inner furrow streaks, faint flyaway bristles, and stacked translucent halo
+  polygons. All stroke randomness is seeded sine noise (deterministic).
+- Performance-critical (task 016): the stroke uses NO SVG filters, and the
+  draw-on is chunked — the artwork is split into ~150–190px arc-length chunks
+  whose opacities fade individually as ScrollTrigger progress passes their
+  thresholds, so scroll frames repaint only the fading tip chunks. Do not
+  reintroduce filters, dashoffset scrubbing, full-layer masks, or clip-path
+  text reveals; text reveals are transform/opacity only. Local light-color
+  inversion over the dark contact band and reduced-motion/no-JS fallbacks that
+  keep text visible are preserved.
 - Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first
   with fluid clamp-based heading scales and a deliberate left/right/left
   editorial stagger on phones (hard right-aligned wordmark line and heading
@@ -64,6 +70,6 @@
 - Under conservative validation, do not run browser, viewport, screenshot,
   Playwright, visual, animation, or interaction checks unless the owner
   explicitly asks. The one-task browser/animation validation authorizations for
-  tasks 014 and 015 have been used and do not carry forward.
+  tasks 014, 015, and 016 have been used and do not carry forward.
 - Use `docs/owner-content-media-intake.md` before replacing placeholders with
   launch-ready content or media.
