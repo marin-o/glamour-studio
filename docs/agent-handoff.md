@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Sitewright is initialized. `docs/tasks/011-mobile-first-responsive-site-refinement.md`
+- Sitewright is initialized. `docs/tasks/012-prepare-owner-content-and-media-intake.md`
   is complete; until a new task is created, Doctor may report
   `PLANNING_REQUIRED` because there is no active executable task.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
@@ -13,6 +13,8 @@
 - Content completion remains intentionally deferred. Address, hours, phone,
   prices, staff names, final Macedonian copy, real photos, and video are still
   owner decisions.
+- `docs/owner-content-media-intake.md` is the owner-facing checklist for the
+  remaining launch facts, media, permissions, privacy, and replacement surfaces.
 - Booking is intentionally not live and must not imply real availability.
 - The previous `design-taste-frontend` skill has been removed and should not
   guide future design work.
@@ -30,8 +32,8 @@
 
 ## Active task
 
-- No active implementation task. Task 011 is complete and recorded in
-  `docs/tasks/011-mobile-first-responsive-site-refinement.md`.
+- No active implementation task. Task 012 is complete and recorded in
+  `docs/tasks/012-prepare-owner-content-and-media-intake.md`.
 
 ## Durable gotchas
 
@@ -42,3 +44,5 @@
 - Under conservative validation, do not run browser, viewport, screenshot,
   Playwright, visual, animation, or interaction checks unless the owner
   explicitly asks.
+- Use `docs/owner-content-media-intake.md` before replacing placeholders with
+  launch-ready content or media.
