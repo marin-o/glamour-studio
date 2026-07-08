@@ -2,13 +2,14 @@
 
 ## Current state
 
-- Sitewright is initialized and Doctor should report `IMPLEMENTATION_READY`
-  while `docs/tasks/011-mobile-first-responsive-site-refinement.md` remains
-  active.
+- Sitewright is initialized. `docs/tasks/011-mobile-first-responsive-site-refinement.md`
+  is complete; until a new task is created, Doctor may report
+  `PLANNING_REQUIRED` because there is no active executable task.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
 - Root `DESIGN.md` is the authoritative visual-system contract.
-- Current focus is mobile-first responsive polish across `/`, `/typography`,
-  `/old`, and `/lookbook`.
+- Public routes `/`, `/typography`, `/old`, and `/lookbook` have mobile-first
+  responsive polish for heading bounds, collapsed section rhythm, media block
+  sizing, and fixed CTA clearance.
 - Content completion remains intentionally deferred. Address, hours, phone,
   prices, staff names, final Macedonian copy, real photos, and video are still
   owner decisions.
@@ -29,10 +30,8 @@
 
 ## Active task
 
-- `docs/tasks/011-mobile-first-responsive-site-refinement.md`: refine all
-  public routes for intentional phone layouts, prevent heading clipping and
-  horizontal overflow, improve collapsed section rhythm, and keep persistent
-  CTAs from obscuring essential content.
+- No active implementation task. Task 011 is complete and recorded in
+  `docs/tasks/011-mobile-first-responsive-site-refinement.md`.
 
 ## Durable gotchas
 

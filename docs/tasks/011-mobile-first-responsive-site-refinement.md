@@ -1,6 +1,6 @@
 # Mobile-first responsive site refinement
 
-Status: TODO
+Status: DONE
 Depends on: 010-plan-lookbook-endpoint
 Owner: AI-assisted implementation
 
@@ -89,24 +89,24 @@ guided, and the typography-led homepage keeps editorial energy on mobile.
 
 ## Acceptance criteria
 
-- [ ] `/`, `/typography`, `/old`, and `/lookbook` remain available.
-- [ ] The typography-led hero heading does not rely on overflow-prone sizing or
+- [x] `/`, `/typography`, `/old`, and `/lookbook` remain available.
+- [x] The typography-led hero heading does not rely on overflow-prone sizing or
       rightward clipping on narrow mobile layouts.
-- [ ] Mobile sections have intentional visual rhythm beyond uniformly centered
+- [x] Mobile sections have intentional visual rhythm beyond uniformly centered
       stacked text.
-- [ ] Persistent bottom CTAs do not obscure essential contact/status content.
-- [ ] No horizontal overflow-prone layout rules remain in changed mobile styles.
-- [ ] Desktop composition remains materially equivalent or intentionally
+- [x] Persistent bottom CTAs do not obscure essential contact/status content.
+- [x] No horizontal overflow-prone layout rules remain in changed mobile styles.
+- [x] Desktop composition remains materially equivalent or intentionally
       improved.
-- [ ] Missing media, contact details, prices, staff, address, hours, final copy,
+- [x] Missing media, contact details, prices, staff, address, hours, final copy,
       and booking remain clearly pending.
-- [ ] No fake availability, fake testimonials, fake awards, fake review counts,
+- [x] No fake availability, fake testimonials, fake awards, fake review counts,
       fake staff claims, fake service details, fake address, fake hours, or fake
       prices are introduced.
-- [ ] Accessibility basics are preserved: semantic regions, readable contrast,
+- [x] Accessibility basics are preserved: semantic regions, readable contrast,
       keyboard focus, usable contact/status path, and reduced-motion behavior.
-- [ ] `docs/agent-handoff.md` reflects the new current state.
-- [ ] Validation results are recorded in this task.
+- [x] `docs/agent-handoff.md` reflects the new current state.
+- [x] Validation results are recorded in this task.
 
 ## Non-goals
 
@@ -148,6 +148,40 @@ guided, and the typography-led homepage keeps editorial energy on mobile.
 ## Completion notes
 
 - Completed:
+  - Refined `src/app/globals.css` for mobile-first behavior across the
+    typography-led homepage and `/typography`, the preserved `/old` route, and
+    `/lookbook`.
+  - Replaced overflow-prone mobile heading scales in the typography hero and
+    lookbook headings with fixed mobile sizes and bounded line boxes.
+  - Added mobile rhythm through staggered copy widths, retained editorial
+    service-number columns, offset media cards, tighter media aspect ratios,
+    and deliberate section spacing instead of uniformly centered stacks.
+  - Increased route and final contact/status section bottom clearance so fixed
+    CTAs have room without covering essential pending/contact status content.
+  - Kept all salon facts, booking behavior, media, prices, staff, address,
+    hours, and final copy explicitly pending.
 - Validation:
+  - `npm run build` passed with Next.js 16.2.10 and prerendered `/`,
+    `/typography`, `/old`, and `/lookbook` as static routes.
+  - Sitewright Doctor passed while task 011 was active and reported
+    `IMPLEMENTATION_READY`.
+  - Horizontal-overflow source scan of `src/app/globals.css` found matches only
+    in pre-existing desktop/tablet grid minimums and short nowrap nav/CTA
+    labels; changed mobile styles avoid unsafe viewport-width type sizing,
+    unbounded grid columns, and fixed-width content.
+  - Fake-claim scan of `src/app` and `src/components` found matches only in
+    explicit pending/not-live language for prices, hours, address, staff, and
+    booking status.
+  - Removed-skill/source scan found no runtime references to the removed
+    design-taste/font-lab tooling; the remaining handoff mention is the durable
+    "do not use" gotcha.
+  - Manually inspected the changed source against this task, `DESIGN.md`, and
+    `docs/product-spec.md`.
 - Deviations:
+  - Did not run browser, viewport, screenshot, Playwright, visual, animation,
+    or interaction validation, per the conservative validation policy and task
+    non-goals.
 - Follow-up:
+  - Next owner decision is whether to collect real salon media/content, create
+    another scoped visual refinement task, or begin replacing pending business
+    details after owner approval.

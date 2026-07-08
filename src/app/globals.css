@@ -554,15 +554,23 @@ h3 {
   }
 
   h1 {
-    font-size: 4.2rem;
+    max-width: min(100%, 9ch);
+    font-size: 3.85rem;
+    line-height: 0.9;
   }
 
   h2 {
-    font-size: 3.1rem;
+    max-width: min(100%, 11ch);
+    font-size: 2.72rem;
+    line-height: 1;
   }
 
   h3 {
     font-size: 1.65rem;
+  }
+
+  .site-shell {
+    padding-bottom: 154px;
   }
 
   .site-nav {
@@ -586,7 +594,8 @@ h3 {
 
   .hero {
     padding-top: 34px;
-    padding-bottom: 34px;
+    padding-bottom: 48px;
+    gap: 30px;
   }
 
   .hero-subtitle {
@@ -605,7 +614,12 @@ h3 {
   }
 
   .hero-media-block {
-    min-height: 430px;
+    min-height: 0;
+  }
+
+  .media-hero {
+    min-height: 360px;
+    aspect-ratio: 4 / 5;
   }
 
   .media-note {
@@ -620,6 +634,10 @@ h3 {
   .about-contact {
     padding-top: 78px;
     padding-bottom: 84px;
+  }
+
+  .about-contact {
+    padding-bottom: 164px;
   }
 
   .media-sequence,
@@ -638,7 +656,13 @@ h3 {
   }
 
   .media-panel-visual {
-    min-height: 300px;
+    min-height: 260px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .media-panel:nth-child(even) {
+    width: calc(100% - 18px);
+    margin-left: auto;
   }
 
   .media-panel-copy {
@@ -652,13 +676,17 @@ h3 {
   }
 
   .service-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 54px minmax(0, 1fr);
     gap: 12px;
     padding: 26px 0;
   }
 
   .service-pending {
-    grid-column: auto;
+    grid-column: 2;
+  }
+
+  .service-row:nth-child(even) {
+    padding-left: 18px;
   }
 
   .footer-name {
@@ -669,7 +697,23 @@ h3 {
   .bottom-cta {
     align-items: stretch;
     flex-direction: column;
+    bottom: 12px;
+    gap: 10px;
     text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  h1 {
+    font-size: 3.28rem;
+  }
+
+  h2 {
+    font-size: 2.34rem;
+  }
+
+  .media-hero {
+    min-height: 315px;
   }
 }
 
@@ -686,6 +730,7 @@ h3 {
   padding-bottom: 104px;
   color: var(--ink);
   background: var(--surface);
+  overflow-x: clip;
 }
 
 .type-nav {
@@ -931,6 +976,10 @@ h3 {
 }
 
 @media (max-width: 900px) {
+  .type-study {
+    padding-bottom: 154px;
+  }
+
   .type-hero,
   .type-index,
   .type-production,
@@ -942,6 +991,18 @@ h3 {
 
   .type-hero {
     min-height: auto;
+    align-content: start;
+    gap: 38px;
+  }
+
+  .type-hero h1 {
+    max-width: min(100%, 42rem);
+    font-size: 6.8rem;
+    line-height: 0.8;
+  }
+
+  .type-hero h1 span {
+    padding-left: 2rem;
   }
 
   .type-hero-grid,
@@ -949,6 +1010,27 @@ h3 {
   .type-production,
   .type-contact {
     grid-template-columns: 1fr;
+  }
+
+  .type-hero-grid {
+    max-width: 38rem;
+    margin-left: 0;
+  }
+
+  .type-hero-grid p:nth-child(2),
+  .type-production ol,
+  .type-contact ul {
+    width: min(100%, 34rem);
+    margin-left: auto;
+  }
+
+  .type-section-title h2,
+  .type-production h2,
+  .type-about h2,
+  .type-contact h2 {
+    max-width: min(100%, 12ch);
+    font-size: 4.8rem;
+    line-height: 0.94;
   }
 
   .type-service-row {
@@ -964,6 +1046,7 @@ h3 {
   .type-nav {
     align-items: flex-start;
     flex-direction: column;
+    gap: 12px;
   }
 
   .type-nav nav {
@@ -971,34 +1054,86 @@ h3 {
     gap: 14px;
   }
 
+  .type-hero,
+  .type-index,
+  .type-production,
+  .type-about,
+  .type-contact {
+    padding-top: 70px;
+  }
+
   .type-hero h1 {
-    font-size: clamp(4.4rem, 24vw, 7.4rem);
+    max-width: 100%;
+    font-size: 4.08rem;
+    line-height: 0.86;
   }
 
   .type-hero h1 span {
-    padding-left: 0;
+    padding-left: 1rem;
   }
 
   .type-section-title h2,
   .type-production h2,
   .type-about h2,
   .type-contact h2 {
-    font-size: clamp(2.8rem, 15vw, 4.6rem);
+    font-size: 3.12rem;
+    line-height: 0.98;
   }
 
   .type-service-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 54px minmax(0, 1fr);
     gap: 12px;
   }
 
+  .type-service-row h3 {
+    font-size: 2.35rem;
+    line-height: 0.96;
+  }
+
   .type-service-row p {
-    grid-column: auto;
+    grid-column: 2;
+  }
+
+  .type-service-row:nth-child(even) {
+    padding-left: 16px;
+  }
+
+  .type-about > p {
+    width: min(100%, 32rem);
+    margin-left: auto;
+  }
+
+  .type-contact {
+    padding-bottom: 164px;
   }
 
   .type-bottom-cta {
     align-items: stretch;
     flex-direction: column;
+    bottom: 12px;
+    gap: 10px;
     text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .type-hero h1 {
+    font-size: 3.52rem;
+  }
+
+  .type-section-title h2,
+  .type-production h2,
+  .type-about h2,
+  .type-contact h2 {
+    font-size: 2.68rem;
+  }
+
+  .type-service-row {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .type-service-row h3 {
+    font-size: 2.05rem;
   }
 }
 
@@ -1009,6 +1144,7 @@ h3 {
   background:
     linear-gradient(180deg, var(--surface), var(--surface-muted) 44%, var(--surface)),
     var(--surface);
+  overflow-x: clip;
 }
 
 .lookbook-nav {
@@ -1410,6 +1546,10 @@ h3 {
 }
 
 @media (max-width: 760px) {
+  .lookbook-page {
+    padding-bottom: 154px;
+  }
+
   .lookbook-nav {
     grid-template-columns: 1fr auto;
     gap: 12px;
@@ -1439,17 +1579,25 @@ h3 {
 
   .lookbook-hero {
     min-height: auto;
+    gap: 30px;
   }
 
   .lookbook-hero h1,
   .lookbook-section-heading h2,
   .lookbook-notes h2,
   .lookbook-status h2 {
-    font-size: clamp(3rem, 16vw, 5rem);
+    max-width: min(100%, 11ch);
+    font-size: 3.24rem;
+    line-height: 0.98;
   }
 
   .lookbook-feature {
-    min-height: 430px;
+    min-height: 0;
+  }
+
+  .lookbook-feature-media {
+    min-height: 360px;
+    aspect-ratio: 4 / 5;
   }
 
   .lookbook-feature figcaption {
@@ -1460,7 +1608,13 @@ h3 {
 
   .lookbook-card-media,
   .lookbook-empty-slot {
-    min-height: 280px;
+    min-height: 250px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .lookbook-card:nth-child(even) {
+    width: calc(100% - 18px);
+    margin-left: auto;
   }
 
   .lookbook-card-copy {
@@ -1473,9 +1627,28 @@ h3 {
     gap: 4px;
   }
 
+  .lookbook-status {
+    padding-bottom: 164px;
+  }
+
   .lookbook-bottom-cta {
     align-items: stretch;
     flex-direction: column;
+    bottom: 12px;
+    gap: 10px;
     text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .lookbook-hero h1,
+  .lookbook-section-heading h2,
+  .lookbook-notes h2,
+  .lookbook-status h2 {
+    font-size: 2.72rem;
+  }
+
+  .lookbook-feature-media {
+    min-height: 315px;
   }
 }
