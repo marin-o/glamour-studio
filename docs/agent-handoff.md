@@ -2,9 +2,8 @@
 
 ## Current state
 
-- Sitewright is initialized. `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`
-  is complete; until a new task is created, Doctor may report
-  `PLANNING_REQUIRED` because there is no active executable task.
+- Sitewright is initialized. The active task is
+  `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
 - Root `DESIGN.md` is the authoritative visual-system contract.
 - Styling is Tailwind CSS v4: tokens live in the `@theme` block of
@@ -39,9 +38,13 @@
 
 ## Active task
 
-- No active implementation task. Task 013 is complete and recorded in
-  `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`, including
-  a one-time owner-authorized screenshot verification of the mobile rhythm.
+- `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md` is TODO:
+  a scroll-scrubbed makeup-stroke SVG tracing the homepage zigzag with
+  GSAP/ScrollTrigger, Framer Motion text reveals triggered as the stroke
+  reaches each segment, and segment-local color inversion over the dark
+  contact band. The owner authorized browser/animation validation for that
+  task only. Library split is an owner preference: Framer Motion (`motion`)
+  for text animation, GSAP for other animation.
 
 ## Durable gotchas
 
