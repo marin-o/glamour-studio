@@ -14,8 +14,9 @@
   scroll-scrubbed abstract makeup stroke (`src/components/motion/MakeupStroke.jsx`)
   and Framer Motion text reveal primitive (`src/components/motion/Reveal.jsx`).
   GSAP/ScrollTrigger owns stroke timing; Framer Motion owns text entrances.
-  The stroke uses measured anchors, local light-color inversion over the dark
-  contact band, and reduced-motion/no-JS fallbacks that keep text visible.
+  The stroke uses measured anchors, real SVG `getTotalLength()` dash scrubbing,
+  local light-color inversion over the dark contact band, and
+  reduced-motion/no-JS fallbacks that keep text visible.
 - Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first
   with fluid clamp-based heading scales and a deliberate left/right/left
   editorial stagger on phones (hard right-aligned wordmark line and heading

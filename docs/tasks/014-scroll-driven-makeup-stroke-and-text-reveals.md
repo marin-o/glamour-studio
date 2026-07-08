@@ -54,7 +54,7 @@ no-JS or reduced-motion visitors, and desktop and mobile both choreographed.
   right-aligned; production heading right; tone-test paragraph and contact
   list right-offset. The stroke path should pass through/near these
   alternating anchors on both mobile and desktop.
-- No animation libraries are installed yet. `react`/`next` are `latest`.
+- Animation libraries are installed: `motion`, `gsap`, and `@gsap/react`.
 
 ## Scope
 
@@ -200,8 +200,15 @@ no-JS or reduced-motion visitors, and desktop and mobile both choreographed.
   homepage component. Initial SSR/no-JS markup remains visible; reduced motion
   leaves text visible and renders the measured stroke fully drawn without
   creating a ScrollTrigger.
+- Completed: follow-up correction after owner report that the stroke appeared
+  suddenly around the first quarter of the page. The draw-on now measures each
+  rendered SVG path with `getTotalLength()` and animates that real dash length,
+  instead of relying on `pathLength="1"` plus a normalized `strokeDasharray: 1`
+  shortcut that could behave like a tiny repeated dash pattern.
 - Validation: `npm run build` passed with `/`, `/typography`, `/old`,
   `/lookbook`, and `/_not-found` statically prerendered.
+- Validation: after the follow-up draw correction, `npm run build` passed
+  again with the same static route set.
 - Validation: browser matrix used the task-authorized in-app browser at 390px
   and 1440px against a temporary static server serving the built `.next`
   output. Checked top/mid/contact scroll positions, screenshots, path counts,

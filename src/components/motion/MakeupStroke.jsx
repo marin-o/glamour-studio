@@ -210,6 +210,14 @@ function sameIds(previous, nextIds) {
   return nextIds.every((id) => previous.has(id));
 }
 
+function getPathLength(path) {
+  if (!path || typeof path.getTotalLength !== "function") {
+    return 1;
+  }
+
+  return Math.max(path.getTotalLength(), 1);
+}
+
 export function MakeupStrokeProvider({ children }) {
   const [motionActive, setMotionActive] = useState(false);
   const [revealedIds, setRevealedIdsState] = useState(() => new Set());
@@ -345,9 +353,14 @@ export default function MakeupStroke() {
         return undefined;
       }
 
-      gsap.set(animatedPaths, {
-        strokeDasharray: 1,
-        strokeDashoffset: prefersReducedMotion ? 0 : 1,
+      animatedPaths.forEach((path) => {
+        const length = getPathLength(path);
+
+        gsap.set(path, {
+          strokeDasharray: length,
+          strokeDashoffset: prefersReducedMotion ? 0 : length,
+          visibility: "visible",
+        });
       });
 
       if (prefersReducedMotion) {
@@ -400,11 +413,6 @@ export default function MakeupStroke() {
   if (!geometry) {
     return <div ref={layerRef} aria-hidden="true" />;
   }
-
-  const dashStyle = {
-    strokeDasharray: 1,
-    strokeDashoffset: prefersReducedMotion ? 0 : 1,
-  };
 
   return (
     <div
@@ -461,36 +469,33 @@ export default function MakeupStroke() {
           fill="none"
           filter={`url(#${svgId}-smudge)`}
           opacity="0.36"
-          pathLength="1"
           stroke="var(--color-blush)"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={geometry.strokeWidth * 1.55}
-          style={dashStyle}
+          style={{ visibility: "hidden" }}
         />
         <path
           ref={accentPathRef}
           d={geometry.path}
           fill="none"
           opacity="0.74"
-          pathLength="1"
           stroke="var(--color-accent)"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={geometry.strokeWidth}
-          style={dashStyle}
+          style={{ visibility: "hidden" }}
         />
         <path
           ref={edgePathRef}
           d={geometry.path}
           fill="none"
           opacity="0.64"
-          pathLength="1"
           stroke="var(--color-accent-deep)"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={geometry.strokeWidth * 0.34}
-          style={dashStyle}
+          style={{ visibility: "hidden" }}
         />
 
         {geometry.darkBand ? (
@@ -500,24 +505,22 @@ export default function MakeupStroke() {
               d={geometry.path}
               fill="none"
               opacity="0.88"
-              pathLength="1"
               stroke="var(--color-surface)"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={geometry.strokeWidth * 0.82}
-              style={dashStyle}
+              style={{ visibility: "hidden" }}
             />
             <path
               ref={lightEdgePathRef}
               d={geometry.path}
               fill="none"
               opacity="0.62"
-              pathLength="1"
               stroke="var(--color-peach)"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={geometry.strokeWidth * 0.26}
-              style={dashStyle}
+              style={{ visibility: "hidden" }}
             />
           </g>
         ) : null}
