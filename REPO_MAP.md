@@ -5,23 +5,34 @@ common work so agents can inspect the smallest relevant file set.
 
 ## Runtime flow
 
-- Request enters the Next.js App Router under `src/app/`, composes product UI and content modules, then renders accessible HTML/CSS for the user.
+- Request enters the Next.js App Router under `src/app/`, composes route-level
+  pages and shared components, then renders accessible HTML/CSS for the user.
 
 ## Ownership
 
-- `src/app/`: route entrypoints, layouts, metadata, and page composition.
-- `src/components/`: reusable UI, layout, and product section components.
+- `src/app/layout.jsx`: root metadata and app shell.
+- `src/app/page.jsx`: typography-led Glamour Studio homepage at `/`.
+- `src/app/typography/page.jsx`: comparison alias for the typography-led homepage.
+- `src/app/old/page.jsx`: preserved task 007 image-led homepage backup.
+- `src/app/lookbook/page.jsx`: media/lookbook planning route with honest placeholder states.
+- `src/app/globals.css`: global tokens, route styles, responsive rules, focus states, and shared primitives.
+- `src/components/TypographySalonPage.jsx`: shared server component for `/` and `/typography`.
 - `src/lib/`: shared helpers and product-facing data utilities when needed.
 - `docs/`: durable product intent, design constraints, implementation plan, tasks, ADRs, and handoff.
+- `docs/tasks/011-mobile-first-responsive-site-refinement.md`: active task for responsive polish across public routes.
 
 ## Cross-file invariants
 
 - Product-facing copy, structure, and launch blockers must stay aligned with `docs/product-spec.md`.
 - Active implementation work must have exactly one scoped task in `docs/tasks/`.
 - Current-state guidance belongs in `docs/agent-handoff.md`, not chat history.
+- `/lookbook` must remain honest about missing real salon media and must not present placeholders as final portfolio work.
+- Booking/contact UI must not imply live scheduling, confirmed availability, real address, real hours, or real prices until owner-approved.
 
 ## Change recipes
 
-- Product slice: start with `docs/product-spec.md`, active task, `src/app/`, and relevant `src/components/`.
-- Design refinement: start with `DESIGN.md`, active task, and affected components/styles.
+- Product slice: start with `docs/product-spec.md`, active task, route file, and relevant shared component.
+- Typography homepage refinement: start with `DESIGN.md`, `docs/tasks/011-mobile-first-responsive-site-refinement.md`, `src/components/TypographySalonPage.jsx`, and `src/app/globals.css`.
+- Lookbook refinement: start with `DESIGN.md`, `public/media/README.md`, `src/app/lookbook/page.jsx`, and `src/app/globals.css`.
+- Backup route changes: start with `src/app/old/page.jsx` and preserve comparison intent unless the owner asks to remove it.
 - Planning or scope change: start with `docs/implementation-plan.md`, `docs/tasks/`, and `docs/agent-handoff.md`.
