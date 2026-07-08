@@ -130,6 +130,19 @@ band, the stroke may flip locally to the light surface color, but only where it
 crosses the dark band. It must not globally change color or reduce contact text
 readability.
 
+The stroke route should be simplified into an elegant spline rather than
+connecting every reveal point. Keep turns long, soft, and editorial; avoid
+hairline, pencil-like, chart-like, or sharply kinked paths. The brush rendering
+should read as a translucent cosmetic swipe with a soft wash and subtle texture,
+not as a hard vector outline.
+
+The stroke must render as a bristled brushstroke, never a constant-width
+rounded-cap tube: pointed tapered tips where the gesture touches down and lifts
+off, width that varies like brush pressure, furrow streaks inside the pigment
+band, and at most faint flyaway bristles outside it. Hair connotations are
+welcome only as multiple flowing strands within one gesture; nothing may read
+as a single stray hair lying on the page.
+
 A future scroll-scrubbed hero video of real salon hair movement remains an
 owner-gated direction. If that media exists later, it may join or replace the
 stroke, but generic stock video must not be used as a substitute.

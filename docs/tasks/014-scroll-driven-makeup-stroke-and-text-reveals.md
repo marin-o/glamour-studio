@@ -205,10 +205,19 @@ no-JS or reduced-motion visitors, and desktop and mobile both choreographed.
   rendered SVG path with `getTotalLength()` and animates that real dash length,
   instead of relying on `pathLength="1"` plus a normalized `strokeDasharray: 1`
   shortcut that could behave like a tiny repeated dash pattern.
+- Completed: follow-up visual refinement after owner feedback that the proof of
+  concept looked like a pencil line with overly sharp turns. The stroke route
+  now groups reveal anchors into larger vertical gesture points, projects reveal
+  timing onto that smoother route, and renders as a wider translucent cosmetic
+  wash with a softer brown core and faint ridge.
 - Validation: `npm run build` passed with `/`, `/typography`, `/old`,
   `/lookbook`, and `/_not-found` statically prerendered.
 - Validation: after the follow-up draw correction, `npm run build` passed
   again with the same static route set.
+- Validation: after the follow-up visual refinement, `npm run build` passed
+  again with the same static route set. No browser/screenshot pass was run for
+  this refinement because the project reverted to conservative validation after
+  task 014's one-task browser authorization was used.
 - Validation: browser matrix used the task-authorized in-app browser at 390px
   and 1440px against a temporary static server serving the built `.next`
   output. Checked top/mid/contact scroll positions, screenshots, path counts,
