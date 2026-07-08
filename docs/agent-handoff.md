@@ -2,13 +2,20 @@
 
 ## Current state
 
-- Sitewright is initialized. The active task is
-  `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`.
+- Sitewright is initialized. Task
+  `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md` is complete;
+  no follow-on implementation task is currently open.
 - The product is a Macedonian-first Glamour Studio salon site for Radovish.
 - Root `DESIGN.md` is the authoritative visual-system contract.
 - Styling is Tailwind CSS v4: tokens live in the `@theme` block of
   `src/app/globals.css`, layout lives in utility classes on the JSX. Do not
   reintroduce hand-rolled global class systems.
+- The typography-led homepage and `/typography` alias now include a client-only,
+  scroll-scrubbed abstract makeup stroke (`src/components/motion/MakeupStroke.jsx`)
+  and Framer Motion text reveal primitive (`src/components/motion/Reveal.jsx`).
+  GSAP/ScrollTrigger owns stroke timing; Framer Motion owns text entrances.
+  The stroke uses measured anchors, local light-color inversion over the dark
+  contact band, and reduced-motion/no-JS fallbacks that keep text visible.
 - Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first
   with fluid clamp-based heading scales and a deliberate left/right/left
   editorial stagger on phones (hard right-aligned wordmark line and heading
@@ -38,13 +45,8 @@
 
 ## Active task
 
-- `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md` is TODO:
-  a scroll-scrubbed makeup-stroke SVG tracing the homepage zigzag with
-  GSAP/ScrollTrigger, Framer Motion text reveals triggered as the stroke
-  reaches each segment, and segment-local color inversion over the dark
-  contact band. The owner authorized browser/animation validation for that
-  task only. Library split is an owner preference: Framer Motion (`motion`)
-  for text animation, GSAP for other animation.
+- None. The next implementation task should be created or selected before
+  changing product behavior.
 
 ## Durable gotchas
 
@@ -54,6 +56,7 @@
   owner-approved media exists.
 - Under conservative validation, do not run browser, viewport, screenshot,
   Playwright, visual, animation, or interaction checks unless the owner
-  explicitly asks.
+  explicitly asks. The one-task browser/animation validation authorization for
+  task 014 has been used and does not carry forward.
 - Use `docs/owner-content-media-intake.md` before replacing placeholders with
   launch-ready content or media.

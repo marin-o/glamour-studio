@@ -21,8 +21,8 @@ spacing:
   section: "64px mobile, 96px desktop as a planning baseline."
 motion:
   feedback: "Subtle fades, opacity, and small transform changes only when useful."
-  reveal: "Scroll-linked reveal and unreveal around the hero media, with static fallback."
-  environmental: "Hero hair-movement video may be scroll-scrubbed when real media exists."
+  reveal: "Current signature enhancement: a scroll-scrubbed abstract makeup stroke with synced text reveals and static fallback."
+  environmental: "Future real salon hair-movement video may join or replace the stroke when owner-approved media exists."
 components:
   navigation: "Minimal single-page anchors or compact header only if useful."
   cta: "Persistent bottom contact or booking CTA, mobile-first, accessible, and direct."
@@ -118,13 +118,25 @@ does not confirm a booking automatically unless the implementation truly does.
 
 ## Motion And Progressive Enhancement
 
-The signature motion direction is a scroll-scrubbed hero video of hair movement,
-preferably filmed in the actual studio with the studio softly blurred behind the
-hair. Text and UI around the hero may reveal and unreveal as scroll progresses.
+The current signature motion is a scroll-scrubbed abstract makeup stroke that
+traces the typography-led homepage from hero through contact. It should feel
+like a soft brush or lipstick gesture in the existing blush and warm-brown
+palette, not like a plain chart line or a generic decorative flourish.
+
+The stroke follows measured text/section anchors instead of hardcoded page
+pixels. Text reveals may be synchronized to the stroke, with GSAP owning scroll
+timing and Framer Motion owning the entrance animation. Over the dark contact
+band, the stroke may flip locally to the light surface color, but only where it
+crosses the dark band. It must not globally change color or reduce contact text
+readability.
+
+A future scroll-scrubbed hero video of real salon hair movement remains an
+owner-gated direction. If that media exists later, it may join or replace the
+stroke, but generic stock video must not be used as a substitute.
 
 Motion must be progressive enhancement:
 
-- provide a static hero fallback image or poster;
+- provide static readable content, and a poster/fallback image for any future video;
 - respect reduced-motion preferences;
 - keep contact and service discovery usable without scroll-linked effects;
 - avoid motion that blocks reading, tapping, or page performance.

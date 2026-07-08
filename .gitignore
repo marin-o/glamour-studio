@@ -1,6 +1,7 @@
 .next/
 node_modules/
 out/
+.validation/
 
 .env*
 !.env.example

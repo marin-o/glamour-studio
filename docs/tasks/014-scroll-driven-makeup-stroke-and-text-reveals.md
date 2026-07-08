@@ -1,6 +1,6 @@
 # Scroll-driven makeup stroke and synced text reveals
 
-Status: TODO
+Status: DONE
 Depends on: 013-adopt-tailwind-and-mobile-editorial-rhythm
 Owner: AI-assisted implementation
 
@@ -130,22 +130,22 @@ no-JS or reduced-motion visitors, and desktop and mobile both choreographed.
 
 ## Acceptance criteria
 
-- [ ] A makeup-like drawn stroke scrubs with scroll along the full homepage
+- [x] A makeup-like drawn stroke scrubs with scroll along the full homepage
       zigzag on both mobile and desktop viewports.
-- [ ] Text segments reveal when the stroke reaches them; GSAP drives the
+- [x] Text segments reveal when the stroke reaches them; GSAP drives the
       timing, Framer Motion renders the entrances.
-- [ ] The stroke renders brown over light sections and light `surface` only
+- [x] The stroke renders brown over light sections and light `surface` only
       along the dark contact band, flipping locally, not globally.
-- [ ] With JavaScript disabled, all content is visible and correctly laid
+- [x] With JavaScript disabled, all content is visible and correctly laid
       out; no text is missing.
-- [ ] With `prefers-reduced-motion: reduce`, there is no scrub or reveal
+- [x] With `prefers-reduced-motion: reduce`, there is no scrub or reveal
       animation and all content is visible.
-- [ ] No horizontal overflow, no cumulative layout shift, no scroll
+- [x] No horizontal overflow, no cumulative layout shift, no scroll
       hijacking; the bottom CTA, anchors, and focus states still work.
-- [ ] `/old` and `/lookbook` are unaffected.
-- [ ] No fake media, business claims, or availability implications are
+- [x] `/old` and `/lookbook` are unaffected.
+- [x] No fake media, business claims, or availability implications are
       introduced.
-- [ ] `DESIGN.md`, `docs/agent-handoff.md`, and this task record the final
+- [x] `DESIGN.md`, `docs/agent-handoff.md`, and this task record the final
       state.
 
 ## Non-goals
@@ -185,7 +185,38 @@ no-JS or reduced-motion visitors, and desktop and mobile both choreographed.
 
 ## Completion notes
 
-- Completed:
-- Validation:
-- Deviations:
-- Follow-up:
+- Completed: added `motion`, `gsap`, and `@gsap/react`; built
+  `src/components/motion/MakeupStroke.jsx` as the measured SVG stroke layer and
+  reveal-state provider; built `src/components/motion/Reveal.jsx` as the
+  Framer Motion text primitive; instrumented `TypographySalonPage` with
+  semantic reveal wrappers and measured stroke anchors for `/` and
+  `/typography`.
+- Completed: the stroke uses measured anchors, path-length dash scrubbing, a
+  textured multi-stroke brush treatment, and a duplicated light path clipped to
+  the contact section's measured bounds for segment-local inversion. Contact
+  text reveals are timed from invisible rail anchors so the light stroke does
+  not wash through the list copy.
+- Completed: the enhancement stays client-only around the shared server
+  homepage component. Initial SSR/no-JS markup remains visible; reduced motion
+  leaves text visible and renders the measured stroke fully drawn without
+  creating a ScrollTrigger.
+- Validation: `npm run build` passed with `/`, `/typography`, `/old`,
+  `/lookbook`, and `/_not-found` statically prerendered.
+- Validation: browser matrix used the task-authorized in-app browser at 390px
+  and 1440px against a temporary static server serving the built `.next`
+  output. Checked top/mid/contact scroll positions, screenshots, path counts,
+  dashoffset progression from `1px` to `0px`, 23 measured anchors, local contact
+  clip bounds, no horizontal overflow, CTA `#type-contact`, `/typography`
+  sharing the stroke, and no stroke anchors/SVG on `/old` or `/lookbook`.
+- Validation: source/build scans found no SSR-hidden text styles in
+  `.next/server/app/index.html`, confirmed key homepage text is present in the
+  built HTML, confirmed reduced-motion handling in the client source, and found
+  no new fake media or live availability claims beyond existing pending-content
+  copy.
+- Deviations: the in-app browser runtime did not expose reduced-motion or
+  JavaScript-disabled emulation. Those two fallback criteria were validated by
+  source/build invariants instead of a browser-mode toggle. The same runtime
+  also lacked `ResizeObserver` and `requestAnimationFrame`, so the component now
+  has measurement fallbacks for both APIs.
+- Follow-up: owner visual pass on an actual phone and desktop browser remains
+  useful for taste-level tuning of stroke thickness, route, and reveal pacing.
