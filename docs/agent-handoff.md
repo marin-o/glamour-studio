@@ -23,14 +23,18 @@
   polygons. All stroke randomness is seeded sine noise (deterministic).
 - Performance-critical (task 016): the stroke uses NO SVG filters, and the
   draw-on is chunked — the artwork is split into ~48–56px arc-length chunks
-  whose opacities fade individually (smoothstep, window ≈ 4.5 chunks) as
-  ScrollTrigger progress passes their thresholds, so scroll frames repaint
-  only the fading tip chunks. The layer stack is split across two chunk sets
-  staggered by half a chunk (core drawn as two half-opacity copies) so
-  transverse cut seams stay invisible — keep chunks smaller than the stroke
-  width and keep the stagger if retuning. Do not reintroduce filters,
-  dashoffset scrubbing, full-layer masks, seam-cover strokes, or clip-path
-  text reveals; text reveals are transform/opacity only. Local light-color
+  whose opacities fade individually (smoothstep, ~210px window) as scroll
+  progress passes their thresholds, so scroll frames repaint only the fading
+  tip chunks. Thresholds (chunks and text reveals alike) are keyed to page y
+  against a 0.75-viewport line, NOT arc length, so the drawn front tracks
+  the viewport instead of lagging in curvy sections. The layer stack is
+  split across two chunk sets staggered by half a chunk (core drawn as two
+  half-opacity copies) so transverse cut seams stay invisible — keep chunks
+  smaller than the stroke width and keep the stagger if retuning. Chunks
+  smaller than ~48px measurably drop frames (28px and 38px tested and
+  rejected). Do not reintroduce filters, dashoffset scrubbing, full-layer
+  masks, seam-cover strokes, or clip-path text reveals; text reveals are
+  transform/opacity only. Local light-color
   inversion over the dark contact band and reduced-motion/no-JS fallbacks that
   keep text visible are preserved.
 - Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first

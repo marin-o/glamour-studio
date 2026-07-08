@@ -385,11 +385,12 @@ function buildChunkSet(samples, strokeWidth, count, half, layers) {
         : null,
       maxY: maxY + strokeWidth * 1.2,
       minY: minY - strokeWidth * 1.2,
+      startY: slice[0].y,
       strandPaths: layers.strandIndices.map((strandIndex) => ({
         d: buildStrandPath(slice, strokeWidth, BRISTLE_STRANDS[strandIndex]),
         strandIndex,
       })),
-      threshold: slice[0].t,
+      threshold: 0,
     });
 
     startIndex = endIndex;
@@ -401,7 +402,7 @@ function buildChunkSet(samples, strokeWidth, count, half, layers) {
 function buildChunkSets(samples, strokeWidth, isNarrow) {
   const totalLength = samples[samples.length - 1].travelled;
   const targetLength = isNarrow ? 56 : 48;
-  const count = clamp(Math.round(totalLength / targetLength), 12, 220);
+  const count = clamp(Math.round(totalLength / targetLength), 12, 260);
 
   return {
     count,
@@ -420,54 +421,18 @@ function buildChunkSets(samples, strokeWidth, isNarrow) {
   };
 }
 
-function getRouteProgressAtY(routePoints, cumulativeDistances, totalDistance, y) {
-  const firstPoint = routePoints[0];
-  const lastPoint = routePoints[routePoints.length - 1];
-
-  if (y <= firstPoint.y) {
-    return 0;
-  }
-
-  if (y >= lastPoint.y) {
-    return 1;
-  }
-
-  for (let index = 1; index < routePoints.length; index += 1) {
-    const previous = routePoints[index - 1];
-    const next = routePoints[index];
-
-    if (y > next.y) {
-      continue;
-    }
-
-    const localProgress = clamp((y - previous.y) / Math.max(next.y - previous.y, 1), 0, 1);
-    const projectedPoint = {
-      x: previous.x + (next.x - previous.x) * localProgress,
-      y: previous.y + (next.y - previous.y) * localProgress,
-    };
-
-    return clamp(
-      (cumulativeDistances[index - 1] + distance(previous, projectedPoint)) /
-        Math.max(totalDistance, 1),
-      0,
-      1,
-    );
-  }
-
-  return 1;
+// Thresholds are keyed to page y instead of arc length. ScrollTrigger
+// progress is a fraction of the scrollable page, so an arc-length threshold
+// desynchronizes wherever the path packs extra length into little vertical
+// distance — the drawn front fell behind the viewport in the curvy early
+// sections and "caught up" later. Mapping y against a viewport line keeps
+// the front pinned ~75% down the screen everywhere, and text reveals share
+// the same mapping so they stay in sync with the stroke tip.
+function progressAtY(y, lead, denominator) {
+  return clamp((y - lead) / denominator, 0, 1);
 }
 
-function buildThresholds(revealPoints, routePoints, viewportHeight) {
-  const cumulativeDistances = [0];
-  let totalDistance = 0;
-
-  for (let index = 1; index < routePoints.length; index += 1) {
-    totalDistance += distance(routePoints[index - 1], routePoints[index]);
-    cumulativeDistances[index] = totalDistance;
-  }
-
-  const initialViewportLine = viewportHeight * 0.78;
-
+function buildThresholds(revealPoints, lead, denominator) {
   return revealPoints
     .map((point) => {
       if (!point.id) {
@@ -476,15 +441,7 @@ function buildThresholds(revealPoints, routePoints, viewportHeight) {
 
       return {
         id: point.id,
-        threshold:
-          point.y <= initialViewportLine
-            ? 0
-            : getRouteProgressAtY(
-                routePoints,
-                cumulativeDistances,
-                totalDistance,
-                point.y,
-              ),
+        threshold: progressAtY(point.y, lead, denominator),
       };
     })
     .filter(Boolean);
@@ -535,14 +492,24 @@ function getGeometry(root) {
   const samples = sampleSegments(segments);
   const strokeWidth = isNarrow ? 30 : 58;
   const chunkSets = buildChunkSets(samples, strokeWidth, isNarrow);
+  const lead = window.innerHeight * 0.75;
+  const endY = samples[samples.length - 1].y;
+  const denominator = Math.max(endY - lead, 1);
+
+  chunkSets.sets.forEach((chunks) => {
+    chunks.forEach((chunk) => {
+      chunk.threshold = progressAtY(chunk.startY, lead, denominator);
+    });
+  });
 
   return {
-    chunkFade: 4.5 / chunkSets.count,
+    // Tip fade length in page pixels, expressed in progress units.
+    chunkFade: (isNarrow ? 180 : 210) / denominator,
     chunkSets: chunkSets.sets,
     darkBand: getDarkBand(root, rootRect, width, height),
     height,
     strokeWidth,
-    thresholds: buildThresholds(measuredPoints, routePoints, window.innerHeight),
+    thresholds: buildThresholds(measuredPoints, lead, denominator),
     width,
   };
 }
@@ -889,7 +856,7 @@ export default function MakeupStroke() {
               <g
                 data-stroke-chunk="true"
                 data-stroke-threshold={chunk.threshold}
-                key={chunk.threshold}
+                key={chunk.startY}
                 style={{ opacity: 0 }}
               >
                 <BrushChunk
@@ -911,7 +878,7 @@ export default function MakeupStroke() {
                   <g
                     data-stroke-chunk="true"
                     data-stroke-threshold={chunk.threshold}
-                    key={chunk.threshold}
+                    key={chunk.startY}
                     style={{ opacity: 0 }}
                   >
                     <BrushChunk

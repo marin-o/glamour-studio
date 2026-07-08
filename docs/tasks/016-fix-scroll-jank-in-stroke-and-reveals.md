@@ -53,6 +53,20 @@ compositor-smooth with the stroke and reveals active.
     the other, making seams invisible with no cover strokes.
   - The dark-band light copy renders only the chunks whose y-range
     intersects the band, inside the existing `userSpaceOnUse` clip.
+  - Owner follow-up: in the early curvy sections the drawn front fell
+    behind the viewport and "caught up" later, because chunk thresholds were
+    arc-length fractions while ScrollTrigger progress is a page fraction.
+    Chunk AND text-reveal thresholds are now keyed to page y against a
+    viewport line (`(y - 0.75·viewportHeight) / (endY - 0.75·viewportHeight)`),
+    which pins the front at ~0.6–0.8 of the viewport at every scroll
+    position (verified) and keeps text reveals in sync with the tip. The
+    fade window is expressed in page pixels (~210px desktop / ~180px
+    mobile).
+  - Chunk-size floor measured: 28px and 38px chunks were tried per owner
+    request and both trend worse in the wheel test (medians ~16% / ~7%
+    dropped vs ~3% at 48px, high run variance); 48px desktop / 56px mobile
+    is the sweet spot on the test machine. Perceived smoothness is governed
+    by the eased fade window, not chunk size.
   - The layer div is compositor-isolated (`transform-gpu`,
     `will-change-transform`).
   - GSAP now uses a bare `ScrollTrigger.create` (no tween, no dash math);
