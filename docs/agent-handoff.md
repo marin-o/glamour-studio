@@ -12,8 +12,11 @@
   reintroduce hand-rolled global class systems.
 - Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first
   with fluid clamp-based heading scales and a deliberate left/right/left
-  editorial stagger on phones (offset copy blocks, indented service rows,
-  shifted media cards), matching the desktop typography-led flow.
+  editorial stagger on phones (hard right-aligned wordmark line and heading
+  blocks, alternating service-row alignment, 78–88% offset copy blocks and
+  cards), matching the desktop typography-led flow. Verified once via an
+  owner-authorized screenshot pass; that authorization was one-time and the
+  conservative validation policy still applies.
 - Content completion remains intentionally deferred. Address, hours, phone,
   prices, staff names, final Macedonian copy, real photos, and video are still
   owner decisions.
@@ -37,9 +40,8 @@
 ## Active task
 
 - No active implementation task. Task 013 is complete and recorded in
-  `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`. The open
-  verification step is an owner visual pass of the mobile rhythm on a real
-  phone.
+  `docs/tasks/013-adopt-tailwind-and-mobile-editorial-rhythm.md`, including
+  a one-time owner-authorized screenshot verification of the mobile rhythm.
 
 ## Durable gotchas
 

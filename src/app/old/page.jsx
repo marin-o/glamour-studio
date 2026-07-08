@@ -129,7 +129,7 @@ export default function OldDraft() {
           <p className={eyebrow}>Backup image-led draft</p>
           <h1
             id="hero-title"
-            className="max-w-[9ch] text-[clamp(3.3rem,15vw,7rem)] leading-[0.9] lg:leading-[0.86]"
+            className="max-w-[9ch] text-[clamp(3.4rem,17vw,7rem)] leading-[0.9] lg:leading-[0.86]"
           >
             Glamour Studio
           </h1>
@@ -200,7 +200,7 @@ export default function OldDraft() {
             const isWide = index === 0 || index === 3;
             return (
               <article
-                className={`grid grid-cols-1 border-t border-line bg-surface/45 even:ml-auto even:w-[calc(100%-18px)] md:col-span-2 md:min-h-[390px] md:grid-cols-[minmax(0,1fr)_minmax(260px,0.72fr)] md:even:ml-0 md:even:w-auto ${
+                className={`grid grid-cols-1 border-t border-line bg-surface/45 even:ml-auto even:w-[88%] md:col-span-2 md:min-h-[390px] md:grid-cols-[minmax(0,1fr)_minmax(260px,0.72fr)] md:even:ml-0 md:even:w-auto ${
                   isWide
                     ? "xl:grid-cols-[minmax(0,0.98fr)_minmax(260px,0.72fr)]"
                     : "xl:col-span-1 xl:grid-cols-1 xl:min-h-[310px]"
@@ -290,7 +290,7 @@ export default function OldDraft() {
         <div className="mt-12 max-w-[1120px] border-t border-line-strong">
           {services.map((service) => (
             <article
-              className="grid grid-cols-[54px_minmax(0,1fr)] items-start gap-3 border-b border-line py-[26px] even:pl-[18px] md:even:pl-0 lg:grid-cols-[72px_minmax(220px,0.82fr)_minmax(260px,1fr)] lg:gap-[clamp(20px,4vw,56px)] lg:py-[30px]"
+              className="grid grid-cols-[54px_minmax(0,1fr)] items-start gap-3 border-b border-line py-[26px] even:pl-8 md:even:pl-0 lg:grid-cols-[72px_minmax(220px,0.82fr)_minmax(260px,1fr)] lg:gap-[clamp(20px,4vw,56px)] lg:py-[30px]"
               key={service.name}
             >
               <span className="font-display text-[2rem] font-bold leading-none text-accent">
@@ -335,7 +335,7 @@ export default function OldDraft() {
         </div>
 
         <div
-          className="ml-auto w-[calc(100%-14px)] rounded-lg border border-line bg-surface/80 p-[clamp(24px,4vw,42px)] lg:ml-0 lg:w-auto"
+          className="ml-auto w-[92%] rounded-lg border border-line bg-surface/80 p-[clamp(24px,4vw,42px)] lg:ml-0 lg:w-auto"
           aria-labelledby="booking-title"
         >
           <p className={eyebrow}>Contact and booking</p>
@@ -364,12 +364,14 @@ export default function OldDraft() {
       </section>
 
       <aside
-        className="fixed inset-x-pad bottom-3 z-10 flex flex-col gap-2.5 rounded-lg border border-ink/25 bg-ink/95 p-3 text-center text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] backdrop-blur-md sm:bottom-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-[11px] sm:pr-3 sm:pl-[18px] sm:text-left"
+        className="fixed inset-x-pad bottom-3 z-10 flex items-center justify-between gap-3 rounded-lg border border-ink/25 bg-ink/95 py-2 pr-2 pl-4 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] backdrop-blur-md sm:bottom-4 sm:gap-4 sm:py-[11px] sm:pr-3 sm:pl-[18px]"
         aria-label="Contact status"
       >
-        <span className="font-extrabold">Contact details pending</span>
+        <span className="text-[0.92rem] font-extrabold sm:text-base">
+          Contact details pending
+        </span>
         <a
-          className="rounded-lg bg-surface px-3.5 py-2.5 font-extrabold whitespace-nowrap text-ink"
+          className="rounded-lg bg-surface px-3 py-2 text-[0.92rem] font-extrabold whitespace-nowrap text-ink sm:px-3.5 sm:py-2.5 sm:text-base"
           href="#booking-title"
         >
           View status

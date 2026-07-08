@@ -50,16 +50,29 @@ left editorial flow as desktop instead of a uniformly centered stack.
   `inset-x-pad`, `border-t-line-strong`, `divide-line-strong`,
   `border-t-surface/25`, `even:` variants) — all present, no silently
   missing classes.
-- No browser, viewport, screenshot, or interaction checks were run, per the
-  conservative validation policy. The owner should visually confirm the
-  mobile rhythm on a phone.
+- The owner explicitly authorized a one-time desktop/mobile screenshot pass
+  after judging the first migration round still too centered on mobile. The
+  pass (temporary `playwright-core` + system Edge harness, removed afterward)
+  confirmed the initial offsets were imperceptible at 390px and drove a
+  second round of stronger moves; a follow-up capture verified the final
+  state and caught a hero wordmark clip at 21.5vw, fixed by settling on
+  18vw. The conservative no-browser-validation policy remains in force for
+  future work.
 
 ## Completion notes
 
 - Heading scales are now fluid `clamp()` values instead of per-breakpoint
   fixed sizes, so type shrinks continuously and cannot clip at odd widths.
-- The hero "Studio" indent is `padding-left: 0.55em`, which scales with the
-  font size and keeps the diagonal wordmark stagger visible on phones.
+- Final mobile rhythm moves (screenshot-verified): hero "Glamour" fills the
+  width at 18vw with "Studio" hard right-aligned for a true diagonal;
+  even service rows are fully right-aligned with oversized names (12.5vw);
+  the production heading is a right-aligned block over a left list; the
+  tone-test paragraph and contact list sit right-offset at 78–80% width
+  behind short blush rules; even media/lookbook cards offset to 88% width.
+  Desktop keeps its previous composition behind `md:`/`lg:` overrides
+  (`md:pl-[0.55em] md:text-left` restores the desktop wordmark indent).
+- The fixed bottom CTA is a single compact row on mobile instead of two
+  stacked full-width rows.
 - Tailwind preflight removes default link underlines; all previous
   `text-decoration: none` rules relied on that look already, so no visual
   regression is expected there.

@@ -82,11 +82,11 @@ const pendingFacts = [
 
 const kicker = "m-0 text-[0.84rem] font-extrabold text-accent";
 const sectionH2 =
-  "max-w-[13ch] text-[clamp(2.4rem,7vw,7.4rem)] leading-[0.94] md:leading-[0.92]";
+  "max-w-[13ch] text-balance text-[clamp(2.4rem,7vw,7.4rem)] leading-[0.94] md:leading-[0.92]";
 const longCopy =
   "mt-7 max-w-[620px] text-[clamp(1.06rem,1.4vw,1.22rem)] leading-[1.72]";
 const offsetList =
-  "m-0 ml-auto grid w-[88%] max-w-[34rem] list-none p-0 lg:ml-0 lg:w-auto lg:max-w-none";
+  "m-0 ml-auto grid w-[80%] max-w-[34rem] list-none p-0 lg:ml-0 lg:w-auto lg:max-w-none";
 
 export default function LookbookPlan() {
   const heroSlot = mediaSlots[0];
@@ -131,7 +131,7 @@ export default function LookbookPlan() {
           <p className={`${kicker} mb-3.5`}>Media lookbook plan</p>
           <h1
             id="lookbook-title"
-            className="max-w-[10ch] text-[clamp(2.7rem,10vw,9.4rem)] leading-[0.94] text-accent-deep lg:leading-[0.88]"
+            className="max-w-[10ch] text-balance text-[clamp(2.9rem,12vw,9.4rem)] leading-[0.94] text-accent-deep lg:leading-[0.88]"
           >
             A place for real salon atmosphere.
           </h1>
@@ -200,7 +200,7 @@ export default function LookbookPlan() {
               index === 0 || index === supportingSlots.length - 1;
             return (
               <article
-                className={`grid border-t border-line bg-surface/50 even:ml-auto even:w-[calc(100%-18px)] lg:min-h-[620px] lg:grid-rows-[minmax(320px,0.82fr)_auto] lg:even:ml-0 lg:even:w-auto ${
+                className={`grid border-t border-line bg-surface/50 even:ml-auto even:w-[88%] lg:min-h-[620px] lg:grid-rows-[minmax(320px,0.82fr)_auto] lg:even:ml-0 lg:even:w-auto ${
                   spansTwo
                     ? "lg:col-span-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.72fr)] lg:grid-rows-none"
                     : ""
@@ -269,9 +269,12 @@ export default function LookbookPlan() {
         id="lookbook-notes"
         aria-labelledby="lookbook-notes-title"
       >
-        <div>
+        <div className="text-right lg:text-left">
           <p className={kicker}>Production notes</p>
-          <h2 id="lookbook-notes-title" className={`${sectionH2} mt-4`}>
+          <h2
+            id="lookbook-notes-title"
+            className={`${sectionH2} mt-4 ml-auto lg:ml-0`}
+          >
             The route waits for the real studio.
           </h2>
         </div>
@@ -321,12 +324,14 @@ export default function LookbookPlan() {
       </section>
 
       <aside
-        className="fixed inset-x-pad bottom-3 z-10 flex flex-col gap-2.5 rounded-lg border border-ink/20 bg-ink/95 p-3 text-center text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] sm:bottom-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-[11px] sm:pr-3 sm:pl-[18px] sm:text-left"
+        className="fixed inset-x-pad bottom-3 z-10 flex items-center justify-between gap-3 rounded-lg border border-ink/20 bg-ink/95 py-2 pr-2 pl-4 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] sm:bottom-4 sm:gap-4 sm:py-[11px] sm:pr-3 sm:pl-[18px]"
         aria-label="Lookbook status"
       >
-        <span className="font-extrabold">Lookbook media pending</span>
+        <span className="text-[0.92rem] font-extrabold sm:text-base">
+          Lookbook media pending
+        </span>
         <a
-          className="rounded-lg bg-surface px-3.5 py-2.5 font-extrabold whitespace-nowrap text-ink"
+          className="rounded-lg bg-surface px-3 py-2 text-[0.92rem] font-extrabold whitespace-nowrap text-ink sm:px-3.5 sm:py-2.5 sm:text-base"
           href="#lookbook-status"
         >
           View status
