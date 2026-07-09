@@ -1,7 +1,12 @@
 # Agent Handoff
 
+<!-- sitewright:fingerprint=8ddb52aa6151eb9a -->
+
 ## Current state
 
+- Sitewright setup is upgraded to schema/template 0.8.0 with the
+  `nextjs-app-router` policy pack; managed workflow rules and the handoff
+  fingerprint are current.
 - Sitewright is initialized. Tasks
   `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`,
   `docs/tasks/015-bristled-brushstroke-texture.md`,

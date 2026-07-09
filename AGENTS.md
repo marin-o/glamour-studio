@@ -3,12 +3,12 @@
 
 ## Project map
 
-- `src/app`: Next.js App Router entrypoints, layouts, routes, and page
-  composition.
-- `src/components`: reusable UI, layout, section, and interaction components.
-- `src/content`: typed or structured product content when content becomes large
-  enough to separate from page composition.
-- `public/`: static assets that ship directly with the app.
+Policy pack: `nextjs-app-router` (Next.js App Router).
+
+- `src/app` or `app`: routes, layouts, server components, and page composition.
+- `src/components` or `components`: reusable interface components.
+- `public`: static assets shipped directly by Next.js.
+
 - `docs/`: durable product, implementation, ADR, task, and handoff documents.
 - `DESIGN.md`: authoritative visual-system contract.
 - `REPO_MAP.md`: current ownership map; read it before broad code exploration.
@@ -59,14 +59,28 @@ commands to that package manager without changing the workflow.
   imagery, component states, or interaction design.
 - Make one independently verifiable outcome per task.
 - Preserve semantic content, accessibility, and reduced-motion behavior.
-- Prefer server components unless browser state or APIs require a client boundary.
-- Use `next/link` for internal App Router navigation.
+- Framework guidance: Prefer server components until browser state or browser APIs require a client boundary. Use `next/link` for internal navigation.
 - Keep Sitewright out of the application runtime.
 - Record durable decisions in ADRs and task-specific detail in task notes.
 - Rewrite the handoff as current state rather than appending history.
 - Use semantic HTML and accessible React composition for real product content.
 - Prefer co-located component styles or the project-approved styling system;
   keep global styles for tokens, base elements, and shared primitives.
+
+## Optional tooling
+
+Do not install optional packages just because they were useful in the source
+repo. Mention and add them only when product intent, design direction, or an
+approved task makes the need concrete:
+
+- `culori`: color math for OKLCH palette generation, contrast repair, and
+  advanced theme tooling.
+- `sharp`: image processing for optimization, intrinsic dimensions, and media
+  manifests.
+- `puppeteer-core`: browser automation for screenshots, performance inspection,
+  or Chrome diagnostics. Do not add it under conservative validation unless the
+  owner explicitly approves browser-based validation.
+- `subset-font`: custom font subsetting for font-production workflows.
 
 ## Validation policy
 
@@ -83,11 +97,21 @@ Validation posture: `conservative`.
 When task instructions and this policy disagree, follow the stricter validation
 boundary and record the deviation in task notes.
 
-Do not run routine verification commands automatically. Run lint, build,
-typecheck, repeated builds, custom harnesses, or broader checks only when the
-owner explicitly asks, the active task requires them, or a specific failure
-needs investigation. For visual or interaction work under conservative
-validation, explain what changed and what the owner should verify manually.
+Run the smallest verification set that proves the active task. Under
+`conservative`, request owner permission before browser or visual checks. Under
+`standard` or `visual`, rendered checks are allowed when acceptance criteria
+depend on them.
+
+## Configurable workflow policies
+
+- Git policy: `manual`. Under `manual`, do not commit unless requested.
+  Under `commit-required`, commit coherent file changes before handoff.
+- Task policy: `single-active`. Under `single-active`, do not create or start a
+  second executable task until the current one is completed or superseded.
+- Design rigor: `standard`. Read and update `DESIGN.md` in proportion to
+  this setting and the task's visual impact.
+- Approval policy: `owner-decisions`. Keep required owner decisions or
+  completion approvals explicit and record the approver in task evidence.
 
 ## Workflow
 
@@ -117,8 +141,7 @@ validation, explain what changed and what the owner should verify manually.
 
 ## Source control
 
-- After any turn in which you make code, docs, content, config, or other file
-  changes, create a git commit before ending the turn.
+- Follow the configured Git policy above.
 - Never push unless the owner explicitly requests or confirms the push.
 - Never add co-author trailers or otherwise credit an agent in commit messages.
 <!-- END:sitewright-agent-rules -->

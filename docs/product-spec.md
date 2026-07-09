@@ -1,6 +1,6 @@
 # glamour-studio Product Spec
 
-## Product Thesis
+## Product thesis
 
 This product is a single-page website for a salon in Radovish owned by the
 client's aunt. Its job is to give the salon a credible, elegant online presence,
@@ -11,7 +11,7 @@ The first release should make the salon feel real, local, polished, and easy to
 contact. It should not pretend to have final content, real-time booking, or
 confirmed business details before the owner provides them.
 
-## Audience And Outcomes
+## Audience and outcomes
 
 The primary audience is new local clients in or near Radovish who are searching
 for a salon or comparing options. Secondary audiences are existing clients who
