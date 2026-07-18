@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "027-darken-light-makeup-stroke-over-contact-copy.md",
+  "status": "DONE",
+  "evidence": "Removed dark-band text outline and changed local light stroke palette to blush; lint, build, and diff checks passed.",
+  "changedFiles": [],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-12T23:41:49.056Z"
+}

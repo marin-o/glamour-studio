@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "025-restore-dark-band-text-after-adaptive-blend-experiment.md",
+  "status": "DONE",
+  "evidence": "Removed the failed difference blend and restored original dark-band text appearance; lint, build, and diff checks passed.",
+  "changedFiles": [],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-12T23:31:32.558Z"
+}

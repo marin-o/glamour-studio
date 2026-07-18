@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "023-improve-dark-band-text-contrast-over-the-light-makeup-stroke.md",
+  "status": "DONE",
+  "evidence": "Localized dark-band text halo preserves contrast over the light stroke; lint, build, and diff checks passed.",
+  "changedFiles": [],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-12T23:26:57.943Z"
+}

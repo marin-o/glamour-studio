@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "task": "043-animate-browser-history-route-transitions.md",
+  "status": "DONE",
+  "evidence": "pnpm lint passed; pnpm build passed; git diff --check passed; Sitewright Doctor IMPLEMENTATION_READY with only the expected pre-refresh handoff warning; browser and interaction QA not run under conservative policy.",
+  "changedFiles": [
+    "src/components/motion/PageTransition.jsx",
+    "DESIGN.md",
+    "REPO_MAP.md",
+    "docs/tasks/043-animate-browser-history-route-transitions.md",
+    "docs/agent-handoff.md"
+  ],
+  "approvedBy": "Owner request in current Codex task",
+  "recordedAt": "2026-07-18T10:54:01.043Z"
+}

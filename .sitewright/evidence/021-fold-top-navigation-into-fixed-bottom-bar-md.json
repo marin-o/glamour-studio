@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "021-fold-top-navigation-into-fixed-bottom-bar.md",
+  "status": "DONE",
+  "evidence": "Top navigation folded into the persistent bottom bar; lint, production build, and diff checks passed.",
+  "changedFiles": [],
+  "approvedBy": null,
+  "recordedAt": "2026-07-12T22:58:38.118Z"
+}

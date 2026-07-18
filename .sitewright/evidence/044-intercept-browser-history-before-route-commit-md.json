@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "task": "044-intercept-browser-history-before-route-commit.md",
+  "status": "DONE",
+  "evidence": "pnpm lint passed; pnpm build passed; git diff --check passed; Sitewright Doctor IMPLEMENTATION_READY with only the expected pre-refresh handoff warning; browser and interaction QA not run under conservative policy.",
+  "changedFiles": [
+    "src/app/layout.jsx",
+    "src/components/motion/PageTransition.jsx",
+    "DESIGN.md",
+    "REPO_MAP.md",
+    "docs/tasks/044-intercept-browser-history-before-route-commit.md",
+    "docs/agent-handoff.md"
+  ],
+  "approvedBy": "Owner correction in current Codex task",
+  "recordedAt": "2026-07-18T10:59:31.907Z"
+}

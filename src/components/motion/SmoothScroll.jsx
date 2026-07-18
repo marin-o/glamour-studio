@@ -4,6 +4,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -13,28 +14,64 @@ gsap.registerPlugin(ScrollTrigger);
 // position. Skipped entirely under prefers-reduced-motion, where native
 // scrolling remains untouched.
 export default function SmoothScroll() {
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const pathname = usePathname();
 
-    if (mediaQuery.matches) {
+  useEffect(() => {
+    if (pathname === "/lookbook") {
       return undefined;
     }
 
-    const lenis = new Lenis({ anchors: true, autoRaf: false });
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let lenis = null;
+    let raf = null;
+
     const update = () => ScrollTrigger.update();
-    const raf = (time) => {
-      lenis.raf(time * 1000);
-    };
 
-    lenis.on("scroll", update);
-    gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
+    const stop = () => {
+      if (!lenis) {
+        return;
+      }
 
-    return () => {
+      lenis.off("scroll", update);
       gsap.ticker.remove(raf);
       lenis.destroy();
+      lenis = null;
+      raf = null;
+
+      // `lagSmoothing(0)` changes the shared GSAP ticker. Restore GSAP's
+      // defaults whenever this integration is inactive.
+      gsap.ticker.lagSmoothing(500, 33);
     };
-  }, []);
+
+    const start = () => {
+      if (lenis || mediaQuery.matches) {
+        return;
+      }
+
+      lenis = new Lenis({ anchors: true, autoRaf: false });
+      raf = (time) => lenis?.raf(time * 1000);
+
+      lenis.on("scroll", update);
+      gsap.ticker.add(raf);
+      gsap.ticker.lagSmoothing(0);
+    };
+
+    const syncWithMotionPreference = () => {
+      if (mediaQuery.matches) {
+        stop();
+      } else {
+        start();
+      }
+    };
+
+    mediaQuery.addEventListener("change", syncWithMotionPreference);
+    syncWithMotionPreference();
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncWithMotionPreference);
+      stop();
+    };
+  }, [pathname]);
 
   return null;
 }

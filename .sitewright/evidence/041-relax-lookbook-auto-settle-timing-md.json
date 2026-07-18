@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "task": "041-relax-lookbook-auto-settle-timing.md",
+  "status": "DONE",
+  "evidence": "pnpm lint passed; pnpm build passed; git diff --check passed; Sitewright Doctor IMPLEMENTATION_READY with only the expected pre-refresh handoff warning; browser and visual QA not run under conservative policy.",
+  "changedFiles": [
+    "src/components/lookbook/HorizontalLookbook.jsx",
+    "docs/tasks/041-relax-lookbook-auto-settle-timing.md",
+    "docs/agent-handoff.md"
+  ],
+  "approvedBy": "Owner request in current Codex task",
+  "recordedAt": "2026-07-18T10:38:02.580Z"
+}

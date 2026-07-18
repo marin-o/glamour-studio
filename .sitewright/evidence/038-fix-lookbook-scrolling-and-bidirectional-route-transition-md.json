@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "task": "038-fix-lookbook-scrolling-and-bidirectional-route-transition.md",
+  "status": "DONE",
+  "evidence": "pnpm lint passed; pnpm build passed; git diff --check passed; Sitewright Doctor IMPLEMENTATION_READY with only the expected pre-refresh handoff warning; browser and visual QA not run under conservative policy.",
+  "changedFiles": [
+    "src/components/motion/PageTransition.jsx",
+    "src/app/layout.jsx",
+    "src/components/motion/SmoothScroll.jsx",
+    "src/components/TypographySalonPage.jsx",
+    "src/components/lookbook/HorizontalLookbook.jsx",
+    "src/app/globals.css",
+    "DESIGN.md",
+    "REPO_MAP.md",
+    "docs/tasks/038-fix-lookbook-scrolling-and-bidirectional-route-transition.md",
+    "docs/agent-handoff.md"
+  ],
+  "approvedBy": "Owner feedback in current Codex task",
+  "recordedAt": "2026-07-18T10:21:54.622Z"
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "026-add-localized-glyph-outline-for-dark-band-text-contrast.md",
+  "status": "DONE",
+  "evidence": "Added scoped 0.65px glyph outline to dark-band text; lint, build, and diff checks passed.",
+  "changedFiles": [],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-12T23:36:25.117Z"
+}

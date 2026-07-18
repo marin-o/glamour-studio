@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export const metadata = {
   title: "Old Draft | Glamour Studio",
@@ -93,12 +94,12 @@ export default function OldDraft() {
         className="sticky top-0 z-20 grid min-h-16 grid-cols-[1fr_auto] items-center gap-3 border-b border-line bg-surface/90 px-pad py-3 backdrop-blur-2xl md:min-h-[68px] md:grid-cols-[minmax(160px,1fr)_auto_minmax(120px,1fr)] md:gap-[22px]"
         aria-label="Old draft navigation"
       >
-        <a
+        <Link
           className="justify-self-start font-display text-[1.15rem] font-bold md:text-[1.35rem]"
           href="/"
         >
           Glamour Studio
-        </a>
+        </Link>
         <nav className="hidden items-center justify-center gap-[34px] text-[0.96rem] text-muted md:flex">
           <a className="whitespace-nowrap" href="#media-title">
             Media
@@ -113,12 +114,12 @@ export default function OldDraft() {
             Contact
           </a>
         </nav>
-        <a
+        <Link
           className="justify-self-end rounded-lg border border-line-strong px-[11px] py-[9px] text-[0.86rem] font-bold whitespace-nowrap text-ink md:px-3.5 md:py-2.5 md:text-[0.92rem]"
           href="/"
         >
           New draft
-        </a>
+        </Link>
       </header>
 
       <section

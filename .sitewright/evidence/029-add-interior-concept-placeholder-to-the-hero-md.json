@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "029-add-interior-concept-placeholder-to-the-hero.md",
+  "status": "DONE",
+  "evidence": "Hero now includes the existing wide interior concept placeholder below the type-led intro; pnpm lint, pnpm build, git diff --check, and Sitewright Doctor passed; browser validation remained off under conservative policy.",
+  "changedFiles": [],
+  "approvedBy": null,
+  "recordedAt": "2026-07-13T23:31:53.602Z"
+}

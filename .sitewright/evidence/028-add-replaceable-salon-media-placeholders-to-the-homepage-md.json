@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "028-add-replaceable-salon-media-placeholders-to-the-homepage.md",
+  "status": "DONE",
+  "evidence": "pnpm lint, pnpm build, git diff --check, and Sitewright Doctor passed; generated assets inspected directly; conservative policy kept browser validation off.",
+  "changedFiles": [],
+  "approvedBy": null,
+  "recordedAt": "2026-07-13T23:21:15.233Z"
+}

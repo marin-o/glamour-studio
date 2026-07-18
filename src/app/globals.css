@@ -32,6 +32,18 @@
     }
   }
 
+  /* Prevent server-visible progressive-enhancement copy from flashing before
+     Motion hydrates. With scripting disabled—or reduced motion requested—the
+     complete static text remains visible. */
+  @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+    [data-motion-role="editorial"],
+    [data-motion-role="stroke"] {
+      opacity: 0;
+    }
+  }
+
+
+
   body {
     color: var(--color-ink);
     background:
@@ -43,6 +55,10 @@
       ),
       var(--color-surface);
     font-family: var(--font-sans);
+  }
+
+  .lookbook-scroller::-webkit-scrollbar {
+    display: none;
   }
 
   a:focus-visible,

@@ -20,13 +20,13 @@ until the owner confirms it.
 
 | Item | Priority | Owner answer | Current site surface |
 | --- | --- | --- | --- |
-| Final salon name and spelling | Required |  | Root metadata, hero headings, nav labels |
-| City/local area wording | Required |  | Root metadata, hero copy, local SEO copy |
-| Street address or location description | Required for launch if visitors need directions |  | Contact section, metadata, future map link |
-| Map destination URL | Required if address is published |  | Contact section, persistent CTA, future map action |
-| Phone number | Required for call CTA |  | Contact section, persistent CTA, metadata |
+| Final salon name and spelling | Required | Glamour Studio — owner confirmed 2026-07-13 | Root metadata, hero headings, nav labels |
+| City/local area wording | Required | Radovish — owner confirmed 2026-07-13 | Root metadata, hero copy, local SEO copy |
+| Street address or location description | Required for launch if visitors need directions | 11 Ilija Aleksov, Radovish — owner confirmed 2026-07-13 | Contact section, metadata, future map link |
+| Map destination URL | Required if address is published | Google Maps search URL derived from confirmed address | Contact section, persistent CTA, future map action |
+| Phone number | Required for call CTA | 077-643-005 — owner confirmed 2026-07-13 | Contact section, persistent CTA, metadata |
 | Viber or WhatsApp contact | Required if used for booking |  | Contact section, persistent CTA |
-| Instagram handle or URL | Optional but useful |  | Contact section, footer/social action |
+| Instagram handle or URL | Optional but useful | https://www.instagram.com/glamourrstudiio/ — owner confirmed 2026-07-13 | Contact section, footer/social action |
 | Opening hours | Required before publishing hours |  | Contact section, metadata/local SEO |
 | Holiday or exception-hours policy | Later unless launch requires it |  | Contact section, future updates |
 
@@ -80,11 +80,28 @@ until owner-approved assets exist.
 | --- | --- | --- | --- |
 | Hero hair-movement video | Optional for MVP, preferred final direction |  | Future hero enhancement, `/lookbook` planning |
 | Hero poster image | Required if hero video is used |  | Metadata image, hero fallback, `/lookbook` |
+| Homepage hero interior background image/crop | Useful strong visual moment | A wide interior shot with calm edges and no essential signage, documents, or readable text; it should crop safely on mobile and tolerate blur/contrast treatment | Homepage hero, future replacement for the concept background |
 | Hair texture/detail photo | Useful |  | `/old`, `/lookbook`, future homepage media |
 | Interior detail photo | Useful |  | `/old`, `/lookbook`, future homepage media |
 | Service process photo | Optional |  | `/lookbook`, future service section |
 | Wide studio image | Optional strong visual moment |  | `/lookbook`, future gallery/vibe section |
 | Staff or owner photo | Optional, permission-sensitive |  | Future about/trust section |
+
+### Homepage Media-Band Replacement Set
+
+The current homepage media band uses three clearly labeled concept placeholders.
+Replace them by role so the layout and metadata can stay stable:
+
+| Placeholder role | Exact real shot requested | Approval and capture notes |
+| --- | --- | --- |
+| Wide interior anchor | A horizontal, warm view of the real styling space with a chair, mirror, materials, or tools | Avoid accidental private documents or unapproved signage; confirm the owner approves the space and crop. |
+| Craft detail | A vertical close or medium shot of approved hands working with hair and salon tools | Keep faces out unless separately approved; confirm whether the client, hands, and service process may be published. |
+| People-at-work context | A vertical, distant or behind-the-scenes view of approved salon work | Obtain permission from every recognizable staff member or client; prefer backs, distance, or an empty scene when consent is not available. |
+
+The replacement images should preserve the current roles, proportions, and
+responsive crops. Provide the file name/source, what the frame shows, approved
+Macedonian alt text, permission owner, people visible, crop permission, and any
+privacy limits for each shot.
 
 For every approved image or video, collect:
 
@@ -105,6 +122,16 @@ For every approved image or video, collect:
 | Contact-form privacy wording | A form collects names, phone numbers, messages, or dates |  |
 | Submission destination | A request form is introduced |  |
 | Analytics choice | Analytics or tracking is added |  |
+
+### Development Instagram Lookbook Gate
+
+The nine files in `public/media/lookbook/instagram-dev/` are only approved for
+local composition work. Before removing the `/lookbook` disclosure or noindex
+metadata, record all of the following for every frame: owner approval for
+website reuse, permission from each recognizable person, the approved original
+file, an approved crop, and final Macedonian alt text. The original Instagram
+permalinks are preserved in `src/lib/lookbook-media.js` for source tracing;
+they are not a substitute for those permissions.
 | Cookie notice requirement | Cookies or tracking scripts are added |  |
 | Review/testimonial approval | Reviews or client quotes are shown |  |
 

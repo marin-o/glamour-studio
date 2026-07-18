@@ -50,6 +50,8 @@ commands to that package manager without changing the workflow.
 - Do not inspect generated, dependency, build, cache, or binary/media folders
   unless the task explicitly depends on them.
 - Decide the validation checklist up front and measure each item once.
+- Do not reload a skill or durable project document already read in the current
+  turn unless it changed or a concrete missing detail requires it.
 
 ## Working rules
 
@@ -67,6 +69,19 @@ commands to that package manager without changing the workflow.
 - Prefer co-located component styles or the project-approved styling system;
   keep global styles for tokens, base elements, and shared primitives.
 
+## Animation libraries
+
+- Use an animation library for every implemented animation rather than bespoke
+  CSS keyframes, Web Animations API sequences, or `requestAnimationFrame` loops.
+- Default to Motion/Framer Motion for text animation.
+- Default to GSAP for other motion, scroll choreography, and timeline work.
+- Either library may be used outside its default role when it is the clearer
+  technical fit.
+- When the choice differs from the default and is not self-evident, record the
+  reasoning in the active task.
+- Do not automatically install Motion or GSAP. Add dependencies only when an
+  approved task concretely requires them.
+
 ## Optional tooling
 
 Do not install optional packages just because they were useful in the source
@@ -82,13 +97,20 @@ approved task makes the need concrete:
   owner explicitly approves browser-based validation.
 - `subset-font`: custom font subsetting for font-production workflows.
 
+For an existing repository, do not invoke Sites building or hosting workflows
+unless `.openai/hosting.json` exists or the owner explicitly requests Sites,
+publishing, hosting, or deployment. Ordinary local application changes use the
+repository's own development workflow.
+
 ## Validation policy
 
 Validation posture: `conservative`.
 
 - `conservative`: do not run browser, viewport, screenshot, Playwright, visual,
   animation, or interaction validation unless the owner explicitly requests it.
-  Prefer lint/build/typecheck/Doctor and small HTTP smoke checks when useful.
+  Do not compensate by automatically running every static check. If rendered
+  behavior is essential and cannot be checked, leave that criterion awaiting
+  owner verification rather than claiming completion.
 - `standard`: browser and viewport checks are allowed when a UI task's
   acceptance criteria depend on rendered behavior; keep them proportional.
 - `visual`: screenshot, viewport matrix, animation, and interaction checks are
@@ -97,10 +119,23 @@ Validation posture: `conservative`.
 When task instructions and this policy disagree, follow the stricter validation
 boundary and record the deviation in task notes.
 
-Run the smallest verification set that proves the active task. Under
-`conservative`, request owner permission before browser or visual checks. Under
-`standard` or `visual`, rendered checks are allowed when acceptance criteria
-depend on them.
+Choose validation by changed surface:
+
+- Documentation, task metadata, evidence, and handoff-only changes need at most
+  formatting or diff checks.
+- Copy, constants, localized styling, and isolated component tuning normally
+  need only a targeted static check when one adds confidence.
+- Runtime structure, routing, dependencies, build configuration, or broad
+  component changes may require lint, typecheck, tests, or a production build.
+- Rendered UI, motion, and interaction behavior should use one proportional
+  rendered check when policy permits it.
+
+Run each selected check once after the implementation is final. Rerun only a
+check invalidated by a subsequent runtime change or after fixing that check's
+failure. Task notes, evidence, and handoff edits do not invalidate a successful
+lint, test, or build. Run Doctor only when Sitewright configuration, product,
+planning, task lifecycle, or handoff state changed, and run it once after those
+changes settle.
 
 ## Configurable workflow policies
 
@@ -112,6 +147,20 @@ depend on them.
   this setting and the task's visual impact.
 - Approval policy: `owner-decisions`. Keep required owner decisions or
   completion approvals explicit and record the approver in task evidence.
+  Authorization to implement is not approval of the completed result.
+
+## Task granularity and review
+
+- A task represents one independently deliverable outcome, not every edit or
+  owner message.
+- Bug fixes, tuning, and corrections received while an outcome is still under
+  review remain part of that task. Do not create a follow-up task merely because
+  the first implementation attempt was marked complete too early.
+- For UI, motion, or interaction work, keep the task active until observable
+  acceptance criteria are verified under the configured policy or the owner
+  explicitly accepts the result.
+- Create a follow-up task only for a genuinely separate outcome or explicitly
+  deferred work.
 
 ## Workflow
 
@@ -120,18 +169,25 @@ depend on them.
 2. Read only the relevant task, spec, design, or ADR sections for the change.
 3. Make the smallest coherent change and avoid duplicate guidance or scripts.
 4. Update `DESIGN.md` when durable visual language, tokens, components, motion,
-   media, interaction states, or anti-patterns change.
+   media, interaction states, or anti-patterns change, not for correctness fixes
+   or parameter tuning that preserve the existing contract.
 5. Update `REPO_MAP.md` only when ownership boundaries or architecture change,
    preserving its one-line-per-file format.
-6. Before ending the session, record durable per-task detail in the relevant
-   `docs/tasks/*.md` file and refresh `docs/agent-handoff.md` per
-   "Logging & handoff".
+6. Record task detail when scope, status, validation evidence, deviations, or
+   durable implementation facts materially change.
+7. Refresh `docs/agent-handoff.md` only at a real continuity boundary described
+   below.
 
 ## Logging & handoff
 
 - `docs/agent-handoff.md` is a short current-state file, not a changelog.
-- Rewrite its sections in place to reflect the present state; never append a
-  running history.
+- An assistant response is not automatically a handoff boundary.
+- Refresh the handoff when work will move to another task, thread, or agent;
+  readiness or owner decisions materially change; or the owner explicitly asks
+  for it. Do not refresh it after ordinary within-thread implementation,
+  tuning, validation attempts, or review corrections.
+- Preserve project-authored owner decisions and durable gotchas when refreshing
+  managed Sitewright state.
 - Keep it to current state, open task, parked directions needing owner reopen,
   and durable gotchas not recorded elsewhere.
 - Put per-task completion notes, deviations, and validation results in that

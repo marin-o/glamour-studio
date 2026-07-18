@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "020-replace-generic-text-reveals-with-a-role-based-motion-system.md",
+  "status": "DONE",
+  "evidence": "Role-based text motion implemented; lint and production build passed; Doctor validated the active task; semantic, reduced-motion, and no-JS fallbacks inspected.",
+  "changedFiles": [],
+  "approvedBy": null,
+  "recordedAt": "2026-07-12T22:37:39.061Z"
+}

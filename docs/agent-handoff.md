@@ -1,97 +1,41 @@
 # Agent Handoff
 
-<!-- sitewright:fingerprint=8ddb52aa6151eb9a -->
+<!-- BEGIN:sitewright-handoff-state -->
+<!-- sitewright:fingerprint=bbdee09b56bf0be9 -->
+## Sitewright state
+
+- Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
+- The repository has structured intent, coherent planning, and an executable task.
+- Active task: 046-add-a-scroll-driven-curtain-reveal-to-the-hero-image.md.
+<!-- END:sitewright-handoff-state -->
 
 ## Current state
 
-- Sitewright setup is upgraded to schema/template 0.8.0 with the
-  `nextjs-app-router` policy pack; managed workflow rules and the handoff
-  fingerprint are current.
-- Sitewright is initialized. Tasks
-  `docs/tasks/014-scroll-driven-makeup-stroke-and-text-reveals.md`,
-  `docs/tasks/015-bristled-brushstroke-texture.md`,
-  `docs/tasks/016-fix-scroll-jank-in-stroke-and-reveals.md`, and
-  `docs/tasks/017-stroke-intro-ramp-and-lenis.md` are complete; no follow-on
-  implementation task is currently open.
-- The product is a Macedonian-first Glamour Studio salon site for Radovish.
-- Root `DESIGN.md` is the authoritative visual-system contract.
-- Styling is Tailwind CSS v4: tokens live in the `@theme` block of
-  `src/app/globals.css`, layout lives in utility classes on the JSX. Do not
-  reintroduce hand-rolled global class systems.
-- The typography-led homepage and `/typography` alias now include a client-only,
-  scroll-scrubbed abstract makeup stroke (`src/components/motion/MakeupStroke.jsx`)
-  and Framer Motion text reveal primitive (`src/components/motion/Reveal.jsx`).
-  GSAP/ScrollTrigger owns stroke timing; Framer Motion owns text entrances.
-  The stroke uses measured anchors grouped into a simplified spline route and
-  renders as a bristled brushstroke (task 015): the route is sampled
-  mathematically into a tapered filled core polygon with pressure-varied width,
-  inner furrow streaks, faint flyaway bristles, and stacked translucent halo
-  polygons. All stroke randomness is seeded sine noise (deterministic).
-- Performance-critical (task 016): the stroke uses NO SVG filters, and the
-  draw-on is chunked — the artwork is split into ~48–56px arc-length chunks
-  whose opacities fade individually (smoothstep, ~210px window) as scroll
-  progress passes their thresholds, so scroll frames repaint only the fading
-  tip chunks. Thresholds (chunks and text reveals alike) are keyed to page y
-  against a 0.75-viewport line, NOT arc length, so the drawn front tracks
-  the viewport instead of lagging in curvy sections. The layer stack is
-  split across two chunk sets staggered by half a chunk (core drawn as two
-  half-opacity copies) so transverse cut seams stay invisible — keep chunks
-  smaller than the stroke width and keep the stagger if retuning. Chunks
-  smaller than ~48px measurably drop frames (28px and 38px tested and
-  rejected). Do not reintroduce filters, dashoffset scrubbing, full-layer
-  masks, seam-cover strokes, or clip-path text reveals; text reveals are
-  transform/opacity only.
-- Task 017: the stroke starts undrawn and ramps in from the path's top over
-  the first ~1.2 viewports of scrolling before locking onto the tracking
-  line (piecewise chunk thresholds, continuous at the catch point; text
-  thresholds unchanged so above-fold copy renders at load). Lenis smooth
-  scrolling is active site-wide via `src/components/motion/SmoothScroll.jsx`
-  (GSAP-ticker driven, `ScrollTrigger.update` on scroll, `anchors: true`,
-  skipped under prefers-reduced-motion) — owner-approved exception recorded
-  in `DESIGN.md`. Local light-color
-  inversion over the dark contact band and reduced-motion/no-JS fallbacks that
-  keep text visible are preserved.
-- Public routes `/`, `/typography`, `/old`, and `/lookbook` are mobile-first
-  with fluid clamp-based heading scales and a deliberate left/right/left
-  editorial stagger on phones (hard right-aligned wordmark line and heading
-  blocks, alternating service-row alignment, 78–88% offset copy blocks and
-  cards), matching the desktop typography-led flow. Verified once via an
-  owner-authorized screenshot pass; that authorization was one-time and the
-  conservative validation policy still applies.
-- Content completion remains intentionally deferred. Address, hours, phone,
-  prices, staff names, final Macedonian copy, real photos, and video are still
-  owner decisions.
-- `docs/owner-content-media-intake.md` is the owner-facing checklist for the
-  remaining launch facts, media, permissions, privacy, and replacement surfaces.
-- Booking is intentionally not live and must not imply real availability.
-- The previous `design-taste-frontend` skill has been removed and should not
-  guide future design work.
-- Owner supplied Framer reference:
-  `https://cooperative-acknowledgment-789213.framer.app/`.
+- Task 046 now uses the existing hero image as its single source: GSAP retracts
+  the backdrop-blur veil and hero foreground early to expose a held sharp window
+  around 78% of viewport height, then advances a services-colored cover while
+  retaining a narrow photo slit. The stroke has a permanent localized route
+  break across the maximum photo band while downstream text and paint keep
+  their normal viewport timing. Owner-authorized browser validation passed;
+  owner completion approval remains pending.
+- The browser-history transition bridge remains a `beforeInteractive` script
+  inside the root layout's explicit `<head>`, with a 2.4s fail-open path.
+- `/lookbook` retains quality-100 responsive images, generated dimensions,
+  route-local horizontal Lenis, relaxed centering, and exact pip progress.
+## Open owner decisions
 
-## Current routes
-
-- `/`: typography-led Glamour Studio homepage using
-  `src/components/TypographySalonPage.jsx`.
-- `/typography`: comparison alias for the same typography-led direction.
-- `/old`: preserved task 007 image-led homepage backup.
-- `/lookbook`: media-focused planning route for future real salon photos/video,
-  with temporary or text-only placeholder slots clearly marked.
-
-## Active task
-
-- None. The next implementation task should be created or selected before
-  changing product behavior.
+- Keep unresolved product, launch, content, and business-truth decisions explicit in product specs or active tasks.
+- All nine development lookbook JPEGs are only 640px wide; approved
+  production-resolution originals remain required for true high-density
+  crispness.
+- Website reuse and recognizable-person permissions remain unapproved; keep the
+  route noindex and visibly disclosed.
 
 ## Durable gotchas
 
-- Do not invent final salon facts, prices, staff, address, hours, testimonials,
-  awards, review counts, or live availability.
-- Do not make `/lookbook` feel like a finished portfolio until real
-  owner-approved media exists.
-- Under conservative validation, do not run browser, viewport, screenshot,
-  Playwright, visual, animation, or interaction checks unless the owner
-  explicitly asks. The one-task browser/animation validation authorizations for
-  tasks 014, 015, and 016 have been used and do not carry forward.
-- Use `docs/owner-content-media-intake.md` before replacing placeholders with
-  launch-ready content or media.
+- Read `AGENTS.md`, `docs/agent-handoff.md`, `REPO_MAP.md`, and the active task before broad source exploration.
+- Refresh this handoff whenever product, planning, policy, or active-task state changes.
+- Keep history interception pre-hydration; reacting only after `usePathname`
+  changes allows Next to visibly swap the route before the curtain.
+- A root `beforeInteractive` history script must live inside the explicit
+  `<head>`, never as a direct `<html>` child.

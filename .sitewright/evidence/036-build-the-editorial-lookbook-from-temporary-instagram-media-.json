@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "036-build-the-editorial-lookbook-from-temporary-instagram-media.md",
+  "status": "DONE",
+  "evidence": "Implemented editorial lookbook; lint/build passed; Git diff check unavailable because workspace is not a Git worktree; browser validation intentionally unrun under conservative policy.",
+  "changedFiles": [],
+  "approvedBy": null,
+  "recordedAt": "2026-07-16T15:37:54.149Z"
+}

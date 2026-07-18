@@ -21,10 +21,10 @@ spacing:
   section: "64px mobile, 96px desktop as a planning baseline."
 motion:
   feedback: "Subtle fades, opacity, and small transform changes only when useful."
-  reveal: "Current signature enhancement: a scroll-scrubbed abstract makeup stroke with synced text reveals and static fallback."
+  reveal: "Role-based system: reserve a one-time typewriter entrance for the hero studio name; use side-aware editorial line assembly for aligned headings and lists, selective makeup-stroke-connected reveals for supporting copy, and static text where motion adds no meaning."
   environmental: "Future real salon hair-movement video may join or replace the stroke when owner-approved media exists."
 components:
-  navigation: "Minimal single-page anchors or compact header only if useful."
+  navigation: "Homepage navigation is consolidated into the persistent bottom bar; do not add a separate top header unless the information architecture materially expands."
   cta: "Persistent bottom contact or booking CTA, mobile-first, accessible, and direct."
   card: "Used sparingly for repeated service or gallery items; avoid nested cards."
   section: "Full-width bands or unframed constrained layouts, not floating page-section cards."
@@ -99,8 +99,55 @@ content. Avoid treating every page section as a floating card. Cards are
 acceptable for repeated service placeholders, gallery items, or contact methods
 when they improve scanning.
 
-The bottom CTA must not cover essential content. Give the final section enough
-padding so contact/location details remain reachable.
+The bottom navigation/CTA bar must not cover essential content. Give the final
+section enough padding so contact/location details remain reachable.
+
+## Homepage Media Placement
+
+After the service index, the homepage has one customer-facing studio-media band:
+use a wide interior image as the anchor and two smaller vertical supporting
+images for craft and people-at-work context. Keep the layout calm and
+asymmetric; this is one visual moment, not a gallery, carousel, or lookbook.
+
+The type-first hero may also use the wide interior concept as a full-section,
+softly blurred background behind the intro copy. Keep the studio name and
+primary message first, use a warm stable contrast veil, and keep the shared
+`Concept imagery — real studio photos pending` label visible in the foreground.
+The background is decorative and static; it must not obscure focus, reading, or
+the contact path, and it must not add a new animation treatment.
+
+For motion-enabled visitors, the hero-to-services boundary may briefly open as
+a scroll-driven curtain onto a sharp, tightly cropped band of that same
+interior concept. Use the hero's existing image element as the only photograph:
+the resting veil supplies the soft blur, then retracts to expose the sharp
+pixels already beneath it. The warm services-colored surface advances across
+most of the opening but leaves a narrow photographic slit instead of joining
+directly to the veiled hero surface. Keep the opening partial, reversible, and
+tied to native page progress; do not pin the page, add a second scroll
+controller, duplicate the hero photograph, or turn the transition into a
+standalone media section. Reduced-motion and no-script presentations keep the
+normal closed boundary.
+
+The makeup stroke must not appear in the hero or cross the photographic band.
+The following solid section owns a hard, ungrouped route anchor at its exact
+top edge; that anchor is the stroke's true first touch-down point, not a resumed
+or clipped continuation. Keep one static, non-animated surface clip as a safety
+boundary around the maximum photographic band while preserving the localized
+opacity chunks that draw the stroke. Leave all downstream chunks on their
+normal viewport-based thresholds so pigment begins once at the solid edge and
+continues only in its original forward direction. Never synthesize hidden hero
+geometry, reveal already-passed chunks backward to create a connection, delay
+service-copy entrances for the curtain, animate the surface clip, or trigger a
+whole-layer repaint.
+
+Until owner-approved photography exists, all three assets must carry the shared
+label `Concept imagery — real studio photos pending`. Their alt text must say
+they are concept placeholders and must not identify the real salon, staff, or
+clients. Replace each metadata entry in `src/lib/homepage-media.js` in place so
+future real assets do not require a structural homepage rewrite. The real
+replacement set is an approved wide interior shot, a vertical hands-at-work
+service-process shot, and a vertical distant/behind-the-scenes work shot with
+permissions for every recognizable person.
 
 ## Components And States
 
@@ -119,16 +166,40 @@ does not confirm a booking automatically unless the implementation truly does.
 ## Motion And Progressive Enhancement
 
 The current signature motion is a scroll-scrubbed abstract makeup stroke that
-traces the typography-led homepage from hero through contact. It should feel
-like a soft brush or lipstick gesture in the existing blush and warm-brown
-palette, not like a plain chart line or a generic decorative flourish.
+traces the typography-led homepage from the services edge through contact. It
+should feel like a soft brush or lipstick gesture in the existing blush and
+warm-brown palette, not like a plain chart line or a generic decorative
+flourish.
+
+Text motion uses a small, role-based vocabulary instead of one repeated reveal
+preset:
+
+- reserve a typewriter entrance for the studio name in the hero only;
+- let editorial text lines enter from the side established by their existing
+  left- or right-aligned layout;
+- use makeup-stroke-connected reveals selectively where the stroke's passage
+  gives the entrance a clear spatial reason.
+
+Motion/Framer Motion owns every text entrance. The existing makeup-stroke
+provider supplies timing to both editorial and stroke-pass treatments so text
+does not add another scroll observer; the `stroke` role is reserved for the
+smaller directional response near a local stroke passage. Hero title characters
+are duplicated only in an `aria-hidden` visual overlay while the complete,
+selectable heading remains the single accessible text source.
+
+Do not apply the typewriter treatment site-wide or turn every text element into
+an individually staggered word or character sequence. Body copy must become
+readable promptly, and all three treatments need static and reduced-motion
+fallbacks that expose the complete text without waiting for animation.
 
 The stroke follows measured text/section anchors instead of hardcoded page
 pixels. Text reveals may be synchronized to the stroke, with GSAP owning scroll
 timing and Framer Motion owning the entrance animation. Over the dark contact
-band, the stroke may flip locally to the light surface color, but only where it
+band, the stroke uses a restrained blush/peach palette, but only where it
 crosses the dark band. It must not globally change color or reduce contact text
 readability.
+
+
 
 The stroke route should be simplified into an elegant spline rather than
 connecting every reveal point. Keep turns long, soft, and editorial; avoid
@@ -180,6 +251,50 @@ generic-luxury stock images that could belong to any salon anywhere.
 Texture, if used, should be subtle: soft grain, paper-like warmth, or gentle
 material cues that support the creamy studio mood. Avoid decorative blobs,
 heavy gradients, neon glow, or ornate glamour effects.
+
+### Development Lookbook
+
+`/lookbook` is a full-viewport, noindex horizontal editorial sequence rather
+than a general gallery. Its development media should move sideways from one
+large image to the next with stable cover crops and warm cream breathing room.
+A route-local horizontal Lenis instance owns continuous wheel and trackpad
+momentum; after input stops, the bundled Lenis snap layer eases the nearest
+image into the viewport center. Touch swiping remains native and receives the
+same settled center, while CSS snapping is reserved for reduced-motion and
+no-script fallbacks. Keyboard image-to-image navigation must center the
+requested frame. Do not collapse the route into masonry, a carousel with
+separate controls, a modal, or a vertically scrolling page.
+
+The route transition is one continuous blush curtain owned by Motion: from the
+homepage it slides in from the right before navigation and exits left after the
+lookbook renders; the Studio return link reverses that direction. The curtain
+must never mount at full coverage or appear abruptly between its two movements.
+Browser Back and Forward use the same choreography: retain the departing route
+by intercepting `popstate` before App Router receives it, move the curtain to
+full coverage, replay the original history state to the router behind the
+curtain, then reveal the destination in the corresponding direction. History
+must fail open if the transition controller is unavailable.
+A layered cosmetic-brushstroke rail at the bottom grows continuously from left
+to right with horizontal progress and pairs with a current-image count; it
+supports the sequence without covering the photography. Under reduced motion
+navigation is immediate and the progress state remains legible without
+depending on animated movement.
+
+The current nine local Instagram frames are development-only media. Keep the
+visible disclosure and noindex metadata until the owner records website-reuse
+approval, recognizable-person permissions, and production-resolution
+replacements. Descriptive alt text must describe only the visible frame and
+must never reuse Instagram captions or make unverified service claims. Each
+visual links to its original source and identifies Reel cover frames as stills
+rather than local video. The route uses a compact fixed utility header and
+progress footer instead of the homepage's persistent bottom navigation.
+
+Lookbook raster delivery follows the Gyroid media contract: preserve source
+pixels, generate and validate intrinsic dimensions, request quality 100 through
+`next/image`, and let responsive `sizes` plus browser format negotiation control
+transfer cost. The current development frames are only 640px wide, so this
+contract prevents additional degradation but does not make them
+production-crisp; approved higher-resolution originals remain required.
 
 ## Accessibility And Fallbacks
 

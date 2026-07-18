@@ -86,6 +86,7 @@ function getStrokePoint(element, rootRect, rootWidth, rootHeight, isNarrow) {
   }
 
   return {
+    boundary: element.dataset.strokeBoundary === "true",
     id: element.dataset.revealId,
     x: clamp(x, inset, rootWidth - inset),
     y: clamp(
@@ -106,8 +107,14 @@ function buildRoutePoints(measuredPoints, width, height, isNarrow) {
   measuredPoints.forEach((point) => {
     const group = groups[groups.length - 1];
 
-    if (!group || point.y - group.startY > groupingDistance) {
+    if (
+      !group ||
+      point.boundary ||
+      group.boundary ||
+      point.y - group.startY > groupingDistance
+    ) {
       groups.push({
+        boundary: point.boundary,
         points: [point],
         startY: point.y,
       });
@@ -137,12 +144,17 @@ function buildRoutePoints(measuredPoints, width, height, isNarrow) {
 
   const first = routePoints[0];
   const last = routePoints[routePoints.length - 1];
+  const startsAtBoundary = groups[0]?.boundary;
 
   return [
-    {
-      x: first.x,
-      y: clamp(first.y - (isNarrow ? 150 : 220), 18, height),
-    },
+    ...(startsAtBoundary
+      ? []
+      : [
+          {
+            x: first.x,
+            y: clamp(first.y - (isNarrow ? 150 : 220), 18, height),
+          },
+        ]),
     ...routePoints,
     {
       x: last.x,
@@ -426,7 +438,7 @@ function buildChunkSets(samples, strokeWidth, isNarrow) {
 // desynchronizes wherever the path packs extra length into little vertical
 // distance — the drawn front fell behind the viewport in the curvy early
 // sections and "caught up" later. Mapping y against a viewport line keeps
-// the front pinned ~75% down the screen everywhere, and text reveals share
+// the front pinned ~88% down the screen everywhere, and text reveals share
 // the same mapping so they stay in sync with the stroke tip.
 function progressAtY(y, lead, denominator) {
   return clamp((y - lead) / denominator, 0, 1);
@@ -487,19 +499,40 @@ function getGeometry(root) {
     .filter((point) => point.id)
     .sort((a, b) => a.y - b.y || a.index - b.index);
 
-  const routePoints = buildRoutePoints(measuredPoints, width, height, isNarrow);
+  const boundaryIndex = measuredPoints.findIndex((point) => point.boundary);
+  const routeMeasuredPoints =
+    boundaryIndex >= 0 ? measuredPoints.slice(boundaryIndex) : measuredPoints;
+  const startsAtBoundary = routeMeasuredPoints[0]?.boundary === true;
+  const routePoints = buildRoutePoints(
+    routeMeasuredPoints,
+    width,
+    height,
+    isNarrow,
+  );
   const segments = buildSegments(routePoints, isNarrow);
   const samples = sampleSegments(segments);
   const strokeWidth = isNarrow ? 30 : 58;
   const chunkSets = buildChunkSets(samples, strokeWidth, isNarrow);
   const viewportHeight = window.innerHeight;
-  const lead = viewportHeight * 0.75;
+  const lead = viewportHeight * 0.88;
   const endY = samples[samples.length - 1].y;
   const denominator = Math.max(endY - lead, 1);
+  const curtain = root.querySelector("[data-hero-curtain]");
+  const curtainHero = curtain?.querySelector("[data-hero-curtain-hero]");
+  const curtainDepth = Number.parseFloat(
+    curtain?.dataset.heroCurtainRevealDepth || "NaN",
+  );
+  const curtainBoundary = curtainHero
+    ? curtainHero.getBoundingClientRect().bottom - rootRect.top
+    : Number.NaN;
+  const curtainTop =
+    Number.isFinite(curtainBoundary) && Number.isFinite(curtainDepth)
+      ? curtainBoundary - curtainDepth
+      : Number.NaN;
 
   // Intro ramp: at progress 0 the stroke is undrawn. Over the first ~1.2
   // viewports of scrolling the front sweeps from the path's start slightly
-  // faster than the scroll until it catches the 0.75-viewport tracking line,
+  // faster than the scroll until it catches the 0.88-viewport tracking line,
   // then follows it. The two mappings meet exactly at catchY, so the
   // handoff is continuous.
   const pathStartY = samples[0].y;
@@ -507,6 +540,10 @@ function getGeometry(root) {
   const rampProgress = clamp((viewportHeight * 1.2) / scrollable, 0.02, 0.35);
   const catchY = lead + rampProgress * denominator;
   const chunkThreshold = (y) => {
+    if (startsAtBoundary) {
+      return progressAtY(y, lead, denominator);
+    }
+
     if (y <= pathStartY + 1) {
       return 0;
     }
@@ -530,6 +567,10 @@ function getGeometry(root) {
     // Tip fade length in page pixels, expressed in progress units.
     chunkFade: (isNarrow ? 180 : 210) / denominator,
     chunkSets: chunkSets.sets,
+    curtainBand:
+      Number.isFinite(curtainTop) && Number.isFinite(curtainBoundary)
+        ? { bottom: curtainBoundary, top: curtainTop }
+        : null,
     darkBand: getDarkBand(root, rootRect, width, height),
     height,
     strokeWidth,
@@ -553,6 +594,8 @@ function geometryChanged(previous, next) {
     previousChunks[0]?.corePath !== nextChunks[0]?.corePath ||
     previousChunks[previousChunks.length - 1]?.corePath !==
       nextChunks[nextChunks.length - 1]?.corePath ||
+    JSON.stringify(previous.curtainBand) !==
+      JSON.stringify(next.curtainBand) ||
     JSON.stringify(previous.darkBand) !== JSON.stringify(next.darkBand) ||
     JSON.stringify(previous.thresholds) !== JSON.stringify(next.thresholds)
   );
@@ -567,7 +610,7 @@ function sameIds(previous, nextIds) {
 }
 
 export function MakeupStrokeProvider({ children }) {
-  const [motionActive, setMotionActive] = useState(false);
+  const [motionActive, setMotionActive] = useState(true);
   const [revealedIds, setRevealedIdsState] = useState(() => new Set());
 
   const setRevealedIds = useCallback((ids) => {
@@ -655,11 +698,11 @@ const MAIN_PALETTE = {
 };
 
 const LIGHT_PALETTE = {
-  coreColor: "var(--color-surface)",
+  coreColor: "var(--color-blush)",
   coreOpacity: 0.471,
   haloColor: "var(--color-peach)",
   haloOpacities: [0.06, 0.1],
-  innerColor: "var(--color-surface)",
+  innerColor: "var(--color-blush)",
   innerOpacity: 0.35,
   strandColor: "var(--color-peach)",
   strandOpacityScale: 0.9,
@@ -691,10 +734,16 @@ export default function MakeupStroke() {
       return undefined;
     }
 
+    let disposed = false;
     let frameId = 0;
 
     const measure = () => {
       frameId = 0;
+
+      if (disposed) {
+        return;
+      }
+
       const nextGeometry = getGeometry(root);
 
       setGeometry((previous) =>
@@ -712,6 +761,10 @@ export default function MakeupStroke() {
         : cancelAnimationFrame;
 
     const scheduleMeasure = () => {
+      if (disposed) {
+        return;
+      }
+
       if (frameId) {
         cancelFrame(frameId);
       }
@@ -732,16 +785,20 @@ export default function MakeupStroke() {
     }
 
     window.addEventListener("resize", scheduleMeasure);
+    root.addEventListener("hero-curtain:measure", scheduleMeasure);
     document.fonts?.ready?.then(scheduleMeasure);
     scheduleMeasure();
 
     return () => {
+      disposed = true;
+
       if (frameId) {
         cancelFrame(frameId);
       }
 
       resizeObserver?.disconnect();
       window.removeEventListener("resize", scheduleMeasure);
+      root.removeEventListener("hero-curtain:measure", scheduleMeasure);
     };
   }, []);
 
@@ -750,7 +807,7 @@ export default function MakeupStroke() {
       const layer = layerRef.current;
       const root = layer?.closest("[data-makeup-root]");
 
-      setMotionActive(false);
+      setMotionActive(!prefersReducedMotion);
 
       if (!root || !geometry || !layer) {
         return undefined;
@@ -858,65 +915,101 @@ export default function MakeupStroke() {
         viewBox={`0 0 ${geometry.width} ${geometry.height}`}
         width={geometry.width}
       >
-        {darkBand ? (
+        {darkBand || geometry.curtainBand ? (
           <defs>
-            <clipPath
-              id={`${svgId}-dark-band`}
-              clipPathUnits="userSpaceOnUse"
-            >
-              <rect
-                height={darkBand.height}
-                width={darkBand.width}
-                x={darkBand.x}
-                y={darkBand.y}
-              />
-            </clipPath>
+            {darkBand ? (
+              <clipPath
+                id={`${svgId}-dark-band`}
+                clipPathUnits="userSpaceOnUse"
+              >
+                <rect
+                  height={darkBand.height}
+                  width={darkBand.width}
+                  x={darkBand.x}
+                  y={darkBand.y}
+                />
+              </clipPath>
+            ) : null}
+            {geometry.curtainBand ? (
+              <clipPath
+                id={`${svgId}-curtain-surfaces`}
+                clipPathUnits="userSpaceOnUse"
+              >
+                <rect
+                  height={Math.max(geometry.curtainBand.top, 0)}
+                  width={geometry.width}
+                  x="0"
+                  y="0"
+                />
+                <rect
+                  height={Math.max(
+                    geometry.height - geometry.curtainBand.bottom,
+                    0,
+                  )}
+                  width={geometry.width}
+                  x="0"
+                  y={geometry.curtainBand.bottom}
+                />
+              </clipPath>
+            ) : null}
           </defs>
         ) : null}
 
-        {geometry.chunkSets.map((chunks, setIndex) => (
-          <g key={setIndex}>
-            {chunks.map((chunk) => (
-              <g
-                data-stroke-chunk="true"
-                data-stroke-threshold={chunk.threshold}
-                key={chunk.startY}
-                style={{ opacity: 0 }}
-              >
-                <BrushChunk
-                  chunk={chunk}
-                  palette={MAIN_PALETTE}
-                  setIndex={setIndex}
-                  strokeWidth={geometry.strokeWidth}
-                />
-              </g>
-            ))}
-          </g>
-        ))}
+        <g
+          clipPath={
+            geometry.curtainBand
+              ? `url(#${svgId}-curtain-surfaces)`
+              : undefined
+          }
+        >
+          {geometry.chunkSets.map((chunks, setIndex) => (
+            <g key={setIndex}>
+              {chunks.map((chunk) => (
+                <g
+                  data-stroke-chunk="true"
+                  data-stroke-max-y={chunk.maxY}
+                  data-stroke-min-y={chunk.minY}
+                  data-stroke-threshold={chunk.threshold}
+                  key={chunk.startY}
+                  style={{ opacity: 0 }}
+                >
+                  <BrushChunk
+                    chunk={chunk}
+                    palette={MAIN_PALETTE}
+                    setIndex={setIndex}
+                    strokeWidth={geometry.strokeWidth}
+                  />
+                </g>
+              ))}
+            </g>
+          ))}
 
-        {darkBand ? (
-          <g clipPath={`url(#${svgId}-dark-band)`}>
-            {lightChunkSets.map((chunks, setIndex) => (
-              <g key={setIndex}>
-                {chunks.map((chunk) => (
-                  <g
-                    data-stroke-chunk="true"
-                    data-stroke-threshold={chunk.threshold}
-                    key={chunk.startY}
-                    style={{ opacity: 0 }}
-                  >
-                    <BrushChunk
-                      chunk={chunk}
-                      palette={LIGHT_PALETTE}
-                      setIndex={setIndex}
-                      strokeWidth={geometry.strokeWidth}
-                    />
-                  </g>
-                ))}
-              </g>
-            ))}
-          </g>
-        ) : null}
+          {darkBand ? (
+            <g clipPath={`url(#${svgId}-dark-band)`}>
+              {lightChunkSets.map((chunks, setIndex) => (
+                <g key={setIndex}>
+                  {chunks.map((chunk) => (
+                    <g
+                      data-stroke-chunk="true"
+                      data-stroke-max-y={chunk.maxY}
+                      data-stroke-min-y={chunk.minY}
+                      data-stroke-threshold={chunk.threshold}
+                      key={chunk.startY}
+                      style={{ opacity: 0 }}
+                    >
+                      <BrushChunk
+                        chunk={chunk}
+                        palette={LIGHT_PALETTE}
+                        setIndex={setIndex}
+                        strokeWidth={geometry.strokeWidth}
+                      />
+                    </g>
+                  ))}
+                </g>
+              ))}
+            </g>
+          ) : null}
+        </g>
       </svg>
     </div>
   );

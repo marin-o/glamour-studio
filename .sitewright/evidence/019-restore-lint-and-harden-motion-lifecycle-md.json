@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "019-restore-lint-and-harden-motion-lifecycle.md",
+  "status": "DONE",
+  "evidence": "ESLint and build pass; Next internal-link lint violations fixed; Lenis reduced-motion lifecycle and stroke measurement cleanup hardened; dependency audit recorded with upstream PostCSS advisory.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-09T23:20:51.781Z"
+}

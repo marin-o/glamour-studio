@@ -1,16 +1,83 @@
 import "./globals.css";
 
+import Script from "next/script";
+
+import { PageTransitionProvider } from "../components/motion/PageTransition";
 import SmoothScroll from "../components/motion/SmoothScroll";
 
+const historyTransitionBridge = `
+(() => {
+  if (window.__glamourHistoryTransitionBridge) return;
+
+  const bridge = {
+    bypass: false,
+    pending: null,
+    failOpenTimer: null,
+    release() {
+      const pending = bridge.pending;
+      if (!pending) return;
+
+      bridge.pending = null;
+      window.clearTimeout(bridge.failOpenTimer);
+      bridge.failOpenTimer = null;
+      bridge.bypass = true;
+      window.dispatchEvent(
+        new PopStateEvent("popstate", { state: pending.state }),
+      );
+    },
+  };
+
+  window.__glamourHistoryTransitionBridge = bridge;
+
+  window.addEventListener(
+    "popstate",
+    (event) => {
+      if (bridge.bypass) {
+        bridge.bypass = false;
+        return;
+      }
+
+      event.stopImmediatePropagation();
+      bridge.pending = {
+        pathname: window.location.pathname,
+        state: event.state,
+      };
+
+      let accepted = false;
+      window.dispatchEvent(
+        new CustomEvent("glamour:history-transition", {
+          detail: {
+            pathname: bridge.pending.pathname,
+            accept() {
+              accepted = true;
+            },
+          },
+        }),
+      );
+
+      if (!accepted) {
+        bridge.release();
+        return;
+      }
+
+      bridge.failOpenTimer = window.setTimeout(() => {
+        bridge.release();
+      }, 2400);
+    },
+    true,
+  );
+})();
+`;
+
 export const metadata = {
-  title: "Glamour Studio | Radovish Salon Draft",
+  title: "Glamour Studio | Salon in Radovish",
   description:
-    "Draft one-page salon website for Glamour Studio in Radovish. Haircuts, hairstyling, and makeup are listed as draft services while address, hours, phone, prices, and media remain pending.",
+    "Glamour Studio in Radovish. Call 077-643-005, find the studio at 11 Ilija Aleksov, or contact the salon on Instagram.",
   metadataBase: new URL("https://example.com"),
   openGraph: {
-    title: "Glamour Studio | Radovish Salon Draft",
+    title: "Glamour Studio | Salon in Radovish",
     description:
-      "Elegant local salon website draft for Glamour Studio. Address, hours, phone, prices, and final media are pending.",
+      "Contact Glamour Studio in Radovish by phone or Instagram, or find the salon at 11 Ilija Aleksov.",
     type: "website",
     locale: "mk_MK",
     images: [
@@ -27,9 +94,18 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="mk">
+      <head>
+        <Script
+          id="history-transition-bridge"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: historyTransitionBridge }}
+        />
+      </head>
       <body>
-        <SmoothScroll />
-        {children}
+        <PageTransitionProvider>
+          <SmoothScroll />
+          {children}
+        </PageTransitionProvider>
       </body>
     </html>
   );

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "024-use-adaptive-blend-contrast-for-dark-band-copy.md",
+  "status": "DONE",
+  "evidence": "Dark-band text now uses scoped difference blending over the light stroke; lint, build, and diff checks passed.",
+  "changedFiles": [],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-12T23:30:43.308Z"
+}

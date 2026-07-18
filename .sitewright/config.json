@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "templateVersion": "0.8.0",
+  "templateVersion": "0.8.2",
   "policyPack": "nextjs-app-router",
   "policies": {
     "validation": "conservative",

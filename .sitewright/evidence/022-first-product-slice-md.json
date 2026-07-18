@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "022-first-product-slice.md",
+  "status": "DONE",
+  "evidence": "Owner-approved identity, phone, address, and Instagram integrated; lint, build, diff check, and Doctor passed.",
+  "changedFiles": [],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-12T23:23:26.789Z"
+}
