@@ -121,12 +121,13 @@ a scroll-driven curtain onto a sharp, tightly cropped band of that same
 interior concept. Use the hero's existing image element as the only photograph:
 the resting veil supplies the soft blur, then retracts to expose the sharp
 pixels already beneath it. The warm services-colored surface advances across
-most of the opening but leaves a narrow photographic slit instead of joining
-directly to the veiled hero surface. Keep the opening partial, reversible, and
-tied to native page progress; do not pin the page, add a second scroll
-controller, duplicate the hero photograph, or turn the transition into a
-standalone media section. Reduced-motion and no-script presentations keep the
-normal closed boundary.
+the page only as the real services section reaches it through normal document
+scroll. Do not add a synthetic upward-closing cover after the sharp window
+opens; let the revealed hero image leave the viewport naturally. Keep the
+opening partial, reversible, and tied to native page progress; do not pin the
+page, add a second scroll controller, duplicate the hero photograph, or turn
+the transition into a standalone media section. Reduced-motion and no-script
+presentations keep the normal closed boundary.
 
 The makeup stroke must not appear in the hero or cross the photographic band.
 The following solid section owns a hard, ungrouped route anchor at its exact
@@ -141,10 +142,13 @@ service-copy entrances for the curtain, animate the surface clip, or trigger a
 whole-layer repaint.
 
 Until owner-approved photography exists, all three assets must carry the shared
-label `Concept imagery — real studio photos pending`. Their alt text must say
-they are concept placeholders and must not identify the real salon, staff, or
-clients. Replace each metadata entry in `src/lib/homepage-media.js` in place so
-future real assets do not require a structural homepage rewrite. The real
+localized concept-media disclosure (English:
+`Concept imagery — real studio photos pending`). Their alt text must say they
+are concept placeholders and must not identify the real salon, staff, or
+clients. Replace technical media metadata in `src/lib/homepage-media.js` and its
+aligned localized label, alt text, and captions in
+`src/lib/homepage-copy.js` so future real assets do not require a structural
+homepage rewrite. The real
 replacement set is an approved wide interior shot, a vertical hands-at-work
 service-process shot, and a vertical distant/behind-the-scenes work shot with
 permissions for every recognizable person.
@@ -154,6 +158,18 @@ permissions for every recognizable person.
 The primary CTA should support calling, messaging, or requesting a booking
 without implying live availability. Use direct, accessible labels and visible
 focus states.
+
+The homepage is Macedonian-first. Its server-rendered and no-JavaScript copy
+must be Macedonian, with a single plain-text language toggle inside the
+persistent bottom navigation. It shows `EN` as the action from Macedonian and
+`MK` as the action from English, without a visible button container. The
+selection is held in root-level memory for the current app visit, follows
+client-side navigation to and from Lookbook, updates the document language, and
+resets to Macedonian on a full reload. It must not introduce locale routes,
+cookies, local storage, or a second header. Keep both provisional language sets
+structurally aligned in
+`src/lib/homepage-copy.js` so owner-approved replacements do not require layout
+or interaction changes.
 
 Services may use placeholder names and prices only if they are clearly marked as
 replaceable. Gallery and media components should distinguish real salon media
@@ -257,6 +273,10 @@ heavy gradients, neon glow, or ornate glamour effects.
 `/lookbook` is a full-viewport, noindex horizontal editorial sequence rather
 than a general gallery. Its development media should move sideways from one
 large image to the next with stable cover crops and warm cream breathing room.
+Keep `Lookbook` as the untranslated product label. Its surrounding interface,
+development disclosures, instructions, and accessibility copy follow the
+root-level language selected on the homepage; a direct or refreshed route load
+uses Macedonian by default.
 A route-local horizontal Lenis instance owns continuous wheel and trackpad
 momentum; after input stops, the bundled Lenis snap layer eases the nearest
 image into the viewport center. Touch swiping remains native and receives the
@@ -267,13 +287,16 @@ separate controls, a modal, or a vertically scrolling page.
 
 The route transition is one continuous blush curtain owned by Motion: from the
 homepage it slides in from the right before navigation and exits left after the
-lookbook renders; the Studio return link reverses that direction. The curtain
-must never mount at full coverage or appear abruptly between its two movements.
+lookbook renders; the localized Studio return link reverses that direction. The
+curtain must never mount at full coverage or appear abruptly between its two
+movements.
 Browser Back and Forward use the same choreography: retain the departing route
 by intercepting `popstate` before App Router receives it, move the curtain to
 full coverage, replay the original history state to the router behind the
 curtain, then reveal the destination in the corresponding direction. History
-must fail open if the transition controller is unavailable.
+must fail open if the transition controller is unavailable. Same-document
+fragment traversal must bypass the curtain because it does not change the App
+Router pathname and therefore has no route commit to trigger a reveal.
 A layered cosmetic-brushstroke rail at the bottom grows continuously from left
 to right with horizontal progress and pairs with a current-image count; it
 supports the sequence without covering the photography. Under reduced motion

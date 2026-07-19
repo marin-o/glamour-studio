@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "047-remove-the-old-draft-and-add-a-macedonian-default-language-toggl.md",
+  "status": "DONE",
+  "evidence": "Owner reviewed the responsive navbar and approved completion after the final one-row layout with a leftmost language switch. pnpm lint, pnpm build, and git diff --check passed; production routes are /, /typography, and /lookbook with /old absent. Rendered language switching remains owner-verified through review rather than automated browser validation under the conservative policy.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-19T16:24:05.629Z"
+}

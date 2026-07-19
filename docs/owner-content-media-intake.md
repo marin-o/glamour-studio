@@ -34,7 +34,7 @@ until the owner confirms it.
 
 | Item | Priority | Owner answer | Current site surface |
 | --- | --- | --- | --- |
-| Confirmed service categories | Required |  | `/`, `/typography`, `/old`, metadata |
+| Confirmed service categories | Required |  | `/`, `/typography`, metadata |
 | Haircuts service names/details | Required if listed |  | Service index rows |
 | Hairstyling service names/details | Required if listed |  | Service index rows |
 | Makeup service names/details | Required if listed |  | Service index rows |
@@ -81,8 +81,8 @@ until owner-approved assets exist.
 | Hero hair-movement video | Optional for MVP, preferred final direction |  | Future hero enhancement, `/lookbook` planning |
 | Hero poster image | Required if hero video is used |  | Metadata image, hero fallback, `/lookbook` |
 | Homepage hero interior background image/crop | Useful strong visual moment | A wide interior shot with calm edges and no essential signage, documents, or readable text; it should crop safely on mobile and tolerate blur/contrast treatment | Homepage hero, future replacement for the concept background |
-| Hair texture/detail photo | Useful |  | `/old`, `/lookbook`, future homepage media |
-| Interior detail photo | Useful |  | `/old`, `/lookbook`, future homepage media |
+| Hair texture/detail photo | Useful |  | `/lookbook`, future homepage media |
+| Interior detail photo | Useful |  | `/lookbook`, future homepage media |
 | Service process photo | Optional |  | `/lookbook`, future service section |
 | Wide studio image | Optional strong visual moment |  | `/lookbook`, future gallery/vibe section |
 | Staff or owner photo | Optional, permission-sensitive |  | Future about/trust section |
@@ -147,7 +147,6 @@ unless the owner provides the exact approved source and wording.
 | `src/components/TypographySalonPage.jsx` services | Confirmed service names, details, prices or price policy |
 | `src/components/TypographySalonPage.jsx` contact | Approved contact channel and booking/request wording |
 | `src/app/typography/page.jsx` metadata | Keep aligned with the active homepage direction if route remains |
-| `src/app/old/page.jsx` | Keep as backup unless owner asks to remove or refresh it |
 | `src/app/lookbook/page.jsx` | Real media assets, alt text, and production notes |
 | `public/media/README.md` | Final media filenames or updated asset rules |
 

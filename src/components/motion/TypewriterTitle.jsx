@@ -3,17 +3,16 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useSyncExternalStore } from "react";
 
-const words = [
-  { className: "text-accent-deep", text: "Glamour" },
-  {
-    className: "block text-right text-ink md:pl-[0.55em] md:text-left",
-    text: "Studio",
-  },
-];
-
 const CHARACTER_DELAY = 0.073;
 
-export default function TypewriterTitle({ className, id }) {
+export default function TypewriterTitle({ className, id, words }) {
+  const styledWords = [
+    { className: "text-accent-deep", text: words[0] },
+    {
+      className: "block text-right text-ink md:pl-[0.55em] md:text-left",
+      text: words[1],
+    },
+  ];
   const enhanced = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -34,12 +33,14 @@ export default function TypewriterTitle({ className, id }) {
       id={id}
     >
       <span className={shouldType ? "opacity-0" : undefined}>
-        Glamour
-        <span className={words[1].className}>Studio</span>
+        {styledWords[0].text}{" "}
+        <span className={styledWords[1].className}>
+          {styledWords[1].text}
+        </span>
       </span>
       {shouldType ? (
         <span aria-hidden="true" className="absolute inset-0">
-          {words.map((word, wordIndex) => (
+          {styledWords.map((word, wordIndex) => (
             <span className={word.className} key={word.text}>
               {Array.from(word.text).map((character, characterIndex) => (
                 <motion.span
@@ -48,7 +49,7 @@ export default function TypewriterTitle({ className, id }) {
                   key={`${character}-${characterIndex}`}
                   transition={{
                     delay:
-                      words
+                      styledWords
                         .slice(0, wordIndex)
                         .reduce(
                           (delay, previousWord) =>

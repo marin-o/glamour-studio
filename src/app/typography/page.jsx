@@ -1,17 +1,11 @@
 import TypographySalonPage from "../../components/TypographySalonPage";
+import { homepageCopy } from "../../lib/homepage-copy";
 
 export const metadata = {
-  title: "Typography Study | Glamour Studio",
-  description:
-    "A typography-led alternate draft for Glamour Studio that keeps salon facts, contact details, prices, media, and booking status clearly pending.",
+  title: homepageCopy.mk.typographyMetadata.title,
+  description: homepageCopy.mk.typographyMetadata.description,
 };
 
 export default function TypographyStudy() {
-  return (
-    <TypographySalonPage
-      eyebrow="Typography study / same direction as homepage"
-      homeHref="/"
-      homeLabel="Main draft"
-    />
-  );
+  return <TypographySalonPage variant="typography" />;
 }

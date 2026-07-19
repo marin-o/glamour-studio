@@ -14,12 +14,16 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { lookbookMediaDimensions } from "../../generated/lookbook-media-manifest";
+import { lookbookCopy } from "../../lib/lookbook-copy";
+import { useLanguage } from "../LanguageProvider";
 import { TransitionLink } from "../motion/PageTransition";
 
 const clamp = (value, minimum, maximum) =>
   Math.min(Math.max(value, minimum), maximum);
 
 export default function HorizontalLookbook({ items }) {
+  const { language } = useLanguage();
+  const copy = lookbookCopy[language];
   const scrollerRef = useRef(null);
   const trackRef = useRef(null);
   const activeIndexRef = useRef(0);
@@ -150,23 +154,22 @@ export default function HorizontalLookbook({ items }) {
           href="/"
           direction="backward"
         >
-          ← Studio
+          {copy.returnLabel}
         </TransitionLink>
         <p className="m-0 font-display text-[1.05rem] font-bold text-accent-deep">
-          Lookbook
+          {copy.title}
         </p>
         <p
           id="lookbook-media-notice"
           className="col-span-3 mt-2 mb-0 text-[0.72rem] leading-[1.35] text-muted md:col-span-1 md:mt-0 md:max-w-[38rem] md:justify-self-center md:text-center md:text-[0.76rem]"
         >
-          Development media · website reuse and recognizable-person permissions
-          pending.
+          {copy.disclosure}
         </p>
         <p
           className="m-0 hidden text-[0.75rem] font-extrabold tracking-[0.08em] text-accent uppercase md:block"
           aria-hidden="true"
         >
-          Scroll sideways
+          {copy.direction}
         </p>
       </header>
 
@@ -175,13 +178,13 @@ export default function HorizontalLookbook({ items }) {
         className={`lookbook-scroller h-svh overflow-x-auto overflow-y-hidden [overscroll-behavior-x:contain] [scrollbar-width:none] ${
           isLenisActive ? "" : "snap-x snap-mandatory"
         }`}
-        aria-label="Horizontal development lookbook"
+        aria-label={copy.regionLabel}
         aria-describedby="lookbook-media-notice"
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
         <h1 className="sr-only">
-          Glamour Studio development lookbook
+          {copy.heading}
         </h1>
 
         <ol
@@ -213,7 +216,11 @@ export default function HorizontalLookbook({ items }) {
                     href={item.permalink}
                     target="_blank"
                     rel="noreferrer"
-                    aria-label={`Open the original Instagram ${isReelCover ? "Reel" : "post"} for image ${index + 1}`}
+                    aria-label={
+                      isReelCover
+                        ? copy.originalReelLabel(index + 1)
+                        : copy.originalPostLabel(index + 1)
+                    }
                     whileHover={
                       prefersReducedMotion ? undefined : { scale: 1.012 }
                     }
@@ -225,7 +232,7 @@ export default function HorizontalLookbook({ items }) {
                     <Image
                       className="block h-full w-full object-cover"
                       src={item.src}
-                      alt={item.alt}
+                      alt={item.alt[language]}
                       width={dimensions.width}
                       height={dimensions.height}
                       priority={index === 0}
@@ -235,7 +242,7 @@ export default function HorizontalLookbook({ items }) {
                     />
                     {isReelCover ? (
                       <span className="absolute top-3 right-3 bg-ink/88 px-2.5 py-1.5 text-[0.7rem] font-extrabold text-surface">
-                        Still frame from a Reel
+                        {copy.reelBadge}
                       </span>
                     ) : null}
                   </motion.a>
@@ -250,7 +257,7 @@ export default function HorizontalLookbook({ items }) {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {isReelCover ? "View Reel source" : "View post source"}
+                      {isReelCover ? copy.reelSource : copy.postSource}
                     </a>
                   </figcaption>
                 </figure>
@@ -262,7 +269,7 @@ export default function HorizontalLookbook({ items }) {
 
       <aside
         className="pointer-events-none fixed inset-x-0 bottom-0 z-30 grid min-h-[76px] grid-cols-[auto_1fr_auto] items-center gap-4 border-t border-line bg-surface/95 px-pad py-3"
-        aria-label={`Image ${activeIndex + 1} of ${items.length}`}
+        aria-label={copy.imageCount(activeIndex + 1, items.length)}
       >
         <p className="m-0 font-display text-[1rem] font-bold text-accent-deep tabular-nums">
           {String(activeIndex + 1).padStart(2, "0")}
@@ -297,7 +304,7 @@ export default function HorizontalLookbook({ items }) {
         </div>
 
         <p className="m-0 text-right text-[0.7rem] font-bold text-muted">
-          Swipe · wheel · arrows
+          {copy.controls}
         </p>
       </aside>
     </main>

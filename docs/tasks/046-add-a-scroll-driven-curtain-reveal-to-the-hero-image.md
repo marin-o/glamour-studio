@@ -1,6 +1,6 @@
 # Add a scroll-driven curtain reveal to the hero image
 
-Status: IN PROGRESS
+Status: DONE
 Depends on: None
 Owner: AI-assisted implementation
 Approver: Owner (approved the interaction direction and task creation)
@@ -9,9 +9,9 @@ Approver: Owner (approved the interaction direction and task creation)
 
 Turn the existing hero interior image into a scroll-driven curtain reveal:
 preserve the current softly blurred hero at rest, expose a cropped sharp window
-onto that image as the hero's solid foreground moves away, then let the next
-section's solid background cover most of the image while preserving a narrow
-photographic slit before that section fully settles.
+onto that image as the hero's solid foreground moves away, then leave the
+window open while the hero and following services section continue through
+normal document scroll.
 
 ## Relevant documents
 
@@ -43,14 +43,13 @@ photographic slit before that section fully settles.
   section. The opening reveals a crisp crop of the same interior image already
   used behind the hero; it is a partial sliding window, not a requirement to
   expose the whole image.
-- Move the hero's blur/veil away to open the window, then advance a
-  services-colored solid surface over most of it while leaving a small,
-  deliberate photographic slit before the service section reads as fully
-  present.
-- Keep the image visually underneath the two solid surfaces so the transition
-  reads as one opening that expands and then narrows, not as a new gallery
-  block or a second independent image. The existing hero image element must be
-  the only photograph used by this transition.
+- Move the hero's blur/veil away to open the window, then keep that window open
+  while the hero leaves the viewport through normal document scroll. Do not
+  add a synthetic services-colored closing surface.
+- Keep the transition attached to the existing hero image so it reads as one
+  opening, not as a new gallery block or a second independent image. The
+  existing hero image element must be the only photograph used by this
+  transition.
 - Remove the makeup brushstroke route from the hero and photographic opening.
   The following solid section's exact top edge must be the stroke's true first
   touch-down point, with no hidden or clipped hero continuation.
@@ -78,8 +77,8 @@ photographic slit before that section fully settles.
 1. Inspect the hero-to-services boundary in `TypographySalonPage.jsx` and the
    relevant geometry, progress, and lifecycle code in `MakeupStroke.jsx`.
 2. Define one responsive scroll interval that opens a partial image window and
-   then narrows it to a small slit with the following solid surface, without
-   changing semantic section order or trapping document scroll.
+   holds it open while the real following section arrives through document
+   scroll, without changing semantic section order or trapping scroll.
 3. Use the existing hero image element as the sharp source and move its
    blur/veil independently so the current blurred/veiled hero state stays
    intact at the top of the page without duplicating the photograph.
@@ -101,9 +100,9 @@ photographic slit before that section fully settles.
 - [ ] The revealed window remains intentionally partial; the effect does not
       turn the homepage into a full-screen gallery or require the complete
       image to be visible.
-- [ ] Continuing to scroll moves a services-colored solid surface over most of
-      the image while retaining a narrow photographic slit before the section
-      reaches its normal settled presentation.
+- [ ] After opening, the sharp image window does not animate closed; it leaves
+      the viewport naturally as the real services section arrives through
+      document scroll.
 - [ ] The transition follows normal document scroll, is reversible when
       scrolling upward, and does not lock, hijack, or unexpectedly jump the
       page.
@@ -118,8 +117,8 @@ photographic slit before that section fully settles.
       static composition with no required scroll choreography.
 - [ ] The implementation avoids new motion dependencies and preserves the
       existing localized-chunk brushstroke performance constraints.
-- [ ] `DESIGN.md`, completion notes, validation evidence, and the current
-      handoff describe the implemented contract accurately.
+- [ ] `DESIGN.md`, completion notes, and validation evidence describe the
+      implemented contract accurately.
 
 ## Non-goals
 
@@ -161,6 +160,10 @@ photographic slit before that section fully settles.
 
 ## Completion notes
 
+- Transition: complete at 2026-07-19T15:35:47.584Z
+- Validation: Owner approved completion after recorded lint, build, diff, Doctor, and authorized rendered validation.
+- Approved by: Owner
+
 - Transition: start at 2026-07-18T11:12:16.113Z
 
 - Completed:
@@ -193,6 +196,14 @@ photographic slit before that section fully settles.
     reveal thresholds. The service-edge anchor is now the actual first route
     point, so the stroke touches down once at that boundary instead of implying
     a clipped or resumed gesture from the hero.
+  - Removed the synthetic services-colored closing layer. The veil now opens
+    over the first 22% of the scroll interval and holds that revealed state for
+    the remainder, allowing the existing hero and real services section to
+    leave and enter through normal document scroll.
+  - Corrected the foreground clipping coordinate space: the text container now
+    compensates for its inset bottom edge, so copy is erased by the same
+    absolute reveal boundary as the canvas instead of by an earlier horizontal
+    cutoff.
   - Recorded the durable curtain and stroke-interruption contract in
     `DESIGN.md` and the new component ownership in `REPO_MAP.md`.
 - Validation:
@@ -229,6 +240,14 @@ photographic slit before that section fully settles.
     existing service/contact semantics stay in document order.
   - Follow-up Sitewright Doctor remained `IMPLEMENTATION_READY`; it reported the
     expected stale-handoff warning after this within-task design refinement.
+  - After removing the synthetic closing layer, targeted `pnpm lint` and
+    `git diff --check` both passed.
+  - No new rendered check was run for this tuning pass under the conservative
+    validation policy; the open-then-scroll-away behavior awaits owner visual
+    confirmation.
+  - Targeted `pnpm lint` and `git diff --check` passed after aligning the
+    foreground and canvas reveal edges. Rendered confirmation remains with the
+    owner under the conservative validation policy.
 - Deviations:
   - Browser validation was run after the owner explicitly requested controlled
     browser inspection, satisfying the conservative-policy authorization gate.

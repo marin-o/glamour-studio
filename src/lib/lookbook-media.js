@@ -7,7 +7,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DagDplJDeqK/`,
     kind: "post",
     status: "development-only",
-    alt: "Back view of straight blonde hair with a blunt, shoulder-length finish in a salon chair.",
+    alt: {
+      mk: "Поглед одзади на права руса коса со рамно потстрижани врвови до рамениците, на салонско столче.",
+      en: "Back view of straight blonde hair with a blunt, shoulder-length finish in a salon chair.",
+    },
     objectPosition: "center center",
   },
   {
@@ -16,7 +19,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DaYEE15NSnT/`,
     kind: "post",
     status: "development-only",
-    alt: "Side view of a brunette low updo with a loose curled strand at the front.",
+    alt: {
+      mk: "Поглед отстрана на ниско крената темна коса со пуштен кадрав прамен напред.",
+      en: "Side view of a brunette low updo with a loose curled strand at the front.",
+    },
     objectPosition: "center center",
   },
   {
@@ -25,7 +31,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DaF8XAotU9l/`,
     kind: "post",
     status: "development-only",
-    alt: "Back view of long light-brown hair styled in loose, defined waves.",
+    alt: {
+      mk: "Поглед одзади на долга светлокафена коса обликувана во пуштени, нагласени бранови.",
+      en: "Back view of long light-brown hair styled in loose, defined waves.",
+    },
     objectPosition: "center 52%",
   },
   {
@@ -34,7 +43,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DaF6hPyNjb4/`,
     kind: "post",
     status: "development-only",
-    alt: "Side view of long blonde layered hair falling over a black salon cape.",
+    alt: {
+      mk: "Поглед отстрана на долга слоевита руса коса преку црна салонска наметка.",
+      en: "Side view of long blonde layered hair falling over a black salon cape.",
+    },
     objectPosition: "center center",
   },
   {
@@ -43,7 +55,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DaFy4dNDV2k/`,
     kind: "post",
     status: "development-only",
-    alt: "Portrait of a person with shoulder-length dark curls and visible makeup.",
+    alt: {
+      mk: "Портрет на лице со темни локни до рамениците и видлива шминка.",
+      en: "Portrait of a person with shoulder-length dark curls and visible makeup.",
+    },
     objectPosition: "center center",
   },
   {
@@ -52,7 +67,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DZnBUnsjT7z/`,
     kind: "post",
     status: "development-only",
-    alt: "Outdoor portrait of a person with long dark hair styled in loose curls.",
+    alt: {
+      mk: "Портрет на отворено на лице со долга темна коса обликувана во пуштени локни.",
+      en: "Outdoor portrait of a person with long dark hair styled in loose curls.",
+    },
     objectPosition: "center center",
   },
   {
@@ -61,7 +79,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/reel/DZm9Cm-tKDQ/`,
     kind: "reel-cover",
     status: "development-only",
-    alt: "Reel cover showing a smiling person wearing a pink hijab and visible makeup.",
+    alt: {
+      mk: "Насловен кадар од Reel со насмеано лице со розов хиџаб и видлива шминка.",
+      en: "Reel cover showing a smiling person wearing a pink hijab and visible makeup.",
+    },
     objectPosition: "center center",
   },
   {
@@ -70,7 +91,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/reel/DZlV_EGNS3V/`,
     kind: "reel-cover",
     status: "development-only",
-    alt: "Reel cover showing a person with long wavy brown hair and visible makeup in a salon.",
+    alt: {
+      mk: "Насловен кадар од Reel со лице со долга брановидна кафена коса и видлива шминка во салон.",
+      en: "Reel cover showing a person with long wavy brown hair and visible makeup in a salon.",
+    },
     objectPosition: "center center",
   },
   {
@@ -79,7 +103,10 @@ export const lookbookMedia = [
     permalink: `${instagramBase}/p/DZfmT0WjZ9k/`,
     kind: "post",
     status: "development-only",
-    alt: "Side and back view of long blonde hair with subtle highlights in a salon.",
+    alt: {
+      mk: "Поглед отстрана и одзади на долга руса коса со нежни прамени во салон.",
+      en: "Side and back view of long blonde hair with subtle highlights in a salon.",
+    },
     objectPosition: "center center",
   },
 ];

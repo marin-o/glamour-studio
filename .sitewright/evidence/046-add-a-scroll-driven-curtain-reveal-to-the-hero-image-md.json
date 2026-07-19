@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "046-add-a-scroll-driven-curtain-reveal-to-the-hero-image.md",
+  "status": "DONE",
+  "evidence": "Owner approved completion after recorded lint, build, diff, Doctor, and authorized rendered validation.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-19T15:35:47.586Z"
+}

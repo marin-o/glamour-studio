@@ -9,22 +9,25 @@ common work so agents can inspect the smallest relevant file set.
 
 ## Ownership
 
-- `src/app/layout.jsx`: root metadata/app shell and pre-hydration browser-history transition bridge.
+- `src/app/layout.jsx`: root metadata/app shell, visit-local language provider, and pre-hydration browser-history transition bridge.
 - `src/app/page.jsx`: typography-led homepage at `/`.
 - `src/app/typography/page.jsx`: comparison alias for the shared homepage.
-- `src/app/old/page.jsx`: preserved image-led homepage backup.
 - `src/app/lookbook/page.jsx`: noindex lookbook route and development-media handoff to the client sequence.
 - `src/app/globals.css`: Tailwind v4 tokens, base styles, and progressive-enhancement reveal guard.
 - `next.config.mjs`: Next image quality allowlist for quality-100 responsive delivery.
 - `src/components/TypographySalonPage.jsx`: shared `/` and `/typography` composition, including the persistent bottom navigation.
+- `src/components/LanguageProvider.jsx`: root-persistent in-memory language state and document-language synchronization across client-side routes.
 - `src/components/lookbook/HorizontalLookbook.jsx`: full-viewport horizontal media sequence, route-local Lenis momentum/settling, responsive quality-100 images, input handling, and brushstroke progress.
-- `src/lib/lookbook-media.js`: development-only lookbook image metadata, source links, alt text, and crop positions.
+- `src/lib/lookbook-media.js`: development-only lookbook image metadata, source links, bilingual alt text, and crop positions.
 - `src/components/motion/MakeupStroke.jsx`: measured GSAP/ScrollTrigger brushstroke and shared reveal timing provider.
 - `src/components/motion/HeroCurtainReveal.jsx`: progressive-enhancement GSAP curtain between the hero and services, with live stroke-interruption bounds.
 - `src/components/motion/PageTransition.jsx`: root-persistent bidirectional Motion curtain, pre-commit history release controller, held-route fallback, and transition-aware internal link.
 - `src/components/motion/Reveal.jsx`: role-based Motion editorial and stroke-pass text entrances.
 - `src/components/motion/TypewriterTitle.jsx`: hero-only sequential typewriter with semantic static fallback.
 - `src/components/motion/SmoothScroll.jsx`: reduced-motion-aware document Lenis integration, disabled in favor of route-local horizontal Lenis on the lookbook.
+- `src/lib/homepage-copy.js`: structurally aligned Macedonian-default and English provisional homepage copy, metadata, and language-control labels.
+- `src/lib/lookbook-copy.js`: aligned Macedonian and English Lookbook interface, disclosure, instruction, and accessibility copy.
+- `src/lib/homepage-media.js`: technical metadata for the live homepage concept imagery.
 - `src/generated/lookbook-media-manifest.js`: generated intrinsic dimensions for lookbook `next/image` rendering.
 - `scripts/media/lookbook-manifest.mjs`: lookbook dimension-manifest generator and read-only media build gate.
 - `src/lib/`: shared helpers and product-facing data utilities when needed.

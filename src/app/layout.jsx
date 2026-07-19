@@ -2,8 +2,10 @@ import "./globals.css";
 
 import Script from "next/script";
 
+import { LanguageProvider } from "../components/LanguageProvider";
 import { PageTransitionProvider } from "../components/motion/PageTransition";
 import SmoothScroll from "../components/motion/SmoothScroll";
+import { homepageCopy } from "../lib/homepage-copy";
 
 const historyTransitionBridge = `
 (() => {
@@ -70,22 +72,20 @@ const historyTransitionBridge = `
 `;
 
 export const metadata = {
-  title: "Glamour Studio | Salon in Radovish",
-  description:
-    "Glamour Studio in Radovish. Call 077-643-005, find the studio at 11 Ilija Aleksov, or contact the salon on Instagram.",
+  title: homepageCopy.mk.metadata.title,
+  description: homepageCopy.mk.metadata.description,
   metadataBase: new URL("https://example.com"),
   openGraph: {
-    title: "Glamour Studio | Salon in Radovish",
-    description:
-      "Contact Glamour Studio in Radovish by phone or Instagram, or find the salon at 11 Ilija Aleksov.",
+    title: homepageCopy.mk.metadata.title,
+    description: homepageCopy.mk.metadata.openGraphDescription,
     type: "website",
     locale: "mk_MK",
     images: [
       {
-        url: "/media/salon-hero-placeholder.png",
-        width: 1792,
+        url: "/media/placeholders/salon-interior-concept.png",
+        width: 1536,
         height: 1024,
-        alt: "Temporary warm salon-style hero placeholder with hair movement.",
+        alt: homepageCopy.mk.metadata.imageAlt,
       },
     ],
   },
@@ -102,10 +102,12 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <PageTransitionProvider>
-          <SmoothScroll />
-          {children}
-        </PageTransitionProvider>
+        <LanguageProvider>
+          <PageTransitionProvider>
+            <SmoothScroll />
+            {children}
+          </PageTransitionProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

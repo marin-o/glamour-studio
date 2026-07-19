@@ -1,10 +1,10 @@
-import Image from "next/image";
-import Link from "next/link";
+"use client";
 
-import {
-  homepageMedia,
-  homepageMediaLabel,
-} from "../lib/homepage-media";
+import Image from "next/image";
+
+import { homepageCopy } from "../lib/homepage-copy";
+import { homepageMedia } from "../lib/homepage-media";
+import { useLanguage } from "./LanguageProvider";
 import MakeupStroke, {
   MakeupStrokeProvider,
 } from "./motion/MakeupStroke";
@@ -12,38 +12,6 @@ import HeroCurtainReveal from "./motion/HeroCurtainReveal";
 import { TransitionLink } from "./motion/PageTransition";
 import Reveal from "./motion/Reveal";
 import TypewriterTitle from "./motion/TypewriterTitle";
-
-const serviceRows = [
-  {
-    label: "01",
-    name: "Haircuts",
-    note: "Draft service category. Final names, duration, pricing, and staff details are pending.",
-  },
-  {
-    label: "02",
-    name: "Hairstyling",
-    note: "Draft service category. Occasion scope, timing, and preparation details are pending.",
-  },
-  {
-    label: "03",
-    name: "Makeup",
-    note: "Draft service category. Final scope, products, artist details, and pricing are pending.",
-  },
-];
-
-const contactItems = [
-  { href: "tel:077643005", label: "Call", value: "077-643-005" },
-  {
-    href: "https://www.google.com/maps/search/?api=1&query=11+Ilija+Aleksov+Radovish",
-    label: "Find us",
-    value: "11 Ilija Aleksov, Radovish",
-  },
-  {
-    href: "https://www.instagram.com/glamourrstudiio/",
-    label: "Instagram",
-    value: "@glamourrstudiio",
-  },
-];
 
 const contactStrokeAnchors = [
   {
@@ -79,11 +47,10 @@ const offsetList =
 
 const [anchorMedia, ...supportingMedia] = homepageMedia;
 
-export default function TypographySalonPage({
-  eyebrow = "Typography-led homepage",
-  homeHref = "/old",
-  homeLabel = "Old draft",
-}) {
+export default function TypographySalonPage({ variant = "home" }) {
+  const { language, setLanguage } = useLanguage();
+  const copy = homepageCopy[language];
+
   return (
     <MakeupStrokeProvider>
       <main
@@ -120,11 +87,6 @@ export default function TypographySalonPage({
           />
         </div>
         <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-surface-warm opacity-0 will-change-transform"
-          data-hero-curtain-cover
-        />
-        <div
           className="relative z-10 grid content-start gap-9 md:min-h-[calc(100svh-12rem)] md:content-between md:gap-12"
           data-hero-curtain-foreground
         >
@@ -135,11 +97,12 @@ export default function TypographySalonPage({
             side="start"
             y={0.42}
           >
-            {eyebrow}
+            {copy.hero.eyebrow[variant]}
           </Reveal>
           <TypewriterTitle
             id="type-title"
             className="mt-4 text-[clamp(3.7rem,18vw,17.5rem)] leading-[0.82] text-accent-deep md:mt-8 md:leading-[0.74]"
+            words={copy.hero.titleWords}
           />
           <div className="grid gap-7 border-t border-line pt-7 md:ml-auto md:w-full md:max-w-[1120px] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-[clamp(28px,7vw,110px)]">
             <Reveal
@@ -148,9 +111,7 @@ export default function TypographySalonPage({
               revealId="hero-intro"
               side="start"
             >
-              A quieter salon direction where the first impression comes from
-              type, spacing, and warm editorial rhythm instead of placeholder
-              imagery or decorative card systems.
+              {copy.hero.intro}
             </Reveal>
             <Reveal
               as="p"
@@ -159,14 +120,12 @@ export default function TypographySalonPage({
               role="stroke"
               side="end"
             >
-              This is still a draft for Radovish. Real media, final Macedonian
-              copy, prices, hours, service details, and booking behavior remain
-              owner decisions.
+              {copy.hero.pending}
             </Reveal>
           </div>
           <p className="mt-2 ml-auto max-w-[58rem] text-[0.86rem] leading-[1.45] text-accent md:w-[72%]">
-            <span className="font-extrabold">{homepageMediaLabel}</span>{" "}
-            Interior concept used as a softly blurred opening background.
+            <span className="font-extrabold">{copy.media.label}</span>{" "}
+            {copy.hero.mediaContext}
           </p>
         </div>
       </section>
@@ -192,7 +151,7 @@ export default function TypographySalonPage({
             revealId="services-eyebrow"
             side="start"
           >
-            Service index
+            {copy.services.eyebrow}
           </Reveal>
           <Reveal
             as="h2"
@@ -202,16 +161,16 @@ export default function TypographySalonPage({
             side="end"
             y={0.2}
           >
-            Draft categories, set like an editorial list.
+            {copy.services.title}
           </Reveal>
         </div>
 
         <div className="mt-10 border-t border-line-strong md:mt-16">
-          {serviceRows.map((service) => (
+          {copy.services.rows.map((service) => (
             <Reveal
               as="article"
               className="grid gap-2.5 border-b border-line py-[26px] even:justify-items-end even:text-right md:grid-cols-[78px_minmax(180px,0.42fr)_minmax(0,0.58fr)] md:items-baseline md:gap-[clamp(18px,5vw,72px)] md:py-[30px] md:even:justify-items-start md:even:text-left"
-              key={service.name}
+              key={service.label}
               revealId={`service-${service.label}`}
               role="stroke"
               side={service.label === "02" ? "end" : "start"}
@@ -239,7 +198,7 @@ export default function TypographySalonPage({
       >
         <div className="grid gap-8 md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] md:gap-[clamp(32px,7vw,96px)]">
           <div className="text-right md:text-left">
-            <p className={kicker}>Studio glimpse</p>
+            <p className={kicker}>{copy.media.eyebrow}</p>
             <Reveal
               as="h2"
               id="type-studio"
@@ -249,25 +208,23 @@ export default function TypographySalonPage({
               side="end"
               strokeSide="start"
             >
-              A calm place for careful work.
+              {copy.media.title}
             </Reveal>
             <p
               id="studio-media-note"
               className="mt-7 ml-auto max-w-[29rem] text-[1.04rem] leading-[1.62] text-muted md:ml-0"
             >
-              These concept frames preview the atmosphere and kinds of moments
-              we want to show here. Real studio photos will replace them once
-              the owner approves the shots and permissions.
+              {copy.media.description}
             </p>
             <p className="mt-5 ml-auto max-w-[29rem] text-[0.92rem] leading-[1.5] font-extrabold text-accent md:ml-0">
-              {homepageMediaLabel}
+              {copy.media.label}
             </p>
           </div>
 
           <div className="grid gap-3 md:grid-cols-[minmax(0,1.55fr)_minmax(150px,0.45fr)]">
             <figure className="m-0">
               <Image
-                alt={anchorMedia.alt}
+                alt={copy.media.items[anchorMedia.id].alt}
                 className="h-auto w-full object-cover"
                 height={anchorMedia.height}
                 sizes="(min-width: 768px) 45vw, 100vw"
@@ -276,7 +233,7 @@ export default function TypographySalonPage({
                 width={anchorMedia.width}
               />
               <figcaption className="sr-only">
-                {homepageMediaLabel}: wide interior concept.
+                {copy.media.items[anchorMedia.id].caption}
               </figcaption>
             </figure>
 
@@ -284,7 +241,7 @@ export default function TypographySalonPage({
               {supportingMedia.map((media) => (
                 <figure className="m-0" key={media.id}>
                   <Image
-                    alt={media.alt}
+                    alt={copy.media.items[media.id].alt}
                     className="h-auto w-full object-cover"
                     height={media.height}
                     sizes="(min-width: 768px) 15vw, 50vw"
@@ -293,7 +250,7 @@ export default function TypographySalonPage({
                     width={media.width}
                   />
                   <figcaption className="sr-only">
-                    {homepageMediaLabel}: supporting {media.id} concept.
+                    {copy.media.items[media.id].caption}
                   </figcaption>
                 </figure>
               ))}
@@ -307,7 +264,7 @@ export default function TypographySalonPage({
         aria-labelledby="type-about"
       >
         <p className={kicker}>
-          Tone test
+          {copy.tone.eyebrow}
         </p>
         <Reveal
           as="h2"
@@ -316,7 +273,7 @@ export default function TypographySalonPage({
           revealId="tone-title"
           side="start"
         >
-          Soft, local, practical, unfinished on purpose.
+          {copy.tone.title}
         </Reveal>
         <Reveal
           as="p"
@@ -325,10 +282,7 @@ export default function TypographySalonPage({
           role="stroke"
           side="end"
         >
-          This direction keeps the salon presence calm and legible while making
-          the unfinished parts explicit. It can later absorb real Macedonian
-          copy and real studio media without depending on generic beauty imagery
-          now.
+          {copy.tone.description}
         </Reveal>
       </section>
 
@@ -355,7 +309,7 @@ export default function TypographySalonPage({
             revealId="contact-eyebrow"
             side="outer-start"
           >
-            Contact and booking
+            {copy.contact.eyebrow}
           </Reveal>
           <Reveal
             as="h2"
@@ -364,16 +318,16 @@ export default function TypographySalonPage({
             anchor={false}
             revealId="contact-title"
           >
-            Visit or get in touch.
+            {copy.contact.title}
           </Reveal>
         </div>
         <ul className={`${listReset} ${offsetList}`}>
-          {contactItems.map((item, index) => (
+          {copy.contact.items.map((item, index) => (
             <Reveal
               anchor={false}
               as="li"
               className="border-t border-t-surface/25 py-[18px] text-[1.08rem] leading-[1.55] text-surface first:border-t-surface/50"
-              key={item.label}
+              key={item.href}
               revealId={`contact-${index + 1}`}
             >
               <a
@@ -388,38 +342,51 @@ export default function TypographySalonPage({
             </Reveal>
           ))}
           <li className="pt-4 text-[0.92rem] leading-[1.55] text-surface/70">
-            Calling or messaging does not confirm an appointment. Opening
-            hours, Viber, and WhatsApp are not confirmed yet.
+            {copy.contact.disclosure}
           </li>
         </ul>
       </section>
 
       <aside
-        className="fixed inset-x-pad bottom-3 z-30 flex items-center gap-3 overflow-hidden rounded-lg border border-ink/20 bg-ink/95 py-2 pr-2 pl-3 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] sm:bottom-4 sm:gap-5 sm:py-[11px] sm:pr-3 sm:pl-[18px]"
-        aria-label="Typography-led navigation"
+        className="fixed inset-x-pad bottom-3 z-30 flex items-stretch gap-1 overflow-hidden rounded-lg border border-ink/20 bg-ink/95 p-2 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] lg:bottom-4 lg:gap-2 lg:py-[11px] lg:pr-3 lg:pl-[18px]"
+        aria-label={copy.navigation.label}
       >
-        <Link
-          className="shrink-0 font-display text-[1rem] font-bold sm:text-[1.1rem]"
-          href={homeHref}
+        <button
+          aria-label={copy.language.toggleLabel}
+          className="flex min-h-11 w-9 shrink-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent px-1 py-2 text-[0.72rem] font-extrabold text-surface/70 outline-none hover:text-surface focus-visible:ring-2 focus-visible:ring-surface focus-visible:ring-offset-2 focus-visible:ring-offset-ink lg:w-auto lg:text-[0.86rem]"
+          onClick={() =>
+            setLanguage((current) => (current === "mk" ? "en" : "mk"))
+          }
+          type="button"
         >
-          {homeLabel}
-        </Link>
-        <span aria-hidden="true" className="h-5 w-px shrink-0 bg-surface/25" />
-        <nav className="flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto text-[0.82rem] font-bold whitespace-nowrap sm:gap-2 sm:text-[0.92rem]">
-          <a className="rounded-md px-2 py-2 sm:px-3" href="#type-services">
-            Services
+          {copy.language.toggleText}
+        </button>
+        <nav className="grid min-w-0 flex-1 grid-cols-4 items-stretch gap-1 text-center text-[0.68rem] leading-tight font-bold whitespace-nowrap sm:text-[0.82rem] lg:flex lg:items-center lg:justify-end lg:gap-2 lg:text-[0.92rem]">
+          <a
+            className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
+            href="#type-services"
+          >
+            {copy.navigation.services}
           </a>
-          <a className="rounded-md px-2 py-2 sm:px-3" href="#type-studio">
-            Studio media
+          <a
+            className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
+            href="#type-studio"
+          >
+            {copy.navigation.studio}
           </a>
-          <TransitionLink className="rounded-md px-2 py-2 sm:px-3" href="/lookbook">
-            Lookbook
+          <TransitionLink
+            className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
+            href="/lookbook"
+          >
+            {copy.navigation.lookbook}
           </TransitionLink>
           <a
-            className="rounded-lg bg-surface px-3 py-2 text-ink sm:px-3.5 sm:py-2.5"
+            aria-label={copy.navigation.call}
+            className="flex min-h-11 min-w-0 items-center justify-center rounded-lg bg-surface px-0.5 py-2 text-ink lg:px-3.5 lg:py-2.5"
             href="tel:077643005"
           >
-            Call 077-643-005
+            <span className="lg:hidden">{copy.navigation.callShort}</span>
+            <span className="hidden lg:inline">{copy.navigation.call}</span>
           </a>
         </nav>
       </aside>

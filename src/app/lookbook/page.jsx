@@ -2,9 +2,9 @@ import HorizontalLookbook from "../../components/lookbook/HorizontalLookbook";
 import { lookbookMedia } from "../../lib/lookbook-media";
 
 export const metadata = {
-  title: "Development Lookbook | Glamour Studio",
+  title: "Lookbook | Glamour Studio",
   description:
-    "A temporary editorial lookbook using development-only local media from Glamour Studio's public Instagram profile.",
+    "Привремен уреднички Lookbook со развојни локални медиуми од јавниот Instagram профил на Glamour Studio.",
   robots: {
     index: false,
     follow: false,

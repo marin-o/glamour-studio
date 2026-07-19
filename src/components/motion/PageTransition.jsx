@@ -128,6 +128,11 @@ export function PageTransitionProvider({ children }) {
         return;
       }
 
+      if (destinationPath === displayedPathRef.current) {
+        bridge.release();
+        return;
+      }
+
       if (prefersReducedMotion || isTransitioningRef.current) {
         bridge.release();
         return;
@@ -163,7 +168,14 @@ export function PageTransitionProvider({ children }) {
 
   const navigate = useCallback(
     async (href, direction = "forward") => {
-      if (href === pathname || isTransitioningRef.current) {
+      const destinationPath = new URL(href, window.location.href).pathname;
+
+      if (destinationPath === pathname) {
+        router.push(href);
+        return;
+      }
+
+      if (isTransitioningRef.current) {
         return;
       }
 
@@ -174,7 +186,7 @@ export function PageTransitionProvider({ children }) {
 
       isTransitioningRef.current = true;
       directionRef.current = direction;
-      pendingPathRef.current = href;
+      pendingPathRef.current = destinationPath;
 
       const entryPosition = direction === "forward" ? "100%" : "-100%";
       curtainControls.set({ x: entryPosition });
