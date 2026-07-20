@@ -484,7 +484,11 @@ function getGeometry(root) {
   );
   const rootRect = root.getBoundingClientRect();
   const width = Math.max(1, root.clientWidth);
-  const height = Math.max(root.scrollHeight, Math.ceil(rootRect.height));
+  // Measure the root's layout box, not its scrollable overflow. The absolute
+  // stroke layer is sized from this value and may itself contribute to
+  // scrollHeight; feeding that overflow back into the next measurement can
+  // repeatedly lengthen the page after copy reflows, such as a language switch.
+  const height = Math.max(1, Math.ceil(rootRect.height));
   const isNarrow = width < 768;
 
   if (anchors.length < 2) {

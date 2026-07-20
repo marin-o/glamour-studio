@@ -7,12 +7,12 @@ const homepageContent = {
       "Glamour Studio | Provisional website",
     ),
     description: bilingual(
-      "Привремена веб-страница за Glamour Studio во Радовиш. Текстот, услугите и контакт-податоците чекаат потврда од сопственикот.",
-      "A provisional website for Glamour Studio in Radovish. Copy, services, and contact details are awaiting owner confirmation.",
+      "Привремена веб-страница за Glamour Studio во Радовиш. Текстот, услугите, работното време и начинот на закажување чекаат потврда од сопственикот.",
+      "A provisional website for Glamour Studio in Radovish. Copy, services, opening hours, and booking details are awaiting owner confirmation.",
     ),
     openGraphDescription: bilingual(
-      "Привремен концепт за Glamour Studio во Радовиш; конечниот текст и деловните податоци сè уште не се одобрени.",
-      "A provisional concept for Glamour Studio in Radovish; final copy and business details are not yet approved.",
+      "Привремен концепт за Glamour Studio во Радовиш; конечниот текст, услугите, работното време и начинот на закажување сè уште не се одобрени.",
+      "A provisional concept for Glamour Studio in Radovish; final copy, services, opening hours, and booking details are not yet approved.",
     ),
     imageAlt: bilingual(
       "Привремена концептуална слика од топол салонски ентериер; ова не е вистинското Glamour Studio.",
@@ -25,8 +25,8 @@ const homepageContent = {
       "Typography study | Glamour Studio",
     ),
     description: bilingual(
-      "Привремена типографска студија за Glamour Studio; текстот, услугите, медиумите и деловните податоци чекаат потврда.",
-      "A provisional typography study for Glamour Studio; copy, services, media, and business details are awaiting confirmation.",
+      "Привремена типографска студија за Glamour Studio; текстот, услугите, медиумите, работното време и начинот на закажување чекаат потврда.",
+      "A provisional typography study for Glamour Studio; copy, services, media, opening hours, and booking details are awaiting confirmation.",
     ),
   },
   language: {
@@ -112,11 +112,7 @@ const homepageContent = {
     },
   },
   services: {
-    eyebrow: bilingual("Привремен индекс на услуги", "Service index"),
-    title: bilingual(
-      "Категории во нацрт, поставени како уредничка листа.",
-      "Draft categories, set like an editorial list.",
-    ),
+    title: bilingual("Внимание во секој детаљ.", "Care in every detail."),
     rows: [
       {
         label: "01",
@@ -161,12 +157,12 @@ const homepageContent = {
     items: [
       {
         href: "tel:077643005",
-        label: bilingual("Телефон — привремено", "Phone — provisional"),
+        label: bilingual("Телефон", "Phone"),
         value: bilingual("077-643-005", "077-643-005"),
       },
       {
         href: "https://www.google.com/maps/search/?api=1&query=11+Ilija+Aleksov+Radovish",
-        label: bilingual("Адреса — привремено", "Address — provisional"),
+        label: bilingual("Адреса", "Address"),
         value: bilingual(
           "ул. Илија Алексов 11, Радовиш",
           "11 Ilija Aleksov, Radovish",
@@ -174,13 +170,13 @@ const homepageContent = {
       },
       {
         href: "https://www.instagram.com/glamourrstudiio/",
-        label: bilingual("Instagram — привремено", "Instagram — provisional"),
+        label: bilingual("Instagram", "Instagram"),
         value: bilingual("@glamourrstudiio", "@glamourrstudiio"),
       },
     ],
     disclosure: bilingual(
-      "Наведените телефон, адреса и профил се привремени податоци и чекаат потврда од сопственикот. Повик или порака не потврдува термин; работното време и каналите за пораки сè уште не се одобрени.",
-      "The listed phone, address, and profile are provisional and await owner confirmation. Calling or messaging does not confirm an appointment; opening hours and messaging channels are not yet approved.",
+      "Телефонот, адресата и Instagram профилот се потврдени од сопственикот. Повик или порака не потврдува термин; работното време и дополнителните канали за пораки сè уште не се одобрени.",
+      "The phone, address, and Instagram profile are owner-confirmed. Calling or messaging does not confirm an appointment; opening hours and additional messaging channels are not yet approved.",
     ),
   },
   navigation: {
@@ -193,6 +189,10 @@ const homepageContent = {
     lookbook: bilingual("Lookbook", "Lookbook"),
     callShort: bilingual("Јави се", "Call"),
     call: bilingual("Јави се на 077-643-005", "Call 077-643-005"),
+    addressLabel: bilingual(
+      "Отвори ја адресата во Google Maps",
+      "Open the address in Google Maps",
+    ),
   },
 };
 

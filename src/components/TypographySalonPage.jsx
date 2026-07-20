@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useLayoutEffect, useRef } from "react";
 
 import { homepageCopy } from "../lib/homepage-copy";
 import { homepageMedia } from "../lib/homepage-media";
@@ -44,17 +45,63 @@ const sectionH2 =
 const listReset = "m-0 grid list-none p-0";
 const offsetList =
   "ml-auto w-[80%] max-w-[34rem] md:ml-0 md:w-auto md:max-w-none";
+const NAVIGATION_CUBBY_SCALE = 4 / 3;
 
 const [anchorMedia, ...supportingMedia] = homepageMedia;
 
 export default function TypographySalonPage({ variant = "home" }) {
   const { language, setLanguage } = useLanguage();
   const copy = homepageCopy[language];
+  const mainRef = useRef(null);
+  const navigationRef = useRef(null);
+  const address = copy.contact.items.find(({ href }) =>
+    href.startsWith("https://www.google.com/maps/"),
+  );
+
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    const navigation = navigationRef.current;
+
+    if (!main || !navigation) {
+      return undefined;
+    }
+
+    const syncCubbyHeight = () => {
+      const navigationHeight = navigation.getBoundingClientRect().height;
+      const cubbyHeight = Math.ceil(
+        navigationHeight * NAVIGATION_CUBBY_SCALE,
+      );
+      const cubbyInset = (cubbyHeight - navigationHeight) / 2;
+
+      main.style.setProperty(
+        "--navigation-cubby-height",
+        `${cubbyHeight}px`,
+      );
+      main.style.setProperty(
+        "--navigation-cubby-inset",
+        `${cubbyInset}px`,
+      );
+    };
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(syncCubbyHeight);
+
+    resizeObserver?.observe(navigation);
+    window.addEventListener("resize", syncCubbyHeight);
+    syncCubbyHeight();
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", syncCubbyHeight);
+    };
+  }, []);
 
   return (
     <MakeupStrokeProvider>
       <main
-        className="relative isolate min-h-dvh overflow-x-clip bg-surface pb-[154px] sm:pb-[104px]"
+        ref={mainRef}
+        className="relative isolate min-h-dvh overflow-x-clip bg-surface pb-[var(--navigation-cubby-height)] [--navigation-cubby-height:124px] [--navigation-cubby-inset:12px] sm:[--navigation-cubby-height:104px] lg:[--navigation-cubby-inset:16px]"
         data-makeup-root
       >
         <MakeupStroke />
@@ -144,26 +191,16 @@ export default function TypographySalonPage({ variant = "home" }) {
           data-stroke-side="center"
           data-stroke-y="0.5"
         />
-        <div className="grid gap-5 md:grid-cols-[minmax(160px,0.32fr)_minmax(0,0.68fr)] md:items-start md:gap-[clamp(24px,6vw,88px)]">
-          <Reveal
-            as="p"
-            className={kicker}
-            revealId="services-eyebrow"
-            side="start"
-          >
-            {copy.services.eyebrow}
-          </Reveal>
-          <Reveal
-            as="h2"
-            id="type-services"
-            className={sectionH2}
-            revealId="services-title"
-            side="end"
-            y={0.2}
-          >
-            {copy.services.title}
-          </Reveal>
-        </div>
+        <Reveal
+          as="h2"
+          id="type-services"
+          className={`${sectionH2} mx-auto text-center`}
+          revealId="services-title"
+          side="end"
+          y={0.2}
+        >
+          {copy.services.title}
+        </Reveal>
 
         <div className="mt-10 border-t border-line-strong md:mt-16">
           {copy.services.rows.map((service) => (
@@ -348,7 +385,8 @@ export default function TypographySalonPage({ variant = "home" }) {
       </section>
 
       <aside
-        className="fixed inset-x-pad bottom-3 z-30 flex items-stretch gap-1 overflow-hidden rounded-lg border border-ink/20 bg-ink/95 p-2 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] lg:bottom-4 lg:gap-2 lg:py-[11px] lg:pr-3 lg:pl-[18px]"
+        ref={navigationRef}
+        className="fixed inset-x-pad bottom-[var(--navigation-cubby-inset)] z-30 flex items-stretch gap-1 overflow-hidden rounded-lg border border-ink/20 bg-ink/95 p-2 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] lg:inset-x-auto lg:left-1/2 lg:w-max lg:max-w-[calc(100vw-2rem)] lg:-translate-x-1/2 lg:gap-2 lg:px-[18px] lg:py-[11px]"
         aria-label={copy.navigation.label}
       >
         <button
@@ -361,7 +399,18 @@ export default function TypographySalonPage({ variant = "home" }) {
         >
           {copy.language.toggleText}
         </button>
-        <nav className="grid min-w-0 flex-1 grid-cols-4 items-stretch gap-1 text-center text-[0.68rem] leading-tight font-bold whitespace-nowrap sm:text-[0.82rem] lg:flex lg:items-center lg:justify-end lg:gap-2 lg:text-[0.92rem]">
+        {address ? (
+          <a
+            aria-label={copy.navigation.addressLabel}
+            className="hidden min-h-11 max-w-[18rem] min-w-0 items-center rounded-md px-3 text-[0.86rem] leading-tight font-bold text-surface/75 hover:text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface lg:flex"
+            href={address.href}
+            rel="noreferrer"
+            target="_blank"
+          >
+            <span className="truncate">{address.value}</span>
+          </a>
+        ) : null}
+        <nav className="grid min-w-0 flex-1 grid-cols-4 items-stretch gap-1 text-center text-[0.68rem] leading-tight font-bold whitespace-nowrap sm:text-[0.82rem] lg:flex lg:flex-none lg:items-center lg:justify-end lg:gap-2 lg:text-[0.92rem]">
           <a
             className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
             href="#type-services"

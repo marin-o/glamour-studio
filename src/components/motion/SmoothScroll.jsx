@@ -7,6 +7,9 @@ import "lenis/dist/lenis.css";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
+import { LANGUAGE_LAYOUT_SETTLED_EVENT } from "../LanguageProvider";
+import { HOMEPAGE_SCROLL_RESTORE_EVENT } from "./PageTransition";
+
 gsap.registerPlugin(ScrollTrigger);
 
 // Owner-requested Lenis smooth scrolling, driven by the GSAP ticker so
@@ -26,6 +29,42 @@ export default function SmoothScroll() {
     let raf = null;
 
     const update = () => ScrollTrigger.update();
+    const syncLanguageLayout = (event) => {
+      lenis?.resize();
+
+      if (event.detail?.anchorToBottom) {
+        const documentHeight = Math.max(
+          document.documentElement.scrollHeight,
+          document.body?.scrollHeight ?? 0,
+        );
+        const nextBottom = Math.max(documentHeight - window.innerHeight, 0);
+
+        if (lenis) {
+          lenis.scrollTo(nextBottom, { force: true, immediate: true });
+        } else {
+          window.scrollTo(window.scrollX, nextBottom);
+        }
+      }
+
+      ScrollTrigger.refresh();
+    };
+    const restoreHomepageScroll = (event) => {
+      const top = Number(event.detail?.top);
+
+      if (!Number.isFinite(top)) {
+        return;
+      }
+
+      lenis?.resize();
+
+      if (lenis) {
+        lenis.scrollTo(top, { force: true, immediate: true });
+      } else {
+        window.scrollTo(window.scrollX, top);
+      }
+
+      ScrollTrigger.refresh();
+    };
 
     const stop = () => {
       if (!lenis) {
@@ -65,10 +104,26 @@ export default function SmoothScroll() {
     };
 
     mediaQuery.addEventListener("change", syncWithMotionPreference);
+    window.addEventListener(
+      LANGUAGE_LAYOUT_SETTLED_EVENT,
+      syncLanguageLayout,
+    );
+    window.addEventListener(
+      HOMEPAGE_SCROLL_RESTORE_EVENT,
+      restoreHomepageScroll,
+    );
     syncWithMotionPreference();
 
     return () => {
       mediaQuery.removeEventListener("change", syncWithMotionPreference);
+      window.removeEventListener(
+        LANGUAGE_LAYOUT_SETTLED_EVENT,
+        syncLanguageLayout,
+      );
+      window.removeEventListener(
+        HOMEPAGE_SCROLL_RESTORE_EVENT,
+        restoreHomepageScroll,
+      );
       stop();
     };
   }, [pathname]);

@@ -68,9 +68,10 @@ Anti-goals:
 
 ## Content Reality
 
-All salon-specific content is placeholder for now. Missing owner-confirmed
-content includes salon name, services, prices, hours, address, phone or Viber,
-Instagram, staff details, photos, and video.
+The salon name, city, street address, Google Maps destination, phone number, and
+Instagram profile are owner-confirmed. Services, prices, opening hours,
+additional messaging channels, staff details, final marketing copy, photos, and
+video remain provisional or missing.
 
 Placeholder content must be visibly replaceable and must not read as final
 business information. Final preferred media should come from the real salon when
@@ -98,8 +99,8 @@ toggleable option later, but localization is not part of discovery.
 
 ## Open Owner Decisions
 
-- Final salon name, real address, hours, contact channels, services, prices, and
-  staff details.
+- Opening hours, additional contact channels, services, prices, and staff
+  details.
 - Final Macedonian copy and later English translation.
 - Final photo and video assets, preferably filmed in the real studio.
 - Booking implementation depth: contact CTA, request form, or Google

@@ -14,16 +14,20 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { lookbookMediaDimensions } from "../../generated/lookbook-media-manifest";
+import { homepageCopy } from "../../lib/homepage-copy";
 import { lookbookCopy } from "../../lib/lookbook-copy";
 import { useLanguage } from "../LanguageProvider";
 import { TransitionLink } from "../motion/PageTransition";
 
 const clamp = (value, minimum, maximum) =>
   Math.min(Math.max(value, minimum), maximum);
+const utilityNavItem =
+  "flex min-h-10 items-center rounded-md px-2.5 py-2 text-[0.82rem] leading-tight font-bold whitespace-nowrap text-accent outline-none hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
 
 export default function HorizontalLookbook({ items }) {
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const copy = lookbookCopy[language];
+  const homepage = homepageCopy[language];
   const scrollerRef = useRef(null);
   const trackRef = useRef(null);
   const activeIndexRef = useRef(0);
@@ -148,29 +152,60 @@ export default function HorizontalLookbook({ items }) {
 
   return (
     <main className="relative h-svh overflow-hidden bg-surface text-ink">
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 grid min-h-[92px] grid-cols-[auto_1fr_auto] items-start gap-x-4 border-b border-line bg-surface/94 px-pad py-4 md:min-h-[78px] md:grid-cols-[auto_auto_1fr_auto] md:items-center md:gap-x-7">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 grid min-h-[92px] grid-cols-[auto_1fr] items-start gap-x-4 border-b border-line bg-surface/94 px-pad py-4 md:min-h-[78px] md:grid-cols-[auto_auto_1fr] md:items-center md:gap-x-7 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto]">
         <TransitionLink
-          className="pointer-events-auto rounded-md font-bold text-accent underline decoration-accent/35 underline-offset-4"
+          aria-label={copy.returnLabel}
+          className="pointer-events-auto rounded-md text-[1.75rem] leading-none font-bold text-accent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           href="/"
           direction="backward"
         >
-          {copy.returnLabel}
+          <span aria-hidden="true">←</span>
         </TransitionLink>
         <p className="m-0 font-display text-[1.05rem] font-bold text-accent-deep">
           {copy.title}
         </p>
         <p
           id="lookbook-media-notice"
-          className="col-span-3 mt-2 mb-0 text-[0.72rem] leading-[1.35] text-muted md:col-span-1 md:mt-0 md:max-w-[38rem] md:justify-self-center md:text-center md:text-[0.76rem]"
+          className="col-span-2 mt-2 mb-0 text-[0.72rem] leading-[1.35] text-muted md:col-span-1 md:mt-0 md:max-w-[38rem] md:justify-self-center md:text-center md:text-[0.76rem]"
         >
           {copy.disclosure}
         </p>
-        <p
-          className="m-0 hidden text-[0.75rem] font-extrabold tracking-[0.08em] text-accent uppercase md:block"
-          aria-hidden="true"
+        <nav
+          aria-label={copy.navigationLabel}
+          className="pointer-events-auto hidden items-center gap-1 lg:flex"
         >
-          {copy.direction}
-        </p>
+          <button
+            aria-label={homepage.language.toggleLabel}
+            className={utilityNavItem}
+            onClick={() =>
+              setLanguage((current) => (current === "mk" ? "en" : "mk"))
+            }
+            type="button"
+          >
+            {homepage.language.toggleText}
+          </button>
+          <TransitionLink
+            className={utilityNavItem}
+            direction="backward"
+            href="/#type-services"
+          >
+            {homepage.navigation.services}
+          </TransitionLink>
+          <TransitionLink
+            className={utilityNavItem}
+            direction="backward"
+            href="/#type-studio"
+          >
+            {homepage.navigation.studio}
+          </TransitionLink>
+          <a
+            aria-label={homepage.navigation.call}
+            className={utilityNavItem}
+            href="tel:077643005"
+          >
+            {homepage.navigation.callShort}
+          </a>
+        </nav>
       </header>
 
       <section
@@ -211,8 +246,8 @@ export default function HorizontalLookbook({ items }) {
                 data-lookbook-item
               >
                 <figure className="grid h-full grid-rows-[minmax(0,1fr)_auto] gap-3">
-                  <motion.a
-                    className="group relative block min-h-0 overflow-hidden bg-surface-muted outline-offset-4 focus-visible:outline-3 focus-visible:outline-accent"
+                  <a
+                    className="relative block min-h-0 overflow-hidden bg-surface-muted outline-offset-4 focus-visible:outline-3 focus-visible:outline-accent"
                     href={item.permalink}
                     target="_blank"
                     rel="noreferrer"
@@ -221,13 +256,6 @@ export default function HorizontalLookbook({ items }) {
                         ? copy.originalReelLabel(index + 1)
                         : copy.originalPostLabel(index + 1)
                     }
-                    whileHover={
-                      prefersReducedMotion ? undefined : { scale: 1.012 }
-                    }
-                    whileFocus={
-                      prefersReducedMotion ? undefined : { scale: 1.012 }
-                    }
-                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <Image
                       className="block h-full w-full object-cover"
@@ -245,7 +273,7 @@ export default function HorizontalLookbook({ items }) {
                         {copy.reelBadge}
                       </span>
                     ) : null}
-                  </motion.a>
+                  </a>
 
                   <figcaption className="flex items-baseline justify-between gap-5 text-[0.8rem] leading-[1.35] text-muted">
                     <span className="font-extrabold tracking-[0.12em] text-accent uppercase">
@@ -268,7 +296,7 @@ export default function HorizontalLookbook({ items }) {
       </section>
 
       <aside
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 grid min-h-[76px] grid-cols-[auto_1fr_auto] items-center gap-4 border-t border-line bg-surface/95 px-pad py-3"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 grid min-h-[76px] grid-cols-[auto_1fr] items-center gap-4 border-t border-line bg-surface/95 px-pad py-3"
         aria-label={copy.imageCount(activeIndex + 1, items.length)}
       >
         <p className="m-0 font-display text-[1rem] font-bold text-accent-deep tabular-nums">
@@ -302,10 +330,6 @@ export default function HorizontalLookbook({ items }) {
             style={{ left: brushTipPosition, x: "-50%" }}
           />
         </div>
-
-        <p className="m-0 text-right text-[0.7rem] font-bold text-muted">
-          {copy.controls}
-        </p>
       </aside>
     </main>
   );

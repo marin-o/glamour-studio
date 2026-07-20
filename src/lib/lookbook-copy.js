@@ -1,10 +1,10 @@
 export const lookbookCopy = {
   mk: {
-    returnLabel: "← Студио",
+    returnLabel: "Врати се во Студио",
+    navigationLabel: "Навигација во Lookbook",
     title: "Lookbook",
     disclosure:
       "Развојни медиуми · дозволата за користење на веб-страницата и согласноста од препознатливите лица сè уште не се потврдени.",
-    direction: "Лизгај хоризонтално",
     regionLabel: "Хоризонтален развоен Lookbook",
     heading: "Развоен Lookbook на Glamour Studio",
     originalReelLabel: (index) =>
@@ -15,14 +15,13 @@ export const lookbookCopy = {
     reelSource: "Погледни го изворниот Reel",
     postSource: "Погледни ја изворната објава",
     imageCount: (current, total) => `Слика ${current} од ${total}`,
-    controls: "Повлечи · тркалце · стрелки",
   },
   en: {
-    returnLabel: "← Studio",
+    returnLabel: "Return to Studio",
+    navigationLabel: "Lookbook navigation",
     title: "Lookbook",
     disclosure:
       "Development media · website reuse and recognizable-person permissions pending.",
-    direction: "Scroll sideways",
     regionLabel: "Horizontal development Lookbook",
     heading: "Glamour Studio development Lookbook",
     originalReelLabel: (index) =>
@@ -33,6 +32,5 @@ export const lookbookCopy = {
     reelSource: "View Reel source",
     postSource: "View post source",
     imageCount: (current, total) => `Image ${current} of ${total}`,
-    controls: "Swipe · wheel · arrows",
   },
 };

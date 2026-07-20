@@ -159,6 +159,16 @@ The primary CTA should support calling, messaging, or requesting a booking
 without implying live availability. Use direct, accessible labels and visible
 focus states.
 
+On desktop, the persistent bottom navigation should shrink-wrap its controls and
+confirmed street-address action, remain centered and viewport-safe, and avoid
+the sparse appearance of a near-full-width bar. The address action stays hidden
+on mobile so the existing language, Services, Studio, Lookbook, and Call actions
+remain in one row.
+
+The services section uses one concise, centered display heading without an
+eyebrow or an empty alignment column. Its provisional bilingual wording remains
+replaceable without changing the section markup.
+
 The homepage is Macedonian-first. Its server-rendered and no-JavaScript copy
 must be Macedonian, with a single plain-text language toggle inside the
 persistent bottom navigation. It shows `EN` as the action from Macedonian and
@@ -297,11 +307,28 @@ curtain, then reveal the destination in the corresponding direction. History
 must fail open if the transition controller is unavailable. Same-document
 fragment traversal must bypass the curtain because it does not change the App
 Router pathname and therefore has no route commit to trigger a reveal.
+When a visit moves from the homepage into Lookbook, retain its vertical scroll
+position in visit-local memory. Returning with the arrow control or browser
+history must restore that position behind the fully closed curtain before the
+homepage is revealed, without visible automatic scrolling. Preserve the exact
+pixel when layout height is unchanged and equivalent normalized progress when
+localized copy changes the page height. Explicit Services or Studio links from
+the Lookbook continue to target their named sections instead.
 A layered cosmetic-brushstroke rail at the bottom grows continuously from left
 to right with horizontal progress and pairs with a current-image count; it
 supports the sequence without covering the photography. Under reduced motion
 navigation is immediate and the progress state remains legible without
 depending on animated movement.
+
+The utility header uses an arrow-only Studio return control with a localized
+accessible name. On desktop, use its open right side for the visit-local
+language control and direct Services, Studio, and Call actions; the Lookbook
+label already marks the current route, so do not duplicate it as a navigation
+item. Keep the compact mobile header free of those additional items. Visible
+directional instructions are unnecessary. Keep the progress rail and image
+count in the footer without a separate input-method legend. Linked images must
+not enlarge on hover or keyboard focus, and their focus-visible treatment must
+remain clear.
 
 The current nine local Instagram frames are development-only media. Keep the
 visible disclosure and noindex metadata until the owner records website-reuse

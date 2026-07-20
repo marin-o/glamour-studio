@@ -12,6 +12,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -25,8 +26,20 @@ const transition = {
   ease: [0.76, 0, 0.24, 1],
 };
 
+export const HOMEPAGE_SCROLL_RESTORE_EVENT =
+  "glamour:homepage-scroll-restore";
+
 const directionForPath = (pathname) =>
   pathname === "/lookbook" ? "forward" : "backward";
+
+function getMaximumScroll() {
+  const documentHeight = Math.max(
+    document.documentElement.scrollHeight,
+    document.body?.scrollHeight ?? 0,
+  );
+
+  return Math.max(documentHeight - window.innerHeight, 0);
+}
 
 export function PageTransitionProvider({ children }) {
   const router = useRouter();
@@ -40,6 +53,66 @@ export function PageTransitionProvider({ children }) {
   const directionRef = useRef("forward");
   const displayedPathRef = useRef(pathname);
   const isTransitioningRef = useRef(false);
+  const homepageScrollRef = useRef(null);
+  const restoreHomepageOnCommitRef = useRef(false);
+
+  const captureHomepageScroll = useCallback(() => {
+    const maximumScroll = getMaximumScroll();
+    const top = Math.min(Math.max(window.scrollY, 0), maximumScroll);
+
+    homepageScrollRef.current = {
+      maximumScroll,
+      progress: maximumScroll > 0 ? top / maximumScroll : 0,
+      top,
+    };
+  }, []);
+
+  const restoreHomepageScroll = useCallback(() => {
+    const snapshot = homepageScrollRef.current;
+
+    restoreHomepageOnCommitRef.current = false;
+
+    if (!snapshot) {
+      return;
+    }
+
+    const maximumScroll = getMaximumScroll();
+    const layoutChanged =
+      Math.abs(maximumScroll - snapshot.maximumScroll) > 1;
+    const top = Math.min(
+      Math.max(
+        layoutChanged ? snapshot.progress * maximumScroll : snapshot.top,
+        0,
+      ),
+      maximumScroll,
+    );
+
+    window.scrollTo(window.scrollX, top);
+    window.dispatchEvent(
+      new CustomEvent(HOMEPAGE_SCROLL_RESTORE_EVENT, {
+        detail: { top },
+      }),
+    );
+  }, []);
+
+  useEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (
+      prefersReducedMotion &&
+      pathname === "/" &&
+      restoreHomepageOnCommitRef.current
+    ) {
+      restoreHomepageScroll();
+    }
+  }, [pathname, prefersReducedMotion, restoreHomepageScroll]);
 
   useEffect(() => {
     if (pathname === displayedPathRef.current) {
@@ -106,15 +179,52 @@ export function PageTransitionProvider({ children }) {
 
     const exitPosition =
       directionRef.current === "forward" ? "-100%" : "100%";
+    let cancelled = false;
+    let restoreFrame = 0;
 
-    curtainControls
-      .start({ x: exitPosition, transition })
-      .finally(() => {
+    const reveal = async () => {
+      if (
+        displayedPathRef.current === "/" &&
+        restoreHomepageOnCommitRef.current
+      ) {
+        await new Promise((resolve) => {
+          restoreFrame = requestAnimationFrame(resolve);
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        restoreHomepageScroll();
+      }
+
+      try {
+        await curtainControls.start({ x: exitPosition, transition });
+      } finally {
+        if (cancelled) {
+          return;
+        }
+
         pendingPathRef.current = null;
         isTransitioningRef.current = false;
         setIdleVersion((version) => version + 1);
-      });
-  }, [curtainControls, revealVersion]);
+      }
+    };
+
+    reveal();
+
+    return () => {
+      cancelled = true;
+
+      if (restoreFrame) {
+        cancelAnimationFrame(restoreFrame);
+      }
+    };
+  }, [
+    curtainControls,
+    restoreHomepageScroll,
+    revealVersion,
+  ]);
 
   const handleHistoryTransition = useCallback(
     async (event) => {
@@ -133,7 +243,24 @@ export function PageTransitionProvider({ children }) {
         return;
       }
 
-      if (prefersReducedMotion || isTransitioningRef.current) {
+      if (isTransitioningRef.current) {
+        bridge.release();
+        return;
+      }
+
+      if (
+        displayedPathRef.current === "/" &&
+        destinationPath === "/lookbook"
+      ) {
+        captureHomepageScroll();
+      }
+
+      restoreHomepageOnCommitRef.current =
+        displayedPathRef.current === "/lookbook" &&
+        destinationPath === "/" &&
+        homepageScrollRef.current !== null;
+
+      if (prefersReducedMotion) {
         bridge.release();
         return;
       }
@@ -149,7 +276,7 @@ export function PageTransitionProvider({ children }) {
       await curtainControls.start({ x: "0%", transition });
       bridge.release();
     },
-    [curtainControls, prefersReducedMotion],
+    [captureHomepageScroll, curtainControls, prefersReducedMotion],
   );
 
   useEffect(() => {
@@ -168,7 +295,8 @@ export function PageTransitionProvider({ children }) {
 
   const navigate = useCallback(
     async (href, direction = "forward") => {
-      const destinationPath = new URL(href, window.location.href).pathname;
+      const destination = new URL(href, window.location.href);
+      const destinationPath = destination.pathname;
 
       if (destinationPath === pathname) {
         router.push(href);
@@ -178,6 +306,19 @@ export function PageTransitionProvider({ children }) {
       if (isTransitioningRef.current) {
         return;
       }
+
+      if (
+        displayedPathRef.current === "/" &&
+        destinationPath === "/lookbook"
+      ) {
+        captureHomepageScroll();
+      }
+
+      restoreHomepageOnCommitRef.current =
+        displayedPathRef.current === "/lookbook" &&
+        destinationPath === "/" &&
+        destination.hash === "" &&
+        homepageScrollRef.current !== null;
 
       if (prefersReducedMotion) {
         router.push(href);
@@ -195,6 +336,7 @@ export function PageTransitionProvider({ children }) {
     },
     [
       curtainControls,
+      captureHomepageScroll,
       pathname,
       prefersReducedMotion,
       router,

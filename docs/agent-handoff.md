@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=c40c8b7d75e7f77f -->
+<!-- sitewright:fingerprint=1bc0055f77debc08 -->
 ## Sitewright state
 
-- Sitewright Doctor reports `PLANNING_REQUIRED` using `nextjs-app-router` policy pack.
-- Reconcile planning artifacts and keep one executable task.
-- Active task: none.
+- Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
+- The repository has structured intent, coherent planning, and an executable task.
+- Active task: 048-refine-navigation-copy-and-lookbook-controls.md.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -18,8 +18,17 @@
   follows client-side navigation between the homepage and Lookbook and resets
   on full reload. Static checks and the production build pass; automated
   rendered validation was not run under the conservative policy.
-- No executable task is active. Sitewright is at `PLANNING_REQUIRED` until the
-  next scoped outcome is selected.
+- Task 048 remains active for owner-rendered review. Its runtime and
+  documentation changes are implemented: desktop navigation now shrink-wraps
+  around a desktop-only confirmed-address action and the existing controls; the
+  services heading is concise and centered; confirmed contact facts no longer
+  read as provisional; and the Lookbook has an accessible arrow-only return,
+  desktop utility navigation, no visible helper legends, and no linked-image
+  scale behavior. Homepage scroll position is held in visit-local transition
+  memory and restored behind the closed curtain on arrow or browser-history
+  returns. Lint and the production build pass. Conservative policy leaves the
+  affected desktop, mobile, hover, focus, scroll-continuity, and layout
+  presentation awaiting owner verification.
 - Task 046 is owner-approved and complete. The existing hero image remains the
   curtain's single source: GSAP opens and holds the sharp window while the real
   services section arrives through normal scroll, and the makeup stroke begins
@@ -33,9 +42,10 @@
 ## Open owner decisions
 
 - Keep unresolved product, launch, content, and business-truth decisions explicit in product specs or active tasks.
-- Final Macedonian copy, the English translation, and all displayed business
-  and contact details remain unapproved; both language sets stay visibly
-  provisional and replaceable.
+- The displayed phone number, street address, Maps destination, and Instagram
+  profile are owner-confirmed. Final Macedonian and English marketing copy,
+  services, prices, hours, booking behavior, and any additional messaging
+  channels remain unapproved and replaceable.
 - All nine development lookbook JPEGs are only 640px wide; approved
   production-resolution originals remain required for true high-density
   crispness.
