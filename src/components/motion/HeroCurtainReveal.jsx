@@ -26,12 +26,14 @@ export default function HeroCurtainReveal({ children }) {
       const wrapper = wrapperRef.current;
       const root = wrapper?.closest("[data-makeup-root]");
       const hero = wrapper?.querySelector("[data-hero-curtain-hero]");
-      const veil = wrapper?.querySelector("[data-hero-curtain-veil]");
+      const veilClip = wrapper?.querySelector(
+        "[data-hero-curtain-veil-clip]",
+      );
       const foreground = wrapper?.querySelector(
         "[data-hero-curtain-foreground]",
       );
 
-      if (!wrapper || !root || !hero || !veil || !foreground) {
+      if (!wrapper || !root || !hero || !veilClip || !foreground) {
         return undefined;
       }
 
@@ -42,14 +44,16 @@ export default function HeroCurtainReveal({ children }) {
 
       if (prefersReducedMotion) {
         clearMetrics();
-        gsap.set([veil, foreground], { clearProps: "all" });
+        gsap.set([veilClip, foreground], { clearProps: "clipPath" });
         return undefined;
       }
 
-      const state = { veilClip: 0 };
       let foregroundBottomOffset = 0;
       let revealDepth = 0;
       let scrollDistance = 0;
+
+      const clipPathFor = (bottom) =>
+        `inset(0 0 ${Math.max(0, bottom)}px 0)`;
 
       const measure = () => {
         const heroRect = hero.getBoundingClientRect();
@@ -69,32 +73,16 @@ export default function HeroCurtainReveal({ children }) {
         root.dispatchEvent(new CustomEvent("hero-curtain:measure"));
       };
 
-      const render = () => {
-        const foregroundClip = Math.max(
-          0,
-          state.veilClip - foregroundBottomOffset,
-        );
-
-        gsap.set(veil, {
-          clipPath: `inset(0 0 ${Math.max(0, state.veilClip)}px 0)`,
-        });
-        gsap.set(foreground, {
-          clipPath: `inset(0 0 ${foregroundClip}px 0)`,
-        });
-      };
-
       measure();
-      render();
+      gsap.set([veilClip, foreground], { clipPath: clipPathFor(0) });
 
       const timeline = gsap.timeline({
         defaults: { ease: "none" },
-        onUpdate: render,
         scrollTrigger: {
           end: () => `+=${scrollDistance}`,
           invalidateOnRefresh: true,
           onRefresh: () => {
             measure();
-            render();
           },
           onRefreshInit: measure,
           scrub: true,
@@ -112,11 +100,22 @@ export default function HeroCurtainReveal({ children }) {
       });
 
       timeline
-        .to(state, {
+        .to(veilClip, {
           duration: 0.22,
-          veilClip: () => revealDepth,
+          clipPath: () => clipPathFor(revealDepth),
         })
-        .to(state, {
+        .to(
+          foreground,
+          {
+            duration: 0.22,
+            clipPath: () =>
+              clipPathFor(Math.max(0, revealDepth - foregroundBottomOffset)),
+          },
+          0,
+        )
+        // Keep the revealed boundary open for the remainder of the native
+        // scroll interval without an onUpdate callback or a per-frame set.
+        .to({}, {
           duration: 0.78,
         });
 
@@ -124,7 +123,7 @@ export default function HeroCurtainReveal({ children }) {
         clearMetrics();
         timeline.scrollTrigger?.kill();
         timeline.kill();
-        gsap.set([veil, foreground], { clearProps: "all" });
+        gsap.set([veilClip, foreground], { clearProps: "clipPath" });
       };
     },
     {

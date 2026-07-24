@@ -12,6 +12,22 @@
 - Phase 2: Design, interaction, and responsive refinement.
 - Phase 3: Content completion and launch-readiness pass for accessibility, metadata, performance, and owner-approved details.
 
+## Custom booking program
+
+The owner approved a custom Next.js and Google Calendar booking direction on
+2026-07-23. Deliver it sequentially under
+`docs/booking-google-calendar-implementation-plan.md`:
+
+1. Booking domain and deterministic availability engine.
+2. Google Calendar adapter and authorization boundary.
+3. Reliable booking orchestration and public API.
+4. Macedonian-first customer booking experience.
+5. Abuse protection, operations, and launch readiness.
+
+Each phase is one Sitewright task. Under the single-active policy, create the
+next phase task only after the current phase has passed implementation, review,
+fixes, recorded validation, and explicit owner completion approval.
+
 ## Cross-phase rules
 
 - Keep the product usable after every normal task.

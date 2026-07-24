@@ -73,8 +73,9 @@ visitor has booked a confirmed slot.
 
 ## Media Assets
 
-Use real Glamour Studio media where possible. Temporary placeholders may remain
-until owner-approved assets exist.
+Use real Glamour Studio media where possible. The current homepage set is a
+provisional role-separated real-media delivery; other temporary placeholders may
+remain until owner-approved assets exist.
 
 | Asset | Priority | Owner/source notes | Current site surface |
 | --- | --- | --- | --- |
@@ -87,21 +88,31 @@ until owner-approved assets exist.
 | Wide studio image | Optional strong visual moment |  | `/lookbook`, future gallery/vibe section |
 | Staff or owner photo | Optional, permission-sensitive |  | Future about/trust section |
 
-### Homepage Media-Band Replacement Set
+### Homepage Role-Separated Media Set
 
-The current homepage media band uses three clearly labeled concept placeholders.
-Replace them by role so the layout and metadata can stay stable:
+The homepage now uses a provisional real-studio set with one hero role and a
+separate three-image studio-band role. The selected photos remain permission-
+and final-selection-gated; recognizable client or person imagery remains unused
+until explicit reuse permission is recorded.
 
-| Placeholder role | Exact real shot requested | Approval and capture notes |
+| Current role | Selected real shot | Approval and capture notes |
 | --- | --- | --- |
-| Wide interior anchor | A horizontal, warm view of the real styling space with a chair, mirror, materials, or tools | Avoid accidental private documents or unapproved signage; confirm the owner approves the space and crop. |
-| Craft detail | A vertical close or medium shot of approved hands working with hair and salon tools | Keep faces out unless separately approved; confirm whether the client, hands, and service process may be published. |
-| People-at-work context | A vertical, distant or behind-the-scenes view of approved salon work | Obtain permission from every recognizable staff member or client; prefer backs, distance, or an empty scene when consent is not available. |
+| Hero / interior | `glamour-studio-hero-clean-4k.jpg` (from `glamour-studio-interior-wide.jpg`): cleaned interior hero frame | Confirm owner approval of the space and crop before launch. |
+| Work-area anchor | `glamour-studio-work-area-4k.jpg` (from `glamour-studio-work-area-source.jpg`): wide work-area overview | Confirm owner approval of the space and crop before launch. |
+| Reception detail | `glamour-studio-reception-detail-4k.jpg` (from `glamour-studio-reception-detail.jpg`): reception detail | Confirm signage and crop approval before launch. |
+| Lounge detail | `glamour-studio-lounge-clean-4k.jpg` (from `glamour-studio-lounge-source.jpg`): cleaned lounge detail | Confirm owner approval of the space and crop before launch. |
 
 The replacement images should preserve the current roles, proportions, and
 responsive crops. Provide the file name/source, what the frame shows, approved
 Macedonian alt text, permission owner, people visible, crop permission, and any
 privacy limits for each shot.
+
+The source originals remain in `public/media/placeholders`; the live derivatives
+are high-quality 4K JPEG deliveries. Localized AI edits removed visible objects
+only. Upscaling used localized patch compositing onto the originals, followed by
+Lanczos3/sharpen processing and JPEG export; this does not claim recovered true
+detail. Keep the shared provisional disclosure separate from scene-specific alt
+text and captions.
 
 For every approved image or video, collect:
 

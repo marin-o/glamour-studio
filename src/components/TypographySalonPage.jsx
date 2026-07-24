@@ -4,8 +4,12 @@ import Image from "next/image";
 import { useLayoutEffect, useRef } from "react";
 
 import { homepageCopy } from "../lib/homepage-copy";
-import { homepageMedia } from "../lib/homepage-media";
+import {
+  homepageHeroMedia,
+  homepageStudioMedia,
+} from "../lib/homepage-media";
 import { useLanguage } from "./LanguageProvider";
+import SiteNavigation from "./SiteNavigation";
 import MakeupStroke, {
   MakeupStrokeProvider,
 } from "./motion/MakeupStroke";
@@ -47,16 +51,14 @@ const offsetList =
   "ml-auto w-[80%] max-w-[34rem] md:ml-0 md:w-auto md:max-w-none";
 const NAVIGATION_CUBBY_SCALE = 4 / 3;
 
-const [anchorMedia, ...supportingMedia] = homepageMedia;
+const heroMedia = homepageHeroMedia;
+const [anchorMedia, ...supportingMedia] = homepageStudioMedia;
 
 export default function TypographySalonPage({ variant = "home" }) {
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const copy = homepageCopy[language];
   const mainRef = useRef(null);
   const navigationRef = useRef(null);
-  const address = copy.contact.items.find(({ href }) =>
-    href.startsWith("https://www.google.com/maps/"),
-  );
 
   useLayoutEffect(() => {
     const main = mainRef.current;
@@ -118,20 +120,25 @@ export default function TypographySalonPage({ variant = "home" }) {
           <Image
             alt=""
             className="h-full w-full scale-105 object-cover"
-            height={anchorMedia.height}
+            height={heroMedia.height}
             priority
             sizes="100vw"
-            src={anchorMedia.src}
+            src={heroMedia.src}
             style={{
               objectPosition:
-                anchorMedia.heroObjectPosition ?? anchorMedia.objectPosition,
+                heroMedia.heroObjectPosition ?? heroMedia.objectPosition,
             }}
-            width={anchorMedia.width}
+            width={heroMedia.width}
           />
           <div
-            className="absolute inset-0 bg-surface/52 backdrop-blur-[6px]"
-            data-hero-curtain-veil
-          />
+            className="absolute inset-0 overflow-hidden will-change-[clip-path]"
+            data-hero-curtain-veil-clip
+          >
+            <div
+              className="absolute inset-0 bg-surface/52 backdrop-blur-[6px]"
+              data-hero-curtain-veil
+            />
+          </div>
         </div>
         <div
           className="relative z-10 grid content-start gap-9 md:min-h-[calc(100svh-12rem)] md:content-between md:gap-12"
@@ -202,29 +209,31 @@ export default function TypographySalonPage({ variant = "home" }) {
           {copy.services.title}
         </Reveal>
 
-        <div className="mt-10 border-t border-line-strong md:mt-16">
-          {copy.services.rows.map((service) => (
+        <ul className="m-0 mt-10 list-none border-t border-line-strong p-0 md:mt-16">
+          {copy.services.groups.map((group, index) => (
             <Reveal
-              as="article"
-              className="grid gap-2.5 border-b border-line py-[26px] even:justify-items-end even:text-right md:grid-cols-[78px_minmax(180px,0.42fr)_minmax(0,0.58fr)] md:items-baseline md:gap-[clamp(18px,5vw,72px)] md:py-[30px] md:even:justify-items-start md:even:text-left"
-              key={service.label}
-              revealId={`service-${service.label}`}
+              as="li"
+              className="grid gap-2.5 border-b border-line py-[26px] even:justify-items-end even:text-right md:grid-cols-[78px_minmax(0,1fr)] md:items-baseline md:gap-[clamp(18px,5vw,72px)] md:py-[30px] md:even:justify-items-start md:even:text-left"
+              key={group.id}
+              revealId={`service-${group.id}`}
               role="stroke"
-              side={service.label === "02" ? "end" : "start"}
+              side={index % 2 ? "end" : "start"}
               y={0.08}
             >
               <span className="font-display text-[1.2rem] font-bold leading-none text-accent md:text-[2.2rem]">
-                {service.label}
+                {String(index + 1).padStart(2, "0")}
               </span>
               <h3 className="text-[clamp(2.7rem,12.5vw,5.8rem)] leading-[0.92] md:text-[clamp(2.1rem,5vw,5.8rem)] md:leading-[0.9]">
-                {service.name}
+                {group.label}
               </h3>
-              <p className="m-0 max-w-[32ch] text-[1.04rem] leading-[1.62] text-muted md:max-w-none">
-                {service.note}
-              </p>
             </Reveal>
           ))}
-        </div>
+        </ul>
+        <p className="mt-8 text-right text-[1.04rem] leading-[1.55] text-muted md:mt-10">
+          <TransitionLink className="font-extrabold text-accent-deep underline decoration-blush decoration-2 underline-offset-4" href="/booking">
+            {copy.services.cta}
+          </TransitionLink>
+        </p>
       </section>
         </HeroCurtainReveal>
 
@@ -378,67 +387,14 @@ export default function TypographySalonPage({ variant = "home" }) {
               </a>
             </Reveal>
           ))}
+          <li className="border-t border-t-surface/25 py-[18px] text-[1.08rem] leading-[1.55] text-surface"><TransitionLink className="font-extrabold underline" href="/booking">{copy.contact.booking}</TransitionLink></li>
           <li className="pt-4 text-[0.92rem] leading-[1.55] text-surface/70">
             {copy.contact.disclosure}
           </li>
         </ul>
       </section>
 
-      <aside
-        ref={navigationRef}
-        className="fixed inset-x-pad bottom-[var(--navigation-cubby-inset)] z-30 flex items-stretch gap-1 overflow-hidden rounded-lg border border-ink/20 bg-ink/95 p-2 text-surface shadow-[0_18px_50px_rgb(52_36_31/0.18)] lg:inset-x-auto lg:left-1/2 lg:w-max lg:max-w-[calc(100vw-2rem)] lg:-translate-x-1/2 lg:gap-2 lg:px-[18px] lg:py-[11px]"
-        aria-label={copy.navigation.label}
-      >
-        <button
-          aria-label={copy.language.toggleLabel}
-          className="flex min-h-11 w-9 shrink-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent px-1 py-2 text-[0.72rem] font-extrabold text-surface/70 outline-none hover:text-surface focus-visible:ring-2 focus-visible:ring-surface focus-visible:ring-offset-2 focus-visible:ring-offset-ink lg:w-auto lg:text-[0.86rem]"
-          onClick={() =>
-            setLanguage((current) => (current === "mk" ? "en" : "mk"))
-          }
-          type="button"
-        >
-          {copy.language.toggleText}
-        </button>
-        {address ? (
-          <a
-            aria-label={copy.navigation.addressLabel}
-            className="hidden min-h-11 max-w-[18rem] min-w-0 items-center rounded-md px-3 text-[0.86rem] leading-tight font-bold text-surface/75 hover:text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface lg:flex"
-            href={address.href}
-            rel="noreferrer"
-            target="_blank"
-          >
-            <span className="truncate">{address.value}</span>
-          </a>
-        ) : null}
-        <nav className="grid min-w-0 flex-1 grid-cols-4 items-stretch gap-1 text-center text-[0.68rem] leading-tight font-bold whitespace-nowrap sm:text-[0.82rem] lg:flex lg:flex-none lg:items-center lg:justify-end lg:gap-2 lg:text-[0.92rem]">
-          <a
-            className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
-            href="#type-services"
-          >
-            {copy.navigation.services}
-          </a>
-          <a
-            className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
-            href="#type-studio"
-          >
-            {copy.navigation.studio}
-          </a>
-          <TransitionLink
-            className="flex min-h-11 min-w-0 items-center justify-center rounded-md px-0.5 py-2 lg:px-3"
-            href="/lookbook"
-          >
-            {copy.navigation.lookbook}
-          </TransitionLink>
-          <a
-            aria-label={copy.navigation.call}
-            className="flex min-h-11 min-w-0 items-center justify-center rounded-lg bg-surface px-0.5 py-2 text-ink lg:px-3.5 lg:py-2.5"
-            href="tel:077643005"
-          >
-            <span className="lg:hidden">{copy.navigation.callShort}</span>
-            <span className="hidden lg:inline">{copy.navigation.call}</span>
-          </a>
-        </nav>
-      </aside>
+      <SiteNavigation ref={navigationRef} current="home" position="bottom" />
       </main>
     </MakeupStrokeProvider>
   );

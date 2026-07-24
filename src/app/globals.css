@@ -57,6 +57,31 @@
     font-family: var(--font-sans);
   }
 
+  * {
+    scrollbar-color: var(--color-accent) var(--color-surface-warm);
+    scrollbar-width: thin;
+  }
+
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--color-surface-warm);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-accent);
+    border: 3px solid var(--color-surface-warm);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-deep);
+  }
+
   .lookbook-scroller::-webkit-scrollbar {
     display: none;
   }

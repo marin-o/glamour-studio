@@ -7,16 +7,16 @@ const homepageContent = {
       "Glamour Studio | Provisional website",
     ),
     description: bilingual(
-      "Привремена веб-страница за Glamour Studio во Радовиш. Текстот, услугите, работното време и начинот на закажување чекаат потврда од сопственикот.",
-      "A provisional website for Glamour Studio in Radovish. Copy, services, opening hours, and booking details are awaiting owner confirmation.",
+      "Веб-страница за Glamour Studio во Радовиш со привремена прва селекција на реални студиски фотографии. Конечниот текст и работното време чекаат потврда од сопственикот.",
+      "A website for Glamour Studio in Radovish with a provisional first selection of real studio photographs. Final copy and opening hours await owner confirmation.",
     ),
     openGraphDescription: bilingual(
-      "Привремен концепт за Glamour Studio во Радовиш; конечниот текст, услугите, работното време и начинот на закажување сè уште не се одобрени.",
-      "A provisional concept for Glamour Studio in Radovish; final copy, services, opening hours, and booking details are not yet approved.",
+      "Привремена прва селекција на реални фотографии од Glamour Studio во Радовиш; конечниот текст и работното време сè уште не се одобрени.",
+      "A provisional first selection of real Glamour Studio photographs in Radovish; final copy and opening hours are not yet approved.",
     ),
     imageAlt: bilingual(
-      "Привремена концептуална слика од топол салонски ентериер; ова не е вистинското Glamour Studio.",
-      "Provisional concept image of a warm salon interior; this is not the real Glamour Studio.",
+      "Ентериер на Glamour Studio со огледала и топли детали.",
+      "Glamour Studio interior with mirrors and warm gold details.",
     ),
   },
   typographyMetadata: {
@@ -25,8 +25,8 @@ const homepageContent = {
       "Typography study | Glamour Studio",
     ),
     description: bilingual(
-      "Привремена типографска студија за Glamour Studio; текстот, услугите, медиумите, работното време и начинот на закажување чекаат потврда.",
-      "A provisional typography study for Glamour Studio; copy, services, media, opening hours, and booking details are awaiting confirmation.",
+      "Привремена типографска студија за Glamour Studio; текстот, медиумите и работното време чекаат потврда.",
+      "A provisional typography study for Glamour Studio; copy, media, and opening hours await confirmation.",
     ),
   },
   language: {
@@ -56,18 +56,18 @@ const homepageContent = {
       "A quieter salon direction where the first impression comes from type, spacing, and warm editorial rhythm instead of placeholder imagery or decorative card systems.",
     ),
     pending: bilingual(
-      "Ова е привремен нацрт за Радовиш. Вистинските фотографии, конечниот текст, цените, работното време, услугите и начинот на закажување сè уште чекаат одлука и потврда од сопственикот.",
-      "This is still a provisional draft for Radovish. Real media, final copy, prices, hours, service details, and booking behavior remain owner decisions.",
+      "Ова е привремен нацрт за Радовиш. Оваа прва селекција на реални фотографии, конечниот текст и работното време сè уште чекаат одлука и потврда од сопственикот.",
+      "This is still a provisional draft for Radovish. This first selection of real photographs, final copy, and opening hours remain owner decisions.",
     ),
     mediaContext: bilingual(
-      "Концептот за ентериер е употребен како нежно заматена почетна заднина.",
-      "Interior concept used as a softly blurred opening background.",
+      "Привремена фотографија од ентериерот на студиото ја поддржува отварањето на страницата.",
+      "A provisional studio-interior photograph supports the opening page and is softly blurred behind the introduction.",
     ),
   },
   media: {
     label: bilingual(
-      "Концептуални фотографии — се чекаат вистински фотографии од студиото",
-      "Concept imagery — real studio photos pending",
+      "Привремена селекција на реални фотографии — конечна одлука за медиумите е во тек",
+      "Provisional selection of real photographs — final media approval is pending",
     ),
     eyebrow: bilingual("Поглед кон студиото", "Studio glimpse"),
     title: bilingual(
@@ -75,70 +75,67 @@ const homepageContent = {
       "A calm place for careful work.",
     ),
     description: bilingual(
-      "Овие концептуални кадри само ја прикажуваат посакуваната атмосфера и видот на моменти што би се споделувале тука. Вистински фотографии од студиото ќе ги заменат откако сопственикот ќе ги одобри кадрите и дозволите.",
-      "These concept frames preview the atmosphere and kinds of moments we want to show here. Real studio photos will replace them once the owner approves the shots and permissions.",
+      "Оваа прва работна селекција прикажува реални простори од Glamour Studio: широк работен простор, детал од рецепцијата и детал од лаунџот. Фотографиите се користат привремено додека сопственикот ја потврди селекцијата и дозволите.",
+      "This first working selection shows real Glamour Studio spaces: a wide work area, a reception detail, and a lounge detail. The photographs are used provisionally while the owner confirms the final selection and permissions.",
     ),
     items: {
       interior: {
         alt: bilingual(
-          "Привремена концептуална слика од топол салонски ентериер со празно столче и огледало; ова не е вистинското Glamour Studio.",
-          "Concept imagery placeholder of a warm salon interior with an empty styling chair and mirror; not the real Glamour Studio.",
+          "Ентериер на Glamour Studio со огледала и топли детали.",
+          "Glamour Studio interior with mirrors and warm gold details.",
         ),
         caption: bilingual(
-          "Концептуална широка слика од ентериер; се чека вистинска фотографија од студиото.",
-          "Concept wide interior image; real studio photo pending.",
+          "Ентериер на Glamour Studio со огледала и топли детали.",
+          "Glamour Studio interior with mirrors and warm gold details.",
         ),
       },
-      craft: {
+      "work-area": {
         alt: bilingual(
-          "Привремена концептуална слика од анонимни раце со салонски алатки и коса; не прикажува вистинска услуга или клиент на Glamour Studio.",
-          "Concept imagery placeholder showing anonymous hands working with salon tools and hair; not a real Glamour Studio service or client.",
+          "Широк работен простор во Glamour Studio.",
+          "Wide Glamour Studio work area with styling stations.",
         ),
         caption: bilingual(
-          "Привремена концептуална слика од работен процес.",
-          "Provisional service-process concept image.",
+          "Широк работен простор во Glamour Studio.",
+          "Wide Glamour Studio work area with styling stations.",
         ),
       },
-      work: {
+      "reception-detail": {
         alt: bilingual(
-          "Привремена концептуална слика од анонимни луѓе што работат во салон; не прикажува вработени или клиенти на Glamour Studio.",
-          "Concept imagery placeholder showing distant anonymous people at work in a salon; not Glamour Studio staff or clients.",
+          "Рецепција со натпис Glamour Studio, цвеќе и прозорец.",
+          "Reception desk with the Glamour Studio sign, flowers and a street-facing window.",
         ),
         caption: bilingual(
-          "Привремена концептуална слика од работа во салон.",
-          "Provisional salon-work concept image.",
+          "Рецепција со натпис Glamour Studio, цвеќе и прозорец.",
+          "Reception desk with the Glamour Studio sign, flowers and a street-facing window.",
+        ),
+      },
+      "lounge-detail": {
+        alt: bilingual(
+          "Детал од лаунџот на Glamour Studio.",
+          "Glamour Studio lounge detail with seating and warm interior finishes.",
+        ),
+        caption: bilingual(
+          "Детал од лаунџот на Glamour Studio.",
+          "Glamour Studio lounge detail with seating and warm interior finishes.",
         ),
       },
     },
   },
   services: {
     title: bilingual("Внимание во секој детаљ.", "Care in every detail."),
-    rows: [
+    groups: [
+      { id: "haircuts", label: bilingual("Шишање", "Haircuts") },
+      { id: "styling", label: bilingual("Стилизирање", "Styling") },
       {
-        label: "01",
-        name: bilingual("Шишање", "Haircuts"),
-        note: bilingual(
-          "Привремена категорија. Точниот назив, времетраењето, цената и достапниот персонал чекаат потврда.",
-          "Draft service category. Final names, duration, pricing, and staff details are pending.",
-        ),
+        id: "colour-treatments",
+        label: bilingual("Боење и третмани", "Colour & treatments"),
       },
-      {
-        label: "02",
-        name: bilingual("Фризура", "Hairstyling"),
-        note: bilingual(
-          "Привремена категорија. Поводите, времетраењето и подготовката чекаат потврда.",
-          "Draft service category. Occasion scope, timing, and preparation details are pending.",
-        ),
-      },
-      {
-        label: "03",
-        name: bilingual("Шминка", "Makeup"),
-        note: bilingual(
-          "Привремена категорија. Опфатот, производите, шминкерот и цената чекаат потврда.",
-          "Draft service category. Final scope, products, artist details, and pricing are pending.",
-        ),
-      },
+      { id: "makeup", label: bilingual("Шминка", "Makeup") },
     ],
+    cta: bilingual(
+      "Погледнете ги сите услуги и закажете термин",
+      "View the full service menu and book an appointment",
+    ),
   },
   tone: {
     eyebrow: bilingual("Проверка на тонот", "Tone test"),
@@ -147,8 +144,8 @@ const homepageContent = {
       "Soft, local, practical, unfinished on purpose.",
     ),
     description: bilingual(
-      "Оваа насока го задржува салонскиот концепт мирен и читлив, а недовршените делови остануваат јасно означени. Подоцна може да се вметнат одобрени текстови и вистински фотографии без зависност од генерички фотографии за убавина.",
-      "This direction keeps the salon presence calm and legible while making the unfinished parts explicit. It can later absorb approved copy and real studio media without depending on generic beauty imagery now.",
+      "Оваа насока го задржува салонот мирен и читлив, а недовршените делови остануваат јасно означени. Привремената селекција на реални фотографии подоцна може да се прецизира заедно со одобрениот текст, без зависност од генерички фотографии за убавина.",
+      "This direction keeps the salon presence calm and legible while making the unfinished parts explicit. The provisional real-photo selection can be refined alongside approved copy without depending on generic beauty imagery.",
     ),
   },
   contact: {
@@ -178,17 +175,18 @@ const homepageContent = {
       "Телефонот, адресата и Instagram профилот се потврдени од сопственикот. Повик или порака не потврдува термин; работното време и дополнителните канали за пораки сè уште не се одобрени.",
       "The phone, address, and Instagram profile are owner-confirmed. Calling or messaging does not confirm an appointment; opening hours and additional messaging channels are not yet approved.",
     ),
+    booking: bilingual("Закажи онлајн", "Book online"),
   },
   navigation: {
     label: bilingual(
-      "Навигација на почетната страница",
-      "Homepage navigation",
+      "Навигација на веб-страницата",
+      "Site navigation",
     ),
     services: bilingual("Услуги", "Services"),
     studio: bilingual("Студио", "Studio media"),
     lookbook: bilingual("Lookbook", "Lookbook"),
-    callShort: bilingual("Јави се", "Call"),
-    call: bilingual("Јави се на 077-643-005", "Call 077-643-005"),
+    bookShort: bilingual("Закажи", "Book"),
+    book: bilingual("Закажи онлајн", "Book online"),
     addressLabel: bilingual(
       "Отвори ја адресата во Google Maps",
       "Open the address in Google Maps",

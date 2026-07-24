@@ -6,6 +6,9 @@ import { LanguageProvider } from "../components/LanguageProvider";
 import { PageTransitionProvider } from "../components/motion/PageTransition";
 import SmoothScroll from "../components/motion/SmoothScroll";
 import { homepageCopy } from "../lib/homepage-copy";
+import { homepageHeroMedia } from "../lib/homepage-media";
+
+const homepageOgImage = homepageHeroMedia;
 
 const historyTransitionBridge = `
 (() => {
@@ -82,9 +85,9 @@ export const metadata = {
     locale: "mk_MK",
     images: [
       {
-        url: "/media/placeholders/salon-interior-concept.png",
-        width: 1536,
-        height: 1024,
+        url: homepageOgImage.src,
+        width: homepageOgImage.width,
+        height: homepageOgImage.height,
         alt: homepageCopy.mk.metadata.imageAlt,
       },
     ],

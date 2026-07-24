@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "task": "053-enable-guarded-localhost-google-calendar-booking-integration.md",
+  "status": "DONE",
+  "evidence": "Owner completed Google setup and confirmed the localhost booking flow appears to work after the live timestamp-shape correction. Final validation: 81/81 booking tests, lint, and production build passed; localhost availability API returned 200 with Google-backed slots.",
+  "changedFiles": [
+    "src/lib/booking/runtime.mjs",
+    "src/lib/booking/local/coordination.mjs",
+    "scripts/booking/google-oauth-local.mjs",
+    "src/lib/booking/client/booking-api.mjs",
+    "tests/booking",
+    ".env.example",
+    "docs/booking-google-calendar-setup.md",
+    "docs/booking-api.md",
+    "REPO_MAP.md",
+    "package.json"
+  ],
+  "approvedBy": "owner",
+  "recordedAt": "2026-07-23T15:26:08.509Z"
+}

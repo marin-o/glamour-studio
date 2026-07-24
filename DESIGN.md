@@ -24,8 +24,8 @@ motion:
   reveal: "Role-based system: reserve a one-time typewriter entrance for the hero studio name; use side-aware editorial line assembly for aligned headings and lists, selective makeup-stroke-connected reveals for supporting copy, and static text where motion adds no meaning."
   environmental: "Future real salon hair-movement video may join or replace the stroke when owner-approved media exists."
 components:
-  navigation: "Homepage navigation is consolidated into the persistent bottom bar; do not add a separate top header unless the information architecture materially expands."
-  cta: "Persistent bottom contact or booking CTA, mobile-first, accessible, and direct."
+  navigation: "Use one shared persistent site bar on every customer-facing route: bottom-positioned on standard pages and top-positioned on Lookbook."
+  cta: "The shared bar keeps booking primary, mobile-first, accessible, and direct."
   card: "Used sparingly for repeated service or gallery items; avoid nested cards."
   section: "Full-width bands or unframed constrained layouts, not floating page-section cards."
 ---
@@ -88,7 +88,7 @@ Macedonian support before adoption.
 Build a single-page, mobile-first flow with strong section rhythm:
 
 - hero;
-- service placeholders;
+- localized four-group service overview leading to the authoritative `/booking` catalog;
 - gallery or studio vibe;
 - about and trust;
 - contact and location;
@@ -105,20 +105,21 @@ section enough padding so contact/location details remain reachable.
 ## Homepage Media Placement
 
 After the service index, the homepage has one customer-facing studio-media band:
-use a wide interior image as the anchor and two smaller vertical supporting
-images for craft and people-at-work context. Keep the layout calm and
-asymmetric; this is one visual moment, not a gallery, carousel, or lookbook.
+use the work-area image as the anchor and two smaller vertical supporting images
+for the reception detail and lounge detail. Keep the layout calm and asymmetric;
+this is one visual moment, not a gallery, carousel, or lookbook. The band must
+never reuse the hero source.
 
-The type-first hero may also use the wide interior concept as a full-section,
+The type-first hero uses its separate interior hero image as a full-section,
 softly blurred background behind the intro copy. Keep the studio name and
 primary message first, use a warm stable contrast veil, and keep the shared
-`Concept imagery — real studio photos pending` label visible in the foreground.
+`Provisional selection of real photographs — final media approval is pending` label visible in the foreground.
 The background is decorative and static; it must not obscure focus, reading, or
 the contact path, and it must not add a new animation treatment.
 
 For motion-enabled visitors, the hero-to-services boundary may briefly open as
 a scroll-driven curtain onto a sharp, tightly cropped band of that same
-interior concept. Use the hero's existing image element as the only photograph:
+interior photograph. Use the hero's existing image element as the only photograph:
 the resting veil supplies the soft blur, then retracts to expose the sharp
 pixels already beneath it. The warm services-colored surface advances across
 the page only as the real services section reaches it through normal document
@@ -141,53 +142,61 @@ geometry, reveal already-passed chunks backward to create a connection, delay
 service-copy entrances for the curtain, animate the surface clip, or trigger a
 whole-layer repaint.
 
-Until owner-approved photography exists, all three assets must carry the shared
-localized concept-media disclosure (English:
-`Concept imagery — real studio photos pending`). Their alt text must say they
-are concept placeholders and must not identify the real salon, staff, or
-clients. Replace technical media metadata in `src/lib/homepage-media.js` and its
-aligned localized label, alt text, and captions in
-`src/lib/homepage-copy.js` so future real assets do not require a structural
-homepage rewrite. The real
-replacement set is an approved wide interior shot, a vertical hands-at-work
-service-process shot, and a vertical distant/behind-the-scenes work shot with
-permissions for every recognizable person.
+The role-separated contract lives in `src/lib/homepage-media.js`: the hero is
+`homepageHeroMedia`, while `homepageStudioMedia` contains the work-area anchor,
+reception-detail support image, and lounge-detail support image. The originals
+remain in `public/media/placeholders`; live routes use the corresponding 4K
+delivery derivatives. The localized AI edits were object-removal edits only.
+Where an original needed upscaling, a localized patch was composited onto the
+original before Lanczos3/sharpen processing and JPEG derivative export. These
+are high-quality 4K delivery derivatives, not a claim of recovered true detail.
+
+All four images carry the shared localized disclosure (English:
+`Provisional selection of real photographs — final media approval is pending`).
+Alt text and captions describe only visible scenes and must not identify people,
+approval state, internal placeholder wording, or unseen claims. Booking may
+reuse the hero image because it is a separate route; Open Graph metadata also
+uses the hero role. Client images remain unused pending explicit permission.
 
 ## Components And States
 
-The primary CTA should support calling, messaging, or requesting a booking
-without implying live availability. Use direct, accessible labels and visible
-focus states.
+The primary CTA leads to the booking route while direct phone contact remains
+visible. Use direct, accessible labels and visible focus states; never claim a
+booking until the server confirms it.
 
-On desktop, the persistent bottom navigation should shrink-wrap its controls and
-confirmed street-address action, remain centered and viewport-safe, and avoid
+On desktop, the shared navigation should shrink-wrap its controls and confirmed
+street-address action, remain centered and viewport-safe, and avoid
 the sparse appearance of a near-full-width bar. The address action stays hidden
-on mobile so the existing language, Services, Studio, Lookbook, and Call actions
-remain in one row.
+on mobile so Services, Studio, Lookbook, and Book remain in one row. Standard
+pages place the bar at the bottom; Lookbook uses the same bar at the top so its
+horizontal progress footer remains unobstructed.
 
 The services section uses one concise, centered display heading without an
-eyebrow or an empty alignment column. Its provisional bilingual wording remains
-replaceable without changing the section markup.
+eyebrow or an empty alignment column. It presents four broad localized groups —
+haircuts, styling, colour & treatments, and makeup — without prices, durations,
+or individual catalog names. One clear localized CTA routes to `/booking` for
+the full authoritative service catalog.
 
 The homepage is Macedonian-first. Its server-rendered and no-JavaScript copy
-must be Macedonian, with a single plain-text language toggle inside the
-persistent bottom navigation. It shows `EN` as the action from Macedonian and
+must be Macedonian, with a single plain-text language toggle inside the homepage
+instance of the shared navigation. It shows `EN` as the action from Macedonian and
 `MK` as the action from English, without a visible button container. The
 selection is held in root-level memory for the current app visit, follows
-client-side navigation to and from Lookbook, updates the document language, and
+client-side navigation to Booking and Lookbook, updates the document language, and
 resets to Macedonian on a full reload. It must not introduce locale routes,
-cookies, local storage, or a second header. Keep both provisional language sets
+cookies, local storage, or duplicate language controls on subpages. Keep both
+provisional language sets
 structurally aligned in
 `src/lib/homepage-copy.js` so owner-approved replacements do not require layout
 or interaction changes.
 
-Services may use placeholder names and prices only if they are clearly marked as
-replaceable. Gallery and media components should distinguish real salon media
-from temporary placeholders.
+Gallery and media components should distinguish real salon media from temporary
+placeholders. Confirmed services, prices, durations, and studio time zone are
+not placeholders.
 
-Forms are not required during discovery. If a booking/contact form is introduced
-later, it must state what data is collected, where the request goes, and that it
-does not confirm a booking automatically unless the implementation truly does.
+The booking route is a three-step service, appointment, and contact flow. It
+states what data is collected and where it goes, has a direct phone/no-script
+fallback, and presents confirmation only after the API returns it.
 
 ## Motion And Progressive Enhancement
 
@@ -320,13 +329,13 @@ supports the sequence without covering the photography. Under reduced motion
 navigation is immediate and the progress state remains legible without
 depending on animated movement.
 
-The utility header uses an arrow-only Studio return control with a localized
-accessible name. On desktop, use its open right side for the visit-local
-language control and direct Services, Studio, and Call actions; the Lookbook
-label already marks the current route, so do not duplicate it as a navigation
-item. Keep the compact mobile header free of those additional items. Visible
-directional instructions are unnecessary. Keep the progress rail and image
-count in the footer without a separate input-method legend. Linked images must
+Lookbook uses the same shared site-navigation bar as every other route, fixed at
+the top rather than the bottom. Preserve its arrow-only Studio return action as
+the leading control inside that shared bar, while removing the old header's
+duplicate language, Services, Studio, and Call controls. Mark Lookbook as the
+current item in the shared bar and keep the development-media disclosure visible
+directly beneath it. Keep the progress rail and image count in the
+footer without a separate input-method legend. Linked images must
 not enlarge on hover or keyboard focus, and their focus-visible treatment must
 remain clear.
 
@@ -336,8 +345,8 @@ approval, recognizable-person permissions, and production-resolution
 replacements. Descriptive alt text must describe only the visible frame and
 must never reuse Instagram captions or make unverified service claims. Each
 visual links to its original source and identifies Reel cover frames as stills
-rather than local video. The route uses a compact fixed utility header and
-progress footer instead of the homepage's persistent bottom navigation.
+rather than local video. The route uses the top-positioned shared navigation and
+retains its route-specific progress footer.
 
 Lookbook raster delivery follows the Gyroid media contract: preserve source
 pixels, generate and validate intrinsic dimensions, request quality 100 through
@@ -354,6 +363,118 @@ sections, accessible buttons/links, reduced motion, and graceful media failure.
 Important contact actions must work without relying on animation. Any text over
 media needs an implementation-level contrast strategy, such as a stable overlay,
 solid band, or alternate layout.
+
+## Booking Experience
+
+`/booking` is a calm, editorial three-step route rather than a separate card
+system. It reuses the warm surface, ink, line, and accent tokens; service rows
+link directly to trusted catalog IDs, while the persistent primary action leads
+to online booking and the phone remains directly visible in Contact. Appointment
+selection, form messages, and confirmation use semantic native controls and
+plain visible state changes with no motion dependency. Repeated service and
+appointment choices use generously padded, softly rounded warm radio cards with
+visible borders, hover/focus rings, and a decisive blush/brown selected
+treatment; the native radio remains in the accessibility tree. The main booking
+surface, date and contact fields, notices, and selected-service summary use the
+same generous rounded geometry instead of sharp rectangular boxes. Primary
+actions are rounded pills; secondary actions remain clearly bounded and rounded
+rather than reading as adjacent text. Appointment/contact steps show one
+editorial selected-service summary strip with duration, price, and a bordered
+Change service action. The three-step position is communicated by one compact
+`Step n of 3 — Label` progress treatment and track rather than inert numbered
+bullets. Date input remains native but is presented as a full-width warm field
+with helper copy and a calendar cue. Primary Continue/Confirm actions are filled
+warm-brown buttons; Back, Change, and Retry use bordered warm surfaces, all with
+clear hover, disabled, and focus-visible states. Action bars keep controls
+separated and stack on narrow screens. The booking route consumes the global
+language selected on the homepage and must not duplicate the language picker.
+It has a meaningful phone fallback when JavaScript or online availability is
+unavailable.
+
+On wide screens, compose Booking as one editorial appointment desk: one
+image-led summary at the left and one substantial working sheet at the right,
+top- and bottom-aligned to the same row height. The summary reuses the
+provisional interior photograph and must carry its localized media disclosure
+and honest alt text. It shows only useful live state—service, duration, price, date, and time—
+with truthful pending copy before selection. On narrow screens it becomes a
+compact summary above the working sheet rather than disappearing. Service
+choices may use a two-column grid where space permits. Appointment selection
+presents the next seven local studio dates as obvious rounded buttons while
+retaining the native date input for any other date; returned times are grouped
+into morning and afternoon for scanning. Carry the same live summary through
+Contact and confirmation instead of repeating separate nested summary cards.
+When that summary card gains or loses service and appointment detail, Motion
+layout animation interpolates its position and dimensions instead of snapping;
+reduced-motion preference keeps the immediate static resize.
+Do not fill the route with ornamental statistics, generic feature claims, or
+additional progress furniture.
+
+Do not repeat a visible route masthead above this desk. The image summary
+already establishes the booking context, so retain only a semantic page heading
+for assistive technology and place state-specific headings inside the working
+sheet.
+
+Booking uses the same measured navigation cubby as the landing page: observe
+the rendered bottom bar height, reserve a four-thirds-height cubby around it,
+and center the fixed bar inside that space. On desktop, subtract that measured
+space and the route's top inset from the aligned image/form row so the page
+itself stays within one dynamic viewport and the bar never overlaps either
+surface. Keep the ten-choice Service step compact enough to fit without its own
+scrollbar. If a short desktop viewport cannot contain a later active form,
+scroll only the working sheet, mark that nested region to bypass global Lenis,
+and keep the image and page frame fixed. Mobile retains normal document flow
+plus the measured bottom cubby.
+
+Keep the appointment step compact before relying on overflow: the seven-day
+rail uses one desktop row, time pills use a dense six-column desktop grid, and
+morning/afternoon spacing stays restrained. When scrolling is still necessary,
+use the platform scrollbar with one global site skin—thin warm track, rounded
+accent-brown thumb, darker hover—rather than page-specific JavaScript
+scrollbars. Preserve Lookbook's intentionally hidden horizontal rail scrollbar.
+
+Booking step changes use one restrained Motion-owned directional transition
+inside the working sheet. Forward progression enters from the right while the
+prior screen leaves left; Back and Change service reverse that direction. Keep
+the image summary and outer desk stationary. Treat the step handoff like one
+continuous carousel movement: the departing and incoming screens travel a full
+panel width at the same time, on the same easing curve, with no pause or
+crossfade. Implement this as one persistent horizontal Motion track with each
+step positioned at an exact panel-width offset; animate the track itself to the
+active index instead of swapping overlapping presence children. Measure the
+active panel so variable-height mobile content keeps the correct viewport
+height. The track viewport is explicitly relative, rounded, overflow-hidden,
+and has no padding of its own, so every 100%-offset panel meets the clip edge
+exactly and adjacent screens cannot show through a gutter. Each panel owns the
+internal safe padding that protects focus rings, selected-card shadows, and
+action validation. Transfer programmatic focus to the incoming step heading
+after the track settles. Reduced-motion preference removes the movement and
+duration without changing the state flow.
+
+Appointment validation belongs beside the control that exposes it. In
+particular, missing-slot feedback sits next to the Continue/Confirm appointment
+button and is overlaid rather than inserted into the date-and-slot content
+stack, so validation does not shift the appointment choices.
+All customer-facing booking messages remain contextual and singular: availability
+status belongs in the date area, appointment action validation shares one
+stationary status beside Continue, and contact/submission feedback sits beside
+Confirm. Taken-slot feedback returns to that appointment status and clears when
+the client changes the slot or edits contact fields. Inactive carousel screens
+remain inert, aria-hidden, and pointer-inactive throughout track movement; only
+the settled active heading receives focus.
+The working sheet keeps emergency vertical reachability on short desktop
+viewports. Its rounded outer shell owns the visible corners while a separate
+inner element owns vertical scrolling, so the scrollbar track cannot square off
+the shell's right edge. The carousel uses a dedicated rounded viewport with safe
+gutters so focus rings and selected-card shadows remain visible without clipping
+hacks.
+The three progress tracks remain mounted and animate their accent fill from the
+left when advancing, or drain it when returning, instead of snapping between
+complete background colors.
+
+Booking and Lookbook both retain a leading arrow-only Studio return control
+inside their shared navigation instance. Use the same geometrically centered
+SVG arrow rather than a font glyph so its alignment is consistent in the
+rounded control at both top and bottom placements.
 
 ## Do's And Don'ts
 
@@ -380,7 +501,7 @@ Don't:
 - Final media assets: hero video, studio photos, service imagery, and staff
   photos.
 - Final Macedonian copy tone and later English translation tone.
-- Exact booking/contact CTA wording once owner chooses CTA, request form, or
-  calendar-aware availability.
+- Final booking CTA wording and tone, plus production activation after the
+  owner-approved calendar-aware architecture is configured.
 - Whether analytics, cookie notices, or privacy copy are required by the chosen
   contact/booking approach.

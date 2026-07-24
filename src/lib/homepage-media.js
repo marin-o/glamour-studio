@@ -1,24 +1,38 @@
-export const homepageMedia = [
-  {
-    id: "interior",
-    src: "/media/placeholders/salon-interior-concept.png",
-    width: 1536,
-    height: 1024,
+const freezeMedia = (media) => Object.freeze(media);
+
+export const homepageHeroMedia = freezeMedia({
+  id: "interior",
+  role: "hero",
+  src: "/media/placeholders/glamour-studio-hero-clean-4k.jpg",
+  width: 4096,
+  height: 3072,
+  objectPosition: "center center",
+  heroObjectPosition: "58% center",
+});
+
+export const homepageStudioMedia = Object.freeze([
+  freezeMedia({
+    id: "work-area",
+    role: "anchor",
+    src: "/media/placeholders/glamour-studio-work-area-4k.jpg",
+    width: 4096,
+    height: 3072,
     objectPosition: "center center",
-    heroObjectPosition: "72% center",
-  },
-  {
-    id: "craft",
-    src: "/media/placeholders/haircraft-hands-concept.png",
-    width: 1024,
-    height: 1536,
+  }),
+  freezeMedia({
+    id: "reception-detail",
+    role: "supporting",
+    src: "/media/placeholders/glamour-studio-reception-detail-4k.jpg",
+    width: 3072,
+    height: 4096,
     objectPosition: "center center",
-  },
-  {
-    id: "work",
-    src: "/media/placeholders/anonymous-salon-work-concept.png",
-    width: 1024,
-    height: 1536,
+  }),
+  freezeMedia({
+    id: "lounge-detail",
+    role: "supporting",
+    src: "/media/placeholders/glamour-studio-lounge-clean-4k.jpg",
+    width: 3072,
+    height: 4096,
     objectPosition: "center center",
-  },
-];
+  }),
+]);

@@ -1,8 +1,6 @@
 export const lookbookCopy = {
   mk: {
     returnLabel: "Врати се во Студио",
-    navigationLabel: "Навигација во Lookbook",
-    title: "Lookbook",
     disclosure:
       "Развојни медиуми · дозволата за користење на веб-страницата и согласноста од препознатливите лица сè уште не се потврдени.",
     regionLabel: "Хоризонтален развоен Lookbook",
@@ -18,8 +16,6 @@ export const lookbookCopy = {
   },
   en: {
     returnLabel: "Return to Studio",
-    navigationLabel: "Lookbook navigation",
-    title: "Lookbook",
     disclosure:
       "Development media · website reuse and recognizable-person permissions pending.",
     regionLabel: "Horizontal development Lookbook",

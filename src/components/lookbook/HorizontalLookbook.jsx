@@ -14,20 +14,15 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { lookbookMediaDimensions } from "../../generated/lookbook-media-manifest";
-import { homepageCopy } from "../../lib/homepage-copy";
 import { lookbookCopy } from "../../lib/lookbook-copy";
 import { useLanguage } from "../LanguageProvider";
-import { TransitionLink } from "../motion/PageTransition";
+import SiteNavigation from "../SiteNavigation";
 
 const clamp = (value, minimum, maximum) =>
   Math.min(Math.max(value, minimum), maximum);
-const utilityNavItem =
-  "flex min-h-10 items-center rounded-md px-2.5 py-2 text-[0.82rem] leading-tight font-bold whitespace-nowrap text-accent outline-none hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
-
 export default function HorizontalLookbook({ items }) {
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const copy = lookbookCopy[language];
-  const homepage = homepageCopy[language];
   const scrollerRef = useRef(null);
   const trackRef = useRef(null);
   const activeIndexRef = useRef(0);
@@ -152,61 +147,18 @@ export default function HorizontalLookbook({ items }) {
 
   return (
     <main className="relative h-svh overflow-hidden bg-surface text-ink">
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 grid min-h-[92px] grid-cols-[auto_1fr] items-start gap-x-4 border-b border-line bg-surface/94 px-pad py-4 md:min-h-[78px] md:grid-cols-[auto_auto_1fr] md:items-center md:gap-x-7 lg:grid-cols-[auto_auto_minmax(0,1fr)_auto]">
-        <TransitionLink
-          aria-label={copy.returnLabel}
-          className="pointer-events-auto rounded-md text-[1.75rem] leading-none font-bold text-accent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-          href="/"
-          direction="backward"
-        >
-          <span aria-hidden="true">←</span>
-        </TransitionLink>
-        <p className="m-0 font-display text-[1.05rem] font-bold text-accent-deep">
-          {copy.title}
-        </p>
-        <p
-          id="lookbook-media-notice"
-          className="col-span-2 mt-2 mb-0 text-[0.72rem] leading-[1.35] text-muted md:col-span-1 md:mt-0 md:max-w-[38rem] md:justify-self-center md:text-center md:text-[0.76rem]"
-        >
-          {copy.disclosure}
-        </p>
-        <nav
-          aria-label={copy.navigationLabel}
-          className="pointer-events-auto hidden items-center gap-1 lg:flex"
-        >
-          <button
-            aria-label={homepage.language.toggleLabel}
-            className={utilityNavItem}
-            onClick={() =>
-              setLanguage((current) => (current === "mk" ? "en" : "mk"))
-            }
-            type="button"
-          >
-            {homepage.language.toggleText}
-          </button>
-          <TransitionLink
-            className={utilityNavItem}
-            direction="backward"
-            href="/#type-services"
-          >
-            {homepage.navigation.services}
-          </TransitionLink>
-          <TransitionLink
-            className={utilityNavItem}
-            direction="backward"
-            href="/#type-studio"
-          >
-            {homepage.navigation.studio}
-          </TransitionLink>
-          <a
-            aria-label={homepage.navigation.call}
-            className={utilityNavItem}
-            href="tel:077643005"
-          >
-            {homepage.navigation.callShort}
-          </a>
-        </nav>
-      </header>
+      <SiteNavigation
+        backHref="/"
+        backLabel={copy.returnLabel}
+        current="lookbook"
+        position="top"
+      />
+      <p
+        id="lookbook-media-notice"
+        className="pointer-events-none fixed top-24 left-1/2 z-20 m-0 w-[min(90vw,44rem)] -translate-x-1/2 rounded-full border border-line bg-surface/92 px-4 py-2 text-center text-[0.7rem] leading-[1.35] text-muted shadow-[0_8px_24px_rgb(52_36_31/0.08)] md:top-[5.75rem] md:text-[0.76rem]"
+      >
+        {copy.disclosure}
+      </p>
 
       <section
         ref={scrollerRef}
@@ -224,7 +176,7 @@ export default function HorizontalLookbook({ items }) {
 
         <ol
           ref={trackRef}
-          className="relative m-0 flex h-full w-max list-none gap-[clamp(18px,3.2vw,48px)] px-[calc((100vw-var(--lookbook-card-width))/2)] pt-[112px] pb-[94px] [--lookbook-card-width:82vw] md:pt-[100px] md:pb-[86px] md:[--lookbook-card-width:min(62vw,690px)]"
+          className="relative m-0 flex h-full w-max list-none gap-[clamp(18px,3.2vw,48px)] px-[calc((100vw-var(--lookbook-card-width))/2)] pt-[148px] pb-[94px] [--lookbook-card-width:82vw] md:pt-[132px] md:pb-[86px] md:[--lookbook-card-width:min(62vw,690px)]"
         >
           {items.map((item, index) => {
             const isReelCover = item.kind === "reel-cover";

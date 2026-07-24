@@ -162,6 +162,56 @@ changes settle.
 - Create a follow-up task only for a genuinely separate outcome or explicitly
   deferred work.
 
+## Coding subagent orchestration
+
+- For substantive coding work, the main agent must orchestrate implementation,
+  adversarial review, and correction through role-appropriate subagents.
+
+### Implementation role selection
+
+- Use the `terra_high` role (Terra high) to implement complex non-UI coding.
+- Choose Luna reasoning proportionally for non-complex implementation:
+  - Use `luna_low` for a fully specified atomic mechanical edit that needs
+    virtually no discovery or judgment, such as flipping an explicit boolean or
+    literal, or replacing one asset with an exact source-to-target mapping.
+  - Use `luna_medium` for a small localized change that needs light context or
+    coordination, such as a batch of explicitly mapped image swaps,
+    straightforward copy/prop/config updates, or a mechanical UI adjustment
+    with no design decision.
+  - Use `luna_xhigh` for simpler coding or UI implementation that still involves
+    meaningful behavioral, visual, accessibility, compositional, or multi-file
+    judgment.
+- Choose by required judgment, not file type alone. A precisely mapped image
+  swap may be Luna low or medium; an image-led layout change with responsive or
+  art-direction decisions is Luna xhigh.
+
+### Review and execution protocol
+
+- Spawn a `sol_high` reviewer (Sol high) only after the implementer finishes.
+  Give the reviewer the task, acceptance criteria, changed-file context, and
+  instructions to inspect the implementation adversarially.
+- If the review finds actionable issues, spawn a separate fixer. Choose
+  `terra_high`, `luna_xhigh`, `luna_medium`, or `luna_low` from the correction's
+  actual complexity and required judgment, not automatically from the original
+  task. Give the fixer the complete adversarial review report plus focused
+  correction and validation instructions.
+- Spawn each subagent with no inherited conversation turns (`fork_turns:
+  "none"`) unless the user explicitly asks for conversation context to be
+  inherited. Never rely on prior chat context that the subagent did not receive.
+- Give every implementer or fixer a self-contained brief, or point it to the
+  active task file and add the missing execution detail. For coding and UI work,
+  state what to change, where to change it, and how the result should work,
+  including relevant constraints and acceptance checks.
+- Treat implementation briefs as informed guidance, not an inflexible design.
+  The subagent may choose a better approach when it explains the reason and
+  still satisfies the task.
+- The default substantive-work cycle is implementer, then reviewer, then fixer
+  when review findings exist. The main agent remains responsible for
+  orchestration, integrating the result, and final validation.
+- User instructions override this workflow. The main agent may also handle very
+  simple incremental fixes or implementations directly when the full cycle
+  would be disproportionate.
+
 ## Workflow
 
 1. Read `docs/README.md`, `AGENTS.md`, `docs/agent-handoff.md`, and

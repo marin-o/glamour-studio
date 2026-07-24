@@ -5,22 +5,73 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
+function createMakeupStrokeStore(initialMotionActive = true) {
+  let motionActive = initialMotionActive;
+  let revealedIds = new Set();
+  // React requires getServerSnapshot to remain referentially stable between
+  // renders. The live revealed set is intentionally excluded so scroll
+  // updates never mutate the server/hydration snapshot.
+  const serverVisibility = !initialMotionActive;
+  const listeners = new Set();
+
+  const subscribe = (listener) => {
+    listeners.add(listener);
+
+    return () => listeners.delete(listener);
+  };
+
+  const notify = () => {
+    listeners.forEach((listener) => listener());
+  };
+
+  const setMotionActive = (nextValue) => {
+    const next =
+      typeof nextValue === "function" ? nextValue(motionActive) : nextValue;
+
+    if (motionActive === next) {
+      return;
+    }
+
+    motionActive = next;
+    notify();
+  };
+
+  const setRevealedIds = (ids) => {
+    const nextIds = Array.from(ids || []);
+
+    if (sameIds(revealedIds, nextIds)) {
+      return;
+    }
+
+    revealedIds = new Set(nextIds);
+    notify();
+  };
+
+  return {
+    getServerVisibility: () => serverVisibility,
+    getVisibility: (id) => !motionActive || revealedIds.has(id),
+    setMotionActive,
+    setRevealedIds,
+    subscribe,
+  };
+}
+
+const fallbackMakeupStrokeStore = createMakeupStrokeStore(false);
 const MakeupStrokeContext = createContext({
-  motionActive: false,
-  revealedIds: new Set(),
   setMotionActive: () => {},
   setRevealedIds: () => {},
+  store: fallbackMakeupStrokeStore,
 });
 
 const SAMPLES_PER_SEGMENT = 48;
@@ -614,23 +665,15 @@ function sameIds(previous, nextIds) {
 }
 
 export function MakeupStrokeProvider({ children }) {
-  const [motionActive, setMotionActive] = useState(true);
-  const [revealedIds, setRevealedIdsState] = useState(() => new Set());
-
-  const setRevealedIds = useCallback((ids) => {
-    setRevealedIdsState((previous) =>
-      sameIds(previous, ids) ? previous : new Set(ids),
-    );
-  }, []);
+  const store = useMemo(() => createMakeupStrokeStore(), []);
 
   const value = useMemo(
     () => ({
-      motionActive,
-      revealedIds,
-      setMotionActive,
-      setRevealedIds,
+      setMotionActive: store.setMotionActive,
+      setRevealedIds: store.setRevealedIds,
+      store,
     }),
-    [motionActive, revealedIds, setRevealedIds],
+    [store],
   );
 
   return (
@@ -641,9 +684,13 @@ export function MakeupStrokeProvider({ children }) {
 }
 
 export function useMakeupStrokeReveal(id) {
-  const { motionActive, revealedIds } = useContext(MakeupStrokeContext);
+  const { store } = useContext(MakeupStrokeContext);
 
-  return !motionActive || revealedIds.has(id);
+  return useSyncExternalStore(
+    store.subscribe,
+    () => store.getVisibility(id),
+    () => store.getServerVisibility(id),
+  );
 }
 
 // Flat fills and strokes only — no SVG filters. Filtered groups are
@@ -811,11 +858,25 @@ export default function MakeupStroke() {
       const layer = layerRef.current;
       const root = layer?.closest("[data-makeup-root]");
 
-      setMotionActive(!prefersReducedMotion);
-
-      if (!root || !geometry || !layer) {
+      if (!root || !layer) {
+        // With no measurable controller there is no scroll lifecycle to
+        // conceal content behind. Keep the progressive-enhancement fallback
+        // visible until a real controller can be installed.
+        setMotionActive(false);
         return undefined;
       }
+
+      // Geometry is populated on the first measured animation frame. Keep the
+      // store's initial motion-active snapshot during that transient gap so
+      // every Reveal does not flash visible and then conceal again on mount.
+      if (!geometry) {
+        return undefined;
+      }
+
+      // This is the intentional controller state. It is set during setup,
+      // never during cleanup, so revertOnUpdate cannot briefly expose every
+      // reveal as a reduced-motion fallback while geometry is re-initialized.
+      setMotionActive(!prefersReducedMotion);
 
       const chunkItems = Array.from(
         layer.querySelectorAll("[data-stroke-chunk]"),
@@ -876,11 +937,9 @@ export default function MakeupStroke() {
       });
 
       applyProgress(trigger.progress || 0);
-      setMotionActive(true);
 
       return () => {
         trigger.kill();
-        setMotionActive(false);
       };
     },
     {

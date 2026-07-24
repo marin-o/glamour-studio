@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "049-build-booking-domain-and-availability-engine.md",
+  "status": "DONE",
+  "evidence": "Owner approved Phase 1 on 2026-07-23 after Terra implementation, independent Sol review, Terra correction pass, passing pnpm test:booking (8/8), pnpm lint, pnpm build on Next 16.2.10, and git diff --check.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-23T11:39:13.826Z"
+}

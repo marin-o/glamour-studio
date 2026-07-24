@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=1bc0055f77debc08 -->
+<!-- sitewright:fingerprint=38d3c59de8ceba23 -->
 ## Sitewright state
 
 - Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
 - The repository has structured intent, coherent planning, and an executable task.
-- Active task: 048-refine-navigation-copy-and-lookbook-controls.md.
+- Active task: 053-enable-guarded-localhost-google-calendar-booking-integration.md.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -51,6 +51,12 @@
   crispness.
 - Website reuse and recognizable-person permissions remain unapproved; keep the
   route noindex and visibly disclosed.
+- The owner rejected managed booking services and approved the phased custom
+  Next.js and Google Calendar direction in
+  `docs/booking-google-calendar-implementation-plan.md`. Task 048 is parked
+  blocked with rendered review still pending while booking work takes priority.
+  Production Google changes, external service provisioning, deployment, and
+  launch remain owner-gated.
 
 ## Durable gotchas
 
