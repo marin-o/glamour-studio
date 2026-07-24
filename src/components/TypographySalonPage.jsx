@@ -54,7 +54,7 @@ const NAVIGATION_CUBBY_SCALE = 4 / 3;
 const heroMedia = homepageHeroMedia;
 const [anchorMedia, ...supportingMedia] = homepageStudioMedia;
 
-export default function TypographySalonPage({ variant = "home" }) {
+export default function TypographySalonPage() {
   const { language } = useLanguage();
   const copy = homepageCopy[language];
   const mainRef = useRef(null);
@@ -144,43 +144,19 @@ export default function TypographySalonPage({ variant = "home" }) {
           className="relative z-10 grid content-start gap-9 md:min-h-[calc(100svh-12rem)] md:content-between md:gap-12"
           data-hero-curtain-foreground
         >
-          <Reveal
-            as="p"
-            className={kicker}
-            revealId="hero-eyebrow"
-            side="start"
-            y={0.42}
-          >
-            {copy.hero.eyebrow[variant]}
-          </Reveal>
           <TypewriterTitle
             id="type-title"
-            className="mt-4 text-[clamp(3.7rem,18vw,17.5rem)] leading-[0.82] text-accent-deep md:mt-8 md:leading-[0.74]"
+            className="mt-4 text-[clamp(3.515rem,17.1vw,16.625rem)] leading-[0.82] text-accent-deep md:mt-8 md:leading-[0.74]"
             words={copy.hero.titleWords}
           />
-          <div className="grid gap-7 border-t border-line pt-7 md:ml-auto md:w-full md:max-w-[1120px] md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-[clamp(28px,7vw,110px)]">
-            <Reveal
-              as="p"
-              className={`${bodyCopy} max-w-[34rem]`}
-              revealId="hero-intro"
-              side="start"
-            >
-              {copy.hero.intro}
-            </Reveal>
-            <Reveal
-              as="p"
-              className={`${bodyCopy} ml-auto w-[78%] max-w-[26rem] border-t-2 border-blush pt-4 md:ml-0 md:w-auto md:max-w-none md:border-t-0 md:pt-0`}
-              revealId="hero-pending"
-              role="stroke"
-              side="end"
-            >
-              {copy.hero.pending}
-            </Reveal>
-          </div>
-          <p className="mt-2 ml-auto max-w-[58rem] text-[0.86rem] leading-[1.45] text-accent md:w-[72%]">
-            <span className="font-extrabold">{copy.media.label}</span>{" "}
-            {copy.hero.mediaContext}
-          </p>
+          <Reveal
+            as="p"
+            className="m-0 ml-auto w-[84%] max-w-[50rem] whitespace-pre-line border-t-2 border-blush pt-4 text-[clamp(1.3rem,1.75vw,1.7rem)] leading-[1.54] text-muted md:w-full md:border-t-0 md:pt-0"
+            revealId="hero-intro"
+            side="end"
+          >
+            {copy.hero.intro}
+          </Reveal>
         </div>
       </section>
 
@@ -240,38 +216,36 @@ export default function TypographySalonPage({ variant = "home" }) {
       <section
         className="border-y border-line bg-surface px-pad pt-[70px] pb-[84px] md:py-24"
         aria-labelledby="type-studio"
-        aria-describedby="studio-media-note"
       >
         <div className="grid gap-8 md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] md:gap-[clamp(32px,7vw,96px)]">
           <div className="text-right md:text-left">
-            <p className={kicker}>{copy.media.eyebrow}</p>
+            <p className={kicker}>{copy.studioIntro.eyebrow}</p>
             <Reveal
               as="h2"
               id="type-studio"
-              className={`${sectionH2} mt-4 ml-auto md:ml-0`}
+              className="mt-4 ml-auto max-w-none break-normal text-balance text-[clamp(2.25rem,4.2vw,4.6rem)] leading-[0.96] md:ml-0 md:leading-[0.92]"
               revealId="studio-title"
               role="editorial"
               side="end"
               strokeSide="start"
             >
-              {copy.media.title}
+              {copy.studioIntro.title}
             </Reveal>
-            <p
-              id="studio-media-note"
-              className="mt-7 ml-auto max-w-[29rem] text-[1.04rem] leading-[1.62] text-muted md:ml-0"
+            <Reveal
+              as="p"
+              className={`${bodyCopy} mt-5 ml-auto max-w-[34rem] md:ml-0`}
+              revealId="studio-intro-copy"
+              side="end"
             >
-              {copy.media.description}
-            </p>
-            <p className="mt-5 ml-auto max-w-[29rem] text-[0.92rem] leading-[1.5] font-extrabold text-accent md:ml-0">
-              {copy.media.label}
-            </p>
+              {copy.studioIntro.description}
+            </Reveal>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1.55fr)_minmax(150px,0.45fr)]">
-            <figure className="m-0">
+          <div className="grid gap-3 md:aspect-[1.74/1] md:grid-cols-[minmax(0,1.55fr)_minmax(150px,0.45fr)] md:items-stretch">
+            <figure className="m-0 md:min-h-0 md:overflow-hidden">
               <Image
                 alt={copy.media.items[anchorMedia.id].alt}
-                className="h-auto w-full object-cover"
+                className="h-auto w-full object-cover md:h-full"
                 height={anchorMedia.height}
                 sizes="(min-width: 768px) 45vw, 100vw"
                 src={anchorMedia.src}
@@ -283,12 +257,12 @@ export default function TypographySalonPage({ variant = "home" }) {
               </figcaption>
             </figure>
 
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-1">
+            <div className="grid grid-cols-2 gap-3 md:h-full md:min-h-0 md:grid-cols-1 md:grid-rows-2">
               {supportingMedia.map((media) => (
-                <figure className="m-0" key={media.id}>
+                <figure className="m-0 md:min-h-0 md:overflow-hidden" key={media.id}>
                   <Image
                     alt={copy.media.items[media.id].alt}
-                    className="h-auto w-full object-cover"
+                    className="h-auto w-full object-cover md:h-full"
                     height={media.height}
                     sizes="(min-width: 768px) 15vw, 50vw"
                     src={media.src}
@@ -303,33 +277,6 @@ export default function TypographySalonPage({ variant = "home" }) {
             </div>
           </div>
         </div>
-      </section>
-
-      <section
-        className="mx-auto w-full max-w-[1180px] px-pad pt-[70px] pb-[84px] md:py-24"
-        aria-labelledby="type-about"
-      >
-        <p className={kicker}>
-          {copy.tone.eyebrow}
-        </p>
-        <Reveal
-          as="h2"
-          id="type-about"
-          className="mt-5 max-w-[12ch] text-balance text-[clamp(2.7rem,8vw,8.5rem)] leading-[0.94] md:max-w-[15ch] md:leading-[0.9]"
-          revealId="tone-title"
-          side="start"
-        >
-          {copy.tone.title}
-        </Reveal>
-        <Reveal
-          as="p"
-          className={`${bodyCopy} mt-7 ml-auto w-[78%] max-w-[32rem] border-t-2 border-blush pt-4 md:mt-[34px] md:w-auto md:max-w-[720px] md:border-t-0 md:pt-0`}
-          revealId="tone-copy"
-          role="stroke"
-          side="end"
-        >
-          {copy.tone.description}
-        </Reveal>
       </section>
 
       <section
@@ -388,9 +335,6 @@ export default function TypographySalonPage({ variant = "home" }) {
             </Reveal>
           ))}
           <li className="border-t border-t-surface/25 py-[18px] text-[1.08rem] leading-[1.55] text-surface"><TransitionLink className="font-extrabold underline" href="/booking">{copy.contact.booking}</TransitionLink></li>
-          <li className="pt-4 text-[0.92rem] leading-[1.55] text-surface/70">
-            {copy.contact.disclosure}
-          </li>
         </ul>
       </section>
 

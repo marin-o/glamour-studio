@@ -5,9 +5,9 @@
 only server-calculated instants. The route is `Cache-Control: no-store`.
 
 `POST /api/booking` accepts JSON with exactly `serviceId`, `start`, `name`,
-`phone`, and optional `email`, plus a bounded opaque `Idempotency-Key` header.
+`phone`, and `email`, plus a bounded opaque `Idempotency-Key` header.
 It returns a confirmed booking with server-derived service/times and a
-notification state: `not_requested`, `requested`, or `unknown`. Phone, email,
+notification state: `requested` or `unknown`. Phone, email,
 Calendar IDs, provider details, and event descriptions are never returned.
 
 Public failures are stable envelopes `{ ok: false, error: { code } }`: invalid
@@ -60,5 +60,5 @@ fingerprint-bound records. In-memory coordination is unsafe on serverless
 hosts. Google
 FreeBusy, insertion, and staff edits are not transactional, so the post-insert
 check narrows but cannot eliminate the residual race. Owner decisions still
-needed: production provider choices, bot protection, Google setup, required
-email, retention/privacy, hosting, and activation policy.
+needed: production provider choices, bot protection, Google setup,
+retention/privacy, hosting, and activation policy.

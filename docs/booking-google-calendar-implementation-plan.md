@@ -113,8 +113,9 @@ synchronized staff view rather than the sole source of truth.
   calendar.
 - Adding the customer's email as an attendee and using Google Calendar attendee
   notifications requests an invitation email.
-- Email is therefore required if the customer must receive a Calendar
-  invitation. A phone-only customer cannot receive one.
+- The owner confirmed on 2026-07-24 that email is required so every accepted
+  online booking can request a Calendar invitation. Phone-only customers use
+  an offline booking path.
 - Google does not guarantee that every invitation appears automatically on the
   customer's calendar; recipient settings and spam controls still apply.
 - A guest declining an invitation is not equivalent to cancelling the booking.

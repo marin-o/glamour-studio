@@ -19,14 +19,14 @@ function validatePolicy(policy) {
   return policy;
 }
 function validateContact(input) {
-  if (!input || Object.getPrototypeOf(input) !== Object.prototype || Object.keys(input).some((key) => !['serviceId', 'start', 'name', 'phone', 'email'].includes(key)) || !validText(input.name, 1, 80) || !validText(input.phone, 3, 40) || (input.email !== undefined && (!validText(input.email, 3, 160) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.email)))) throw new BookingError('INVALID_REQUEST', 400);
+  if (!input || Object.getPrototypeOf(input) !== Object.prototype || Object.keys(input).some((key) => !['serviceId', 'start', 'name', 'phone', 'email'].includes(key)) || !validText(input.name, 1, 80) || !validText(input.phone, 3, 40) || !validText(input.email, 3, 160) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.email)) throw new BookingError('INVALID_REQUEST', 400);
 }
-function publicOutcome(service, start, end, notification = 'not_requested') { return Object.freeze({ status: 'confirmed', serviceId: service.id, start: start.toString(), end: end.toString(), notification }); }
+function publicOutcome(service, start, end, notification = 'unknown') { return Object.freeze({ status: 'confirmed', serviceId: service.id, start: start.toString(), end: end.toString(), notification }); }
 function replay(record, expectedOutcome) {
   if (record.state === 'confirmed' || record.state === 'confirmed_notification_pending') {
     const outcome = record.outcome;
     if (!expectedOutcome || outcome.serviceId !== expectedOutcome.serviceId || outcome.start !== expectedOutcome.start || outcome.end !== expectedOutcome.end
-      || (record.state === 'confirmed_notification_pending' ? (!expectedOutcome.hasEmail || outcome.notification !== 'unknown') : (expectedOutcome.hasEmail ? !['requested', 'unknown'].includes(outcome.notification) : outcome.notification !== 'not_requested'))) throw new TypeError('Idempotency provider returned an incompatible replay outcome.');
+      || (record.state === 'confirmed_notification_pending' ? outcome.notification !== 'unknown' : !['requested', 'unknown'].includes(outcome.notification))) throw new TypeError('Idempotency provider returned an incompatible replay outcome.');
     return outcome;
   }
   if (record.state === 'conflict') throw new BookingError(record.code, 409);
@@ -67,7 +67,7 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
     let service; try { service = getService(input.serviceId); } catch { throw new BookingError('INVALID_REQUEST', 400); }
     const start = instant(input.start); const end = start.add({ minutes: service.durationMinutes }); const date = start.toZonedDateTimeISO(STUDIO_TIME_ZONE).toPlainDate().toString();
     try { if (!getAvailableStarts({ serviceId: service.id, date, busyIntervals: [], constraints: { now: Temporal.Instant.from(now()).toString(), leadTimeMinutes: policy.leadTimeMinutes, bookingHorizonDays: policy.bookingHorizonDays } }).includes(start.toString())) throw new BookingError('SLOT_UNAVAILABLE', 409); } catch (error) { throw error instanceof BookingError ? error : new BookingError('INVALID_REQUEST', 400); }
-    const contactDigest = digest(`${input.name}\u0000${input.phone}\u0000${input.email ?? ''}`); const rate = validRate(await ports.rateLimit.check({ action: 'booking', subjectDigest: requestContext.subjectDigest, contactDigest }));
+    const contactDigest = digest(`${input.name}\u0000${input.phone}\u0000${input.email}`); const rate = validRate(await ports.rateLimit.check({ action: 'booking', subjectDigest: requestContext.subjectDigest, contactDigest }));
     if (!rate.allowed) throw new BookingError('RATE_LIMITED', 429, { retryAfter: rate.retryAfter });
     let lease;
     try {
@@ -75,7 +75,7 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
     } catch { throw new BookingError('BOOKING_UNAVAILABLE', 503); }
     const keyDigest = digest(idempotencyKey); const fingerprint = digest(JSON.stringify({ serviceId: service.id, start: start.toString(), contactDigest }));
     const expected = { idempotencyKey, start: start.toString(), end: end.toString(), summary: `Glamour Studio: ${service.name}`, description: `Customer: ${input.name}` };
-    const replayExpected = { serviceId: service.id, start: expected.start, end: expected.end, hasEmail: Boolean(input.email) };
+    const replayExpected = { serviceId: service.id, start: expected.start, end: expected.end };
     try {
       await ports.lock.assertOwnership({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken });
       let record = await ports.idempotency.get({ keyDigest });
@@ -105,8 +105,7 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
         catch { try { await transition(keyDigest, record, 'manual_review', { eventId: record.eventId, code: 'COMPENSATION_UNKNOWN' }); } catch {} throw new BookingError('BOOKING_UNKNOWN', 503); }
         throw new BookingError('SLOT_UNAVAILABLE', 409);
       }
-      const base = publicOutcome(service, start, end, input.email ? 'unknown' : 'not_requested');
-      if (!input.email) { try { return (await transition(keyDigest, record, 'confirmed', { outcome: base })).outcome; } catch { throw new BookingError('BOOKING_UNKNOWN', 503); } }
+      const base = publicOutcome(service, start, end, 'unknown');
       if (record.state === 'event_created') { try { record = await transition(keyDigest, record, 'confirmed_notification_pending', { outcome: base }); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); } }
       // The persisted pending-notification state is itself the replayable safe outcome; never resend it.
       if (record.state === 'confirmed_notification_pending') {

@@ -14,9 +14,10 @@
   --color-line-strong: rgb(92 56 44 / 0.34);
 
   --font-sans:
-    "Aptos", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
-    sans-serif;
-  --font-display: Georgia, "Times New Roman", serif;
+    var(--font-manrope), "Aptos", "Segoe UI", system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  --font-display:
+    var(--font-cormorant-garamond), Georgia, "Times New Roman", serif;
 
   --spacing-pad: clamp(20px, 5vw, 72px);
 }
@@ -108,6 +109,6 @@
   h3 {
     color: var(--color-ink);
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: 600;
   }
 }

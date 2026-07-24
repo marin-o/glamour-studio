@@ -1,32 +1,28 @@
 export const lookbookCopy = {
   mk: {
-    returnLabel: "Врати се во Студио",
-    disclosure:
-      "Развојни медиуми · дозволата за користење на веб-страницата и согласноста од препознатливите лица сè уште не се потврдени.",
-    regionLabel: "Хоризонтален развоен Lookbook",
-    heading: "Развоен Lookbook на Glamour Studio",
+    returnLabel: "Врати се на почетната страна",
+    regionLabel: "Lookbook",
+    heading: "Lookbook на Glamour Studio",
     originalReelLabel: (index) =>
-      `Отвори го оригиналниот Instagram Reel за слика ${index}`,
+      `Отвори ја оригиналната Instagram објава за слика ${index}`,
     originalPostLabel: (index) =>
       `Отвори ја оригиналната Instagram објава за слика ${index}`,
     reelBadge: "Кадар од Reel",
-    reelSource: "Погледни го изворниот Reel",
+    reelSource: "Погледни ја изворната објава",
     postSource: "Погледни ја изворната објава",
     imageCount: (current, total) => `Слика ${current} од ${total}`,
   },
   en: {
-    returnLabel: "Return to Studio",
-    disclosure:
-      "Development media · website reuse and recognizable-person permissions pending.",
-    regionLabel: "Horizontal development Lookbook",
-    heading: "Glamour Studio development Lookbook",
+    returnLabel: "Return to the homepage",
+    regionLabel: "Lookbook",
+    heading: "Glamour Studio Lookbook",
     originalReelLabel: (index) =>
-      `Open the original Instagram Reel for image ${index}`,
+      `Open the original Instagram post for image ${index}`,
     originalPostLabel: (index) =>
       `Open the original Instagram post for image ${index}`,
     reelBadge: "Still frame from a Reel",
-    reelSource: "View Reel source",
-    postSource: "View post source",
+    reelSource: "View original Instagram post",
+    postSource: "View original Instagram post",
     imageCount: (current, total) => `Image ${current} of ${total}`,
   },
 };

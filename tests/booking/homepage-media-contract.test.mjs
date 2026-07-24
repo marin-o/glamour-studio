@@ -101,9 +101,8 @@ test("localized media copy follows the four visible scene IDs", () => {
   for (const language of ["mk", "en"]) {
     const copy = homepageCopy[language];
     assert.deepEqual(Object.keys(copy.media.items), ids);
-    assert.match(copy.media.label, /real|реалн/i);
-    assert.doesNotMatch(copy.media.label, /concept|концепт|placeholder|плејсхолдер/i);
-    assert.match(copy.media.description, /Glamour Studio/i);
+    assert.equal(Object.hasOwn(copy.media, 'label'), false);
+    assert.equal(Object.hasOwn(copy.media, 'description'), false);
 
     for (const item of Object.values(copy.media.items)) {
       assert.ok(item.alt.length > 0);

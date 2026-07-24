@@ -35,6 +35,6 @@ test('subpages inherit global language and Lookbook no longer owns duplicate nav
   assert.doesNotMatch(lookbook, /setLanguage|utilityNavItem|<header/);
   assert.match(lookbook, /returnLabel/);
   assert.match(navigation, /backHref/);
-  assert.match(lookbook, /lookbook-media-notice/);
+  assert.doesNotMatch(lookbook, /lookbook-media-notice|aria-describedby/);
   assert.match(lookbook, /brushProgress/);
 });

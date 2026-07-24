@@ -34,7 +34,7 @@ until the owner confirms it.
 
 | Item | Priority | Owner answer | Current site surface |
 | --- | --- | --- | --- |
-| Confirmed service categories | Required |  | `/`, `/typography`, metadata |
+| Confirmed service categories | Required | Шишање и стилизирање; Боење и третмани; Шминка — owner confirmed 2026-07-24 | `/`, metadata |
 | Haircuts service names/details | Required if listed |  | Service index rows |
 | Hairstyling service names/details | Required if listed |  | Service index rows |
 | Makeup service names/details | Required if listed |  | Service index rows |
@@ -47,11 +47,11 @@ until the owner confirms it.
 
 | Item | Priority | Owner answer | Current site surface |
 | --- | --- | --- | --- |
-| Short homepage intro | Required |  | Hero copy on `/` and `/typography` |
-| About/trust paragraph | Required |  | About section |
+| Short homepage intro | Required | Concise two-sentence customer-facing introduction, with the second sentence on its own line — owner directed 2026-07-24 | Hero on `/` |
+| About/trust paragraph | Required | Owner-directed Macedonian salon introduction supplied 2026-07-24 | Studio-media section |
 | Service descriptions | Required if services are listed |  | Service index |
-| Contact instructions | Required before live contact CTA |  | Contact section, bottom CTA |
-| Booking disclaimer or request wording | Required if booking requests are accepted |  | Contact section, bottom CTA |
+| Contact instructions | Required before live contact CTA | Owner-directed phone, address, Instagram, and online-booking presentation supplied 2026-07-24 | Contact section, bottom CTA |
+| Booking disclaimer or request wording | Required if booking requests are accepted | Owner-directed booking flow copy supplied 2026-07-24; customer email is mandatory | Contact section, booking flow |
 | English translation | Later enhancement |  | Future language toggle or alternate copy |
 | Tone notes | Optional |  | All visible copy |
 
@@ -65,7 +65,7 @@ Choose one launch path before replacing the current "not live" wording.
 | Viber or WhatsApp message |  | Bottom CTA can open the approved channel with clear request wording. |
 | Instagram DM |  | Contact section can include Instagram as a secondary action. |
 | Simple booking request form |  | Requires submission destination, privacy wording, and no auto-confirmation unless true. |
-| Calendar-aware booking |  | Later enhancement; requires confirmed calendar rules and fallback behavior. |
+| Calendar-aware booking | Approved 2026-07-23; mandatory customer email confirmed 2026-07-24 | Custom guarded Google Calendar-aware flow with phone and no-script fallback. |
 
 Booking copy must make clear whether the action requests an appointment or
 confirms one. Until a real scheduling system exists, do not say or imply that a
@@ -111,8 +111,8 @@ The source originals remain in `public/media/placeholders`; the live derivatives
 are high-quality 4K JPEG deliveries. Localized AI edits removed visible objects
 only. Upscaling used localized patch compositing onto the originals, followed by
 Lanczos3/sharpen processing and JPEG export; this does not claim recovered true
-detail. Keep the shared provisional disclosure separate from scene-specific alt
-text and captions.
+detail. Do not add a visible provisional disclosure. Accurate, scene-specific alt
+text and captions remain required.
 
 For every approved image or video, collect:
 
@@ -136,9 +136,11 @@ For every approved image or video, collect:
 
 ### Development Instagram Lookbook Gate
 
-The nine files in `public/media/lookbook/instagram-dev/` are only approved for
-local composition work. Before removing the `/lookbook` disclosure or noindex
-metadata, record all of the following for every frame: owner approval for
+The nine files in `public/media/lookbook/instagram-dev/` remain permission-
+gated. The owner directed removal of the visible development disclosure on
+2026-07-24, but that direction did not record website-reuse or recognizable-
+person permission. Before removing noindex metadata, record all of the following
+for every frame: owner approval for
 website reuse, permission from each recognizable person, the approved original
 file, an approved crop, and final Macedonian alt text. The original Instagram
 permalinks are preserved in `src/lib/lookbook-media.js` for source tracing;
@@ -154,10 +156,8 @@ unless the owner provides the exact approved source and wording.
 | Current surface | Replace after owner provides |
 | --- | --- |
 | `src/app/layout.jsx` metadata | Final salon description, contact/location wording, final social image |
-| `src/components/TypographySalonPage.jsx` hero | Final Macedonian intro and truthful launch-status copy |
 | `src/components/TypographySalonPage.jsx` services | Confirmed service names, details, prices or price policy |
 | `src/components/TypographySalonPage.jsx` contact | Approved contact channel and booking/request wording |
-| `src/app/typography/page.jsx` metadata | Keep aligned with the active homepage direction if route remains |
 | `src/app/lookbook/page.jsx` | Real media assets, alt text, and production notes |
 | `public/media/README.md` | Final media filenames or updated asset rules |
 

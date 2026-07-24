@@ -23,7 +23,7 @@ test('booking handler enforces json, bounded body, and hides contact data', asyn
 
 test('default routes fail closed with sanitized no-store 503 envelopes', async () => {
   const availability = await defaultAvailability(new Request('http://test/api/booking/availability?serviceId=makeup&date=2026-07-24'));
-  const booking = await defaultBooking(new Request('http://test/api/booking', { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': 'booking-key-default' }, body: JSON.stringify({ serviceId: 'makeup', start: '2026-07-24T04:00:00Z', name: 'Ana', phone: '+38970000000' }) }));
+  const booking = await defaultBooking(new Request('http://test/api/booking', { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': 'booking-key-default' }, body: JSON.stringify({ serviceId: 'makeup', start: '2026-07-24T04:00:00Z', name: 'Ana', phone: '+38970000000', email: 'ana@example.com' }) }));
   for (const response of [availability, booking]) { assert.equal(response.status, 503); assert.equal(response.headers.get('cache-control'), 'no-store'); assert.deepEqual(await response.json(), { ok: false, error: { code: 'BOOKING_NOT_CONFIGURED' } }); assert.equal(response.headers.get('access-control-allow-origin'), null); }
 });
 

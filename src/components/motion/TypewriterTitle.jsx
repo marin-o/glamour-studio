@@ -9,7 +9,8 @@ export default function TypewriterTitle({ className, id, words }) {
   const styledWords = [
     { className: "text-accent-deep", text: words[0] },
     {
-      className: "block text-right text-ink md:pl-[0.55em] md:text-left",
+      className:
+        "block text-right text-ink md:pl-[0.55em] md:text-left",
       text: words[1],
     },
   ];

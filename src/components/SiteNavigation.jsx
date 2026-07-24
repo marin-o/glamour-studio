@@ -118,7 +118,7 @@ const SiteNavigation = forwardRef(function SiteNavigation(
         {current === "booking" ? (
           <span aria-current="page" className={primaryItem}>
             <span className="lg:hidden">{copy.navigation.bookShort}</span>
-            <span className="hidden lg:inline">{copy.navigation.book}</span>
+            <span className="hidden lg:inline">{copy.navigation.bookShort}</span>
           </span>
         ) : (
           <TransitionLink className={primaryItem} href="/booking">

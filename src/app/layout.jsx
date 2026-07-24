@@ -1,5 +1,6 @@
 import "./globals.css";
 
+import { Cormorant_Garamond, Manrope } from "next/font/google";
 import Script from "next/script";
 
 import { LanguageProvider } from "../components/LanguageProvider";
@@ -9,6 +10,24 @@ import { homepageCopy } from "../lib/homepage-copy";
 import { homepageHeroMedia } from "../lib/homepage-media";
 
 const homepageOgImage = homepageHeroMedia;
+
+const displayFont = Cormorant_Garamond({
+  display: "swap",
+  fallback: ["Georgia", "Times New Roman"],
+  style: "normal",
+  subsets: ["cyrillic", "cyrillic-ext", "latin"],
+  variable: "--font-cormorant-garamond",
+  weight: "variable",
+});
+
+const bodyFont = Manrope({
+  display: "swap",
+  fallback: ["Aptos", "Segoe UI"],
+  style: "normal",
+  subsets: ["cyrillic", "cyrillic-ext", "latin"],
+  variable: "--font-manrope",
+  weight: "variable",
+});
 
 const historyTransitionBridge = `
 (() => {
@@ -96,7 +115,10 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="mk">
+    <html
+      className={`${displayFont.variable} ${bodyFont.variable}`}
+      lang="mk"
+    >
       <head>
         <Script
           id="history-transition-bridge"

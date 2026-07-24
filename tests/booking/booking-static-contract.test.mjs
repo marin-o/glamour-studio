@@ -13,6 +13,9 @@ test('booking SSR entry validates search params, provides a stable Skopje date, 
   assert.doesNotMatch(page, /Suspense|useSearchParams/);
   assert.match(page, /<noscript>/);
   assert.match(page, /Јавете се на/);
+  assert.match(page, /Закажување \| Glamour Studio/);
+  assert.match(page, /Закажете термин во Glamour Studio во Радовиш/);
+  assert.match(page, /openGraph/);
 });
 
 test('route service preselection uses a stable empty hydration snapshot before joining interactive flow state', async () => {
@@ -33,17 +36,15 @@ test('booking controls retain lifecycle hooks while customer notices stay in one
   assert.match(serviceBlock, /<ul[\s\S]*copy\.services\.groups\.map/);
   assert.match(serviceBlock, /<Reveal\s+as="li"/);
   assert.match(serviceBlock, /<TransitionLink[\s\S]*href="\/booking"[\s\S]*>\s*\{copy\.services\.cta\}\s*<\/TransitionLink>/);
-  assert.equal(homepageCopy.mk.services.groups.length, 4);
-  assert.equal(homepageCopy.en.services.groups.length, 4);
+  assert.equal(homepageCopy.mk.services.groups.length, 3);
+  assert.equal(homepageCopy.en.services.groups.length, 3);
   assert.deepEqual(homepageCopy.mk.services.groups, [
-    { id: 'haircuts', label: 'Шишање' },
-    { id: 'styling', label: 'Стилизирање' },
+    { id: 'haircuts-styling', label: 'Шишање и стилизирање' },
     { id: 'colour-treatments', label: 'Боење и третмани' },
     { id: 'makeup', label: 'Шминка' },
   ]);
   assert.deepEqual(homepageCopy.en.services.groups, [
-    { id: 'haircuts', label: 'Haircuts' },
-    { id: 'styling', label: 'Styling' },
+    { id: 'haircuts-styling', label: 'Haircuts & styling' },
     { id: 'colour-treatments', label: 'Colour & treatments' },
     { id: 'makeup', label: 'Makeup' },
   ]);
@@ -60,10 +61,12 @@ test('booking controls retain lifecycle hooks while customer notices stay in one
   assert.match(booking, /id="booking-error"/);
 });
 
-test('booking desk keeps disclosed imagery, aligned surfaces, quick dates, grouped slots, and emergency scrolling', async () => {
+test('booking desk keeps honest imagery, aligned surfaces, quick dates, grouped slots, and emergency scrolling', async () => {
   const booking = await read('src/components/booking/BookingExperience.jsx');
-  for (const contract of [/BookingSummary/, /homepageCopy/, /mediaCopy\.label/, /mediaCopy\.items\.interior\.alt/, /quality=\{100\}/, /lg:grid-cols-\[0\.72fr_1\.28fr\]/, /grid items-stretch/, /className="sr-only"/, /useLayoutEffect/, /ResizeObserver/, /--navigation-cubby-height/, /ref=\{navigationRef\}/, /lg:min-h-dvh/, /data-lenis-prevent/, /lg:overflow-y-auto/, /Array\.from\(\{ length: 7 \}/, /quickDateOptions/, /morningStarts/, /afternoonStarts/, /<motion\.div[\s\S]*layout=\{!prefersReducedMotion\}[\s\S]*borderRadius: "2rem"/]) assert.match(booking, contract);
-  assert.doesNotMatch(booking, /lg:h-dvh|lg:overflow-hidden/);
+  for (const contract of [/BookingSummary/, /homepageCopy/, /mediaCopy\.items\.interior\.alt/, /quality=\{100\}/, /lg:grid-cols-\[0\.72fr_1\.28fr\]/, /grid items-stretch/, /className="sr-only"/, /useLayoutEffect/, /ResizeObserver/, /--navigation-cubby-height/, /ref=\{navigationRef\}/, /lg:min-h-dvh/, /overflow-x-clip/, /lg:h-\[calc\(100dvh-var\(--navigation-cubby-height\)-2\.5rem\)\] lg:min-h-0/, /data-lenis-prevent=\{desktopSheetScroll \? "" : undefined\}/, /lg:overflow-y-auto/, /Array\.from\(\{ length: 7 \}/, /quickDateOptions/, /morningStarts/, /afternoonStarts/, /<motion\.div[\s\S]*layout=\{!prefersReducedMotion\}[\s\S]*borderRadius: "2rem"/]) assert.match(booking, contract);
+  assert.doesNotMatch(booking, /lg:min-h-\[calc\(100dvh-var\(--navigation-cubby-height\)-2\.5rem\)\]/);
+  assert.doesNotMatch(booking, /mediaCopy\.label/);
+  assert.doesNotMatch(booking, /lg:h-dvh/);
   assert.doesNotMatch(booking, /<header className=/);
 });
 
@@ -77,8 +80,14 @@ test('step screens move on one measured Motion carousel track inside a rounded s
   const booking = await read('src/components/booking/BookingExperience.jsx');
   for (const contract of [/motion, useReducedMotion/, /const carouselSteps = \[\.\.\.steps, "success"\]/, /function CarouselPanel/, /activeScreenIndex \* -100/, /left: `\$\{index \* 100\}%`/, /carouselViewportRef/, /carouselPanelRefs/, /new ResizeObserver\(syncHeight\)/, /relative isolate overflow-hidden rounded/, /w-full px-3 py-2 sm:px-4 sm:py-3/, /absolute top-0/, /onAnimationComplete=\{\(\) => \{/, /settledScreenIndexRef\.current = activeScreenIndex/, /Math\.max\(incomingHeight, outgoingHeight\)/, /activeFocusRef\.current\?\.focus\(\)/, /aria-hidden=\{!active/, /inert=\{!active/, /pointerEvents: active \? "auto" : "none"/, /animate=\{\{ scaleX: index <= current \? 1 : 0 \}\}/, /origin-left/, /initial=\{false\}/]) assert.match(booking, contract);
   assert.doesNotMatch(booking, /carouselViewportRef\} className="[^"]*px-/);
-  assert.match(booking, /overflow-hidden rounded-\[2\.75rem\]/);
-  assert.match(booking, /h-full overflow-y-auto p-5/);
+  assert.match(booking, /h-auto min-h-\[24rem\] overflow-visible rounded-\[2\.75rem\]/);
+  assert.match(booking, /lg:h-full lg:min-h-0 lg:overflow-hidden/);
+  assert.match(booking, /h-auto overflow-visible p-5 sm:p-8 lg:h-full lg:overflow-y-auto/);
+  assert.doesNotMatch(booking, /(?:^|[\s"])overflow-y-auto(?:[\s"]|$)/);
+  assert.match(booking, /grid grid-cols-2 gap-2/);
+  assert.match(booking, /min-h-28 min-w-0/);
+  assert.match(booking, /whitespace-nowrap rounded-full/);
+  assert.doesNotMatch(booking, /grid gap-2 md:grid-cols-2/);
   assert.doesNotMatch(booking, /AnimatePresence|usePresenceData|useIsPresent|mode="popLayout"|mode="sync"|mode="wait"/);
   assert.doesNotMatch(booking, /\[grid-area:1\/1\]/);
   assert.doesNotMatch(booking, /clip-path:inset\(0\)/);

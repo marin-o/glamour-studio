@@ -260,3 +260,11 @@ desk that feels native to the existing salon site.
   src/components/booking/BookingExperience.jsx src/app/layout.jsx
   tests/booking/homepage-media-contract.test.mjs` passed. No browser,
   screenshot, viewport, Playwright, or interaction validation was run.
+- Mobile service-selection correction: the booking sheet and its inner wrapper
+  now use natural height and visible overflow below `lg`, so touch scrolling
+  remains with the document instead of a nested form scroller. Service choices
+  start as a compact two-column grid with full-card radio targets and wrapping
+  duration/price metadata. Desktop retains a bounded, viewport-derived desk
+  height with an inner emergency scroller for short viewports. The focused
+  static contract passed 9/9 and scoped ESLint passed; rendered mobile behavior
+  remains pending owner verification under the conservative validation policy.

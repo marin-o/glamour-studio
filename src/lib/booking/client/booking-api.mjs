@@ -55,7 +55,7 @@ function successBooking(body, serviceId, start) {
   return exactKeys(body, ['ok', 'booking']) && body.ok === true && exactKeys(booking, ['status', 'serviceId', 'start', 'end', 'notification'])
     && booking.status === 'confirmed' && serviceById.has(booking.serviceId) && booking.serviceId === serviceId
     && canonicalInstant(booking.start) && booking.start === start && canonicalInstant(booking.end) && booking.end === expectedEnd(start, serviceId)
-    && ['requested', 'not_requested', 'unknown'].includes(booking.notification)
+    && ['requested', 'unknown'].includes(booking.notification)
     ? { ok: true, booking: { serviceId: booking.serviceId, start: booking.start, notification: booking.notification } } : null;
 }
 function secureKey(cryptoApi = globalThis.crypto) {
@@ -82,8 +82,8 @@ export function createBookingApi({ fetch: injectedFetch, crypto = globalThis.cry
       const body = await boundedJson(response); const timedOut = deadline.timedOut(); const externallyAborted = Boolean(signal?.aborted); deadline.finish(); return timedOut ? unavailable('timeout') : externallyAborted ? unavailable('aborted') : successAvailability(body, serviceId, date) ?? publicError(response, body);
     },
     async book({ serviceId, start, name, phone, email, idempotencyKey, signal }) {
-      if (!serviceById.has(serviceId) || !canonicalInstant(start) || typeof idempotencyKey !== 'string' || idempotencyKey.length < 8) return unavailable('invalid');
-      const payload = { serviceId, start, name, phone, ...(email ? { email } : {}) };
+      if (!serviceById.has(serviceId) || !canonicalInstant(start) || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email) || typeof idempotencyKey !== 'string' || idempotencyKey.length < 8) return unavailable('invalid');
+      const payload = { serviceId, start, name, phone, email };
       const deadline = withDeadline(injectedFetch, '/api/booking', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(payload) }, signal, timeoutMs);
       let response; try { response = await deadline.request; } catch { const timedOut = deadline.timedOut(); deadline.finish(); return timedOut ? unavailable('timeout') : unavailable('network'); }
       const body = await boundedJson(response); const timedOut = deadline.timedOut(); const externallyAborted = Boolean(signal?.aborted); deadline.finish(); return timedOut ? unavailable('timeout') : externallyAborted ? unavailable('aborted') : successBooking(body, serviceId, start) ?? publicError(response, body);

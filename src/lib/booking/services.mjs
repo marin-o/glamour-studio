@@ -1,6 +1,7 @@
 const catalog = [
   ['short-hair-haircut', 'Short-hair haircut', '400–500 MKD', 30],
   ['long-hair-haircut', 'Long-hair haircut', '700–900 MKD', 30],
+  ['hairstyling', 'Hairstyling', '1300–1800 MKD', 30],
   ['hair-straightening-ironing', 'Hair straightening/ironing', '500 MKD', 30],
   ['hair-curling', 'Hair curling', '500–1500 MKD', 30],
   ['hair-coloring', 'Hair coloring', '1200–2000 MKD', 90],
@@ -8,7 +9,6 @@ const catalog = [
   ['keratin-treatment', 'Keratin treatment', '1500–2000 MKD', 90],
   ['makeup', 'Makeup', '1500 MKD', 60],
   ['balayage', 'Balayage', 'from 4500 MKD', 300],
-  ['hairstyling', 'Hairstyling', '1300–1800 MKD', 30],
 ];
 
 export const SERVICES = Object.freeze(

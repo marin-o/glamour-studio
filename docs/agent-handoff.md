@@ -1,62 +1,57 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=38d3c59de8ceba23 -->
+<!-- sitewright:fingerprint=b24a29fc94ce19fc -->
 ## Sitewright state
 
 - Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
 - The repository has structured intent, coherent planning, and an executable task.
-- Active task: 053-enable-guarded-localhost-google-calendar-booking-integration.md.
+- Active task: 054-turn-booking-into-an-editorial-appointment-desk.md.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
 
-- Task 047 is owner-approved and complete. `/old` and its route-only assets are
-  removed; the app server-renders provisional Macedonian copy by default and
-  exposes a plain-text `EN`/`MK` toggle as the leftmost control in the
-  single-row persistent bottom navigation. Root-level in-memory language state
-  follows client-side navigation between the homepage and Lookbook and resets
-  on full reload. Static checks and the production build pass; automated
-  rendered validation was not run under the conservative policy.
-- Task 048 remains active for owner-rendered review. Its runtime and
-  documentation changes are implemented: desktop navigation now shrink-wraps
-  around a desktop-only confirmed-address action and the existing controls; the
-  services heading is concise and centered; confirmed contact facts no longer
-  read as provisional; and the Lookbook has an accessible arrow-only return,
-  desktop utility navigation, no visible helper legends, and no linked-image
-  scale behavior. Homepage scroll position is held in visit-local transition
-  memory and restored behind the closed curtain on arrow or browser-history
-  returns. Lint and the production build pass. Conservative policy leaves the
-  affected desktop, mobile, hover, focus, scroll-continuity, and layout
-  presentation awaiting owner verification.
-- Task 046 is owner-approved and complete. The existing hero image remains the
-  curtain's single source: GSAP opens and holds the sharp window while the real
-  services section arrives through normal scroll, and the makeup stroke begins
-  at the service surface rather than crossing the photograph.
+- Owner-directed Macedonian copy is now customer-facing: the homepage has a
+  brand-led hero with a concise customer introduction, three broad service
+  groups, a short salon introduction, and concise contact/metadata copy.
+  `/typography` is removed. English remains a later editorial refinement while
+  the visit-local `EN`/`MK` behavior remains.
+- Cormorant Garamond 300–700 and Manrope 200–800 are loaded as the current
+  variable-font review pair with Cyrillic Extended subsets. This is a visual
+  review candidate, not final owner approval.
+- Booking requires name, phone, and a syntactically valid email in both the
+  client flow and public server contract. The catalogue keeps the confirmed
+  IDs, prices, and durations, with Hairstyling third after both haircut
+  options. Accepted bookings request a Google Calendar invitation; the public
+  confirmation reports `requested` or the safe `unknown` fallback.
+- `/lookbook` retains its noindex horizontal sequence, source tracing,
+  meaningful bilingual alt text, quality-100 responsive images, route-local
+  Lenis, and exact progress. Owner-directed customer copy removes visible
+  development/disclosure wording without recording media permissions.
+- Homepage scroll position is held in visit-local transition memory and
+  restored behind the closed curtain on arrow or browser-history returns.
 - The browser-history transition bridge remains a `beforeInteractive` script
   inside the root layout's explicit `<head>`, with a 2.4s fail-open path.
-- `/lookbook` retains quality-100 responsive images, generated dimensions,
-  route-local horizontal Lenis, relaxed centering, and exact pip progress. The
-  label `Lookbook` remains untranslated while the surrounding route copy and
-  meaningful accessibility text follow the visit-local language.
 ## Open owner decisions
 
 - Keep unresolved product, launch, content, and business-truth decisions explicit in product specs or active tasks.
+- Approve or replace the Cormorant Garamond + Manrope review pair after rendered
+  Macedonian and English review.
 - The displayed phone number, street address, Maps destination, and Instagram
-  profile are owner-confirmed. Final Macedonian and English marketing copy,
-  services, prices, hours, booking behavior, and any additional messaging
-  channels remain unapproved and replaceable.
+  profile are owner-confirmed. Current Macedonian copy, services, prices,
+  durations, and mandatory booking email are owner-directed; English editorial
+  copy and any additional messaging channels remain open.
 - All nine development lookbook JPEGs are only 640px wide; approved
   production-resolution originals remain required for true high-density
   crispness.
 - Website reuse and recognizable-person permissions remain unapproved; keep the
-  route noindex and visibly disclosed.
+  route noindex. The owner explicitly removed the visible development
+  disclosure, which does not itself approve the media.
 - The owner rejected managed booking services and approved the phased custom
   Next.js and Google Calendar direction in
-  `docs/booking-google-calendar-implementation-plan.md`. Task 048 is parked
-  blocked with rendered review still pending while booking work takes priority.
-  Production Google changes, external service provisioning, deployment, and
-  launch remain owner-gated.
+  `docs/booking-google-calendar-implementation-plan.md`. Production Google
+  changes, external service provisioning, deployment, and launch remain
+  owner-gated.
 
 ## Durable gotchas
 
@@ -68,3 +63,7 @@
   do not produce a new App Router pathname or reveal trigger.
 - A root `beforeInteractive` history script must live inside the explicit
   `<head>`, never as a direct `<html>` child.
+- When the planned dynamic Lookbook is defined, replace the fixed
+  `lookbookMedia` sequence with a content model that preserves source tracing,
+  per-item Macedonian/English alt text, permission state, intrinsic dimensions,
+  crop intent, and the current noindex gate until reuse approvals are recorded.

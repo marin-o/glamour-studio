@@ -180,10 +180,7 @@ function BookingSummary({ flow, service, language, copy, onChangeService, prefer
       <div className="absolute inset-0 bg-accent-deep/55" aria-hidden="true" />
       <div className="relative flex h-full min-h-[24rem] flex-col justify-between p-5 sm:p-7 lg:min-h-0 lg:p-8">
         <div>
-          <p className="inline-flex max-w-sm rounded-full border border-surface/35 bg-accent-deep/75 px-4 py-2 text-xs font-bold leading-snug text-surface backdrop-blur-sm">
-            {mediaCopy.label}
-          </p>
-          <p className="mt-7 max-w-[9ch] text-[clamp(2.7rem,5vw,5.7rem)] font-bold leading-[0.88] tracking-[-0.045em] text-surface">
+          <p className="max-w-[9ch] text-[clamp(2.7rem,5vw,5.7rem)] font-bold leading-[0.88] tracking-[-0.045em] text-surface">
             {copy.summaryTitle}
           </p>
         </div>
@@ -341,6 +338,7 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
   const prefersReducedMotion = useReducedMotion();
   const t = bookingCopy[language];
   const [flow, setFlow] = useState(initialBookingFlow);
+  const [desktopSheetScroll, setDesktopSheetScroll] = useState(false);
   const hydratedInitialServiceId = useSyncExternalStore(
     subscribeToHydration,
     () => initialServiceId,
@@ -471,6 +469,14 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
   }, [activeScreenIndex, prefersReducedMotion]);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const syncDesktopSheetScroll = () => setDesktopSheetScroll(mediaQuery.matches);
+    syncDesktopSheetScroll();
+    mediaQuery.addEventListener?.("change", syncDesktopSheetScroll);
+    return () => mediaQuery.removeEventListener?.("change", syncDesktopSheetScroll);
+  }, []);
+
+  useEffect(() => {
     if (!selectedServiceId) return undefined;
 
     const controller = new AbortController();
@@ -583,17 +589,17 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
   return (
     <main
       ref={mainRef}
-      className="min-h-dvh overflow-x-hidden bg-surface px-pad pt-8 pb-[var(--navigation-cubby-height)] [--navigation-cubby-height:124px] [--navigation-cubby-inset:12px] sm:pt-12 sm:[--navigation-cubby-height:104px] lg:min-h-dvh lg:overflow-y-auto lg:pt-10 lg:[--navigation-cubby-inset:16px]"
+      className="min-h-dvh overflow-x-clip bg-surface px-pad pt-8 pb-[var(--navigation-cubby-height)] [--navigation-cubby-height:124px] [--navigation-cubby-inset:12px] sm:pt-12 sm:[--navigation-cubby-height:104px] lg:min-h-dvh lg:overflow-y-auto lg:pt-10 lg:[--navigation-cubby-inset:16px]"
     >
       <div className="mx-auto max-w-[90rem] lg:h-full">
         <h1 className="sr-only">{flow.step === "success" ? t.success : t.title}</h1>
-        <div className="grid items-stretch gap-6 lg:min-h-[calc(100dvh-var(--navigation-cubby-height)-2.5rem)] lg:grid-cols-[0.72fr_1.28fr] lg:gap-8">
+        <div className="grid items-stretch gap-6 lg:h-[calc(100dvh-var(--navigation-cubby-height)-2.5rem)] lg:min-h-0 lg:grid-cols-[0.72fr_1.28fr] lg:gap-8">
           <BookingSummary flow={presentedFlow} service={service} language={language} copy={t} onChangeService={changeService} prefersReducedMotion={prefersReducedMotion} />
 
           <section
-            className="h-full min-h-[24rem] overflow-hidden rounded-[2.75rem] border border-line bg-surface-warm/65 shadow-[0_24px_70px_rgb(92_56_44_/_0.08)] lg:min-h-0"
+            className="h-auto min-h-[24rem] overflow-visible rounded-[2.75rem] border border-line bg-surface-warm/65 shadow-[0_24px_70px_rgb(92_56_44_/_0.08)] lg:h-full lg:min-h-0 lg:overflow-hidden"
           >
-            <div className="h-full overflow-y-auto p-5 sm:p-8 lg:[scrollbar-gutter:stable]" data-lenis-prevent>
+            <div className="h-auto overflow-visible p-5 sm:p-8 lg:h-full lg:overflow-y-auto lg:[scrollbar-gutter:stable]" data-lenis-prevent={desktopSheetScroll ? "" : undefined}>
             <Progress step={flow.step} copy={t} prefersReducedMotion={prefersReducedMotion} />
 
             <div ref={carouselViewportRef} className="relative isolate overflow-hidden rounded-[1.75rem] bg-surface-warm/30">
@@ -616,19 +622,19 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
               <fieldset className="pt-3">
                 <legend ref={serviceStepRef} tabIndex="-1" className="text-3xl font-bold tracking-[-0.025em] outline-none">{t.choose}</legend>
                 <p className="mt-2 text-sm text-muted">{t.serviceHint}</p>
-                <div className="mt-5 grid gap-2 md:grid-cols-2">
+                <div className="mt-5 grid grid-cols-2 gap-2">
                   {SERVICES.map((item) => (
                     <label
-                      className="group relative grid min-h-24 cursor-pointer grid-cols-[auto_1fr] items-start gap-3 rounded-[1.5rem] border border-line-strong bg-surface px-4 py-3 transition-colors hover:border-accent hover:bg-peach/35 has-[:checked]:border-accent-deep has-[:checked]:bg-peach/70 has-[:checked]:shadow-[0_12px_30px_rgb(92_56_44_/_0.1)] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent lg:min-h-[4.75rem]"
+                      className="group relative grid min-h-28 min-w-0 cursor-pointer grid-cols-1 items-start gap-2 rounded-[1.25rem] border border-line-strong bg-surface px-3 py-3 transition-colors hover:border-accent hover:bg-peach/35 has-[:checked]:border-accent-deep has-[:checked]:bg-peach/70 has-[:checked]:shadow-[0_12px_30px_rgb(92_56_44_/_0.1)] has-[:focus-visible]:outline has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent lg:min-h-[4.75rem] lg:grid-cols-[auto_1fr] lg:gap-3 lg:rounded-[1.5rem] lg:px-4 lg:py-3"
                       key={item.id}
                     >
                       <input checked={selectedServiceId === item.id} onChange={() => set("serviceId", item.id)} className="peer sr-only" type="radio" name="service" />
                       <span aria-hidden="true" className="flex size-7 items-center justify-center rounded-full border-2 border-accent/50 text-sm text-transparent transition-colors peer-checked:border-accent-deep peer-checked:bg-accent-deep peer-checked:text-surface peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">✓</span>
-                      <span>
-                        <span className="block text-lg font-bold leading-tight text-ink">{serviceNames[item.id][language]}</span>
-                        <span className="mt-2 flex flex-wrap gap-2">
-                          <span className="rounded-full bg-surface-warm px-2.5 py-1 text-xs font-bold text-muted">{durationLabel(item.durationMinutes, language)}</span>
-                          <span className="rounded-full bg-surface-warm px-2.5 py-1 text-xs font-extrabold text-accent-deep">{item.priceLabel}</span>
+                      <span className="min-w-0">
+                        <span className="block text-base font-bold leading-tight text-ink sm:text-lg">{serviceNames[item.id][language]}</span>
+                        <span className="mt-2 flex min-w-0 flex-wrap gap-1.5 sm:gap-2">
+                          <span className="whitespace-nowrap rounded-full bg-surface-warm px-2 py-1 text-[0.7rem] font-bold leading-tight text-muted sm:px-2.5 sm:text-xs">{durationLabel(item.durationMinutes, language)}</span>
+                          <span className="whitespace-nowrap rounded-full bg-surface-warm px-2 py-1 text-[0.7rem] font-extrabold leading-tight text-accent-deep sm:px-2.5 sm:text-xs">{item.priceLabel}</span>
                         </span>
                         <span className="sr-only">, {selectedServiceId === item.id ? t.selected : ""}</span>
                       </span>
@@ -706,7 +712,7 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
                   </label>
                   <label className="block text-sm font-extrabold text-ink sm:col-span-2">
                     {t.email}
-                    <input aria-describedby={flow.notice === "invalid" ? "booking-error" : "email-note"} aria-invalid={flow.notice === "invalid"} autoComplete="email" maxLength={PUBLIC_BOUNDS.email} className="mt-2 min-h-14 w-full rounded-[1.5rem] border border-line-strong bg-surface px-4 text-base font-semibold text-ink outline-none transition-colors hover:border-accent focus:border-accent-deep focus:ring-3 focus:ring-blush/50" type="email" value={flow.email} onChange={(event) => set("email", event.target.value)} />
+                    <input aria-describedby={flow.notice === "invalid" ? "booking-error" : "email-note"} aria-invalid={flow.notice === "invalid"} autoComplete="email" required maxLength={PUBLIC_BOUNDS.email} className="mt-2 min-h-14 w-full rounded-[1.5rem] border border-line-strong bg-surface px-4 text-base font-semibold text-ink outline-none transition-colors hover:border-accent focus:border-accent-deep focus:ring-3 focus:ring-blush/50" type="email" value={flow.email} onChange={(event) => set("email", event.target.value)} />
                     <span id="email-note" className="mt-2 block font-normal text-muted">{t.emailNote}</span>
                   </label>
                 </div>

@@ -34,8 +34,7 @@ Required page sections:
 
 - striking elegant hero;
 - services section;
-- gallery or vibe section;
-- about and trust section;
+- gallery or vibe section with the concise about-and-trust copy integrated;
 - contact and location section;
 - persistent bottom booking/contact call to action.
 
@@ -45,7 +44,9 @@ selection, and minimal contact details followed by confirmation. Customers do
 not create accounts or select an employee. Phone, text, and walk-in bookings
 entered by staff into the dedicated studio calendar as `Busy` must remove those
 times from online availability. Staff manage moves and cancellations from that
-same calendar.
+same calendar. The owner confirmed on 2026-07-24 that customer email is
+mandatory so each accepted online booking can request a Google Calendar
+invitation.
 
 ## Experience Direction
 
@@ -72,13 +73,16 @@ Anti-goals:
 The salon name, city, street address, Google Maps destination, phone number,
 Instagram profile, booking service catalog, booking prices/durations, seasonal
 opening hours, and `Europe/Skopje` booking time zone are owner-confirmed.
-Additional messaging channels, staff details, final marketing copy, photos, and
-video remain provisional or missing.
+Additional messaging channels, staff details, English editorial copy, photos,
+and video remain provisional or missing. The current Macedonian homepage,
+Lookbook interface, booking copy, and metadata direction were owner-directed on
+2026-07-24.
 
 The confirmed booking catalog is:
 
 - Short-hair haircut: 400–500 MKD, 30 minutes.
 - Long-hair haircut: 700–900 MKD, 30 minutes.
+- Hairstyling: 1300–1800 MKD, 30 minutes.
 - Hair straightening/ironing: 500 MKD, 30 minutes.
 - Hair curling: 500–1500 MKD, 30 minutes.
 - Hair coloring: 1200–2000 MKD, 90 minutes.
@@ -86,7 +90,6 @@ The confirmed booking catalog is:
 - Keratin treatment: 1500–2000 MKD, 90 minutes.
 - Makeup: 1500 MKD, 1 hour.
 - Balayage: from 4500 MKD, 5 hours.
-- Hairstyling: 1300–1800 MKD, 30 minutes.
 
 The studio is open every day. April through September hours are 06:00–18:00;
 October through March hours are 10:00–18:00.
@@ -119,11 +122,10 @@ toggleable option later, but localization is not part of discovery.
 ## Open Owner Decisions
 
 - Additional contact channels and staff details.
-- Final Macedonian copy and later English translation.
+- Later English editorial translation.
 - Final photo and video assets, preferably filmed in the real studio.
-- Whether customer email is mandatory for Calendar invitations, the final
-  cancellation policy, booking lead time and horizon, the production Google
-  account/calendar, durable-lock provider, bot protection, and hosting.
+- The final cancellation policy, booking lead time and horizon, the production
+  Google account/calendar, durable-lock provider, bot protection, and hosting.
 - Exact typography and font choices.
 - Whether analytics or cookies are needed.
 - Legal or privacy copy required if booking/contact forms collect personal data.

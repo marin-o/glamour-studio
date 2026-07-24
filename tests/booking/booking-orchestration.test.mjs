@@ -7,7 +7,7 @@ import { createBookingService } from '../../src/lib/booking/orchestration/bookin
 const start = '2026-07-24T04:00:00Z'; const end = '2026-07-24T05:00:00Z';
 const policy = { leadTimeMinutes: 0, bookingHorizonDays: 30, idempotencyTtlSeconds: 3600, lockTimeoutMs: 100, lockLeaseMs: 10_000, providerOperationBudgetMs: 8_000, leaseSafetyMs: 1_000 };
 const now = () => Temporal.Instant.from('2026-07-23T00:00:00Z');
-const input = { serviceId: 'makeup', start, name: 'Ana', phone: '+38970000000' };
+const input = { serviceId: 'makeup', start, name: 'Ana', phone: '+38970000000', email: 'ana@example.com' };
 const context = { subjectDigest: 'a'.repeat(64) };
 
 function fakes({ staffBlocker = false } = {}) {
@@ -115,11 +115,10 @@ test('blocker-list outage and compensation ambiguity stay unknown, preserve the 
   assert.equal(fake.inserts, 1); assert.equal(releases, 3);
 });
 
-test('no-email confirmation and notification-pending persistence outages never claim success or send an invite', async () => {
-  const noEmail = fakes(); const transition = noEmail.ports.idempotency.transition;
-  noEmail.ports.idempotency.transition = async (request) => request.state === 'confirmed' ? Promise.reject(new Error('store unavailable')) : transition(request);
-  await assert.rejects(createBookingService({ calendar: noEmail.calendar, ports: noEmail.ports, policy, now }).book(input, 'booking-key-904', context), { code: 'BOOKING_UNKNOWN' });
-
+test('missing email is rejected and notification-pending persistence outages never claim success or send an invite', async () => {
+  const noEmail = fakes();
+  await assert.rejects(createBookingService({ calendar: noEmail.calendar, ports: noEmail.ports, policy, now }).book({ ...input, email: undefined }, 'booking-key-904', context), { code: 'INVALID_REQUEST' });
+  assert.equal(noEmail.inserts, 0);
   const pending = fakes(); const pendingTransition = pending.ports.idempotency.transition;
   pending.ports.idempotency.transition = async (request) => request.state === 'confirmed_notification_pending' ? Promise.reject(new Error('store unavailable')) : pendingTransition(request);
   await assert.rejects(createBookingService({ calendar: pending.calendar, ports: pending.ports, policy, now }).book({ ...input, email: 'ana@example.com' }, 'booking-key-905', context), { code: 'BOOKING_UNKNOWN' });
@@ -155,8 +154,7 @@ test('confirmed replay is bound to the trusted current service, canonical instan
     ['wrong service', { serviceId: 'hair-styling' }, input],
     ['wrong canonical start', { start: '2026-07-24T04:15:00Z' }, input],
     ['wrong derived end', { end: '2026-07-24T05:15:00Z' }, input],
-    ['no-email incompatible notification', { notification: 'requested' }, input],
-    ['email incompatible notification', { notification: 'not_requested' }, { ...input, email: 'ana@example.com' }],
+    ['missing invitation disposition', { notification: 'not_requested' }, input],
   ];
   for (const [name, patch, request] of cases) await t.test(name, async () => {
     const fake = fakes(); const service = createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }); const key = `booking-key-replay-${name.replaceAll(' ', '-')}`;

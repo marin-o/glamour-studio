@@ -15,8 +15,8 @@ survive restarts, or provide durable recovery.
   online slots.
 - A booking is rechecked while holding the local single-process lock, then a
   private event is created on the configured calendar.
-- If the customer supplies an email address, Google Calendar is asked to add
-  that address as an attendee with `sendUpdates=all`. The invitation is an
+- Customer email is required. Google Calendar is asked to add that address as
+  an attendee with `sendUpdates=all`. The invitation is an
   email/calendar invitation, not proof of delivery or acceptance.
 - Staff move and cancel appointments in the same Google Calendar. The next
   availability request sees the current Calendar state.
@@ -81,7 +81,7 @@ paste the client secret or refresh token into chat.
    is absent after selecting that date and service in the booking page.
 2. Remove the manual test event and submit an online booking.
 3. Verify exactly one private event appears in the dedicated calendar.
-4. If an email was entered, verify the customer address receives an invitation.
+4. Verify the customer address receives an invitation.
 5. Move or cancel the event in Google Calendar and verify a new availability
    request reflects that change.
 

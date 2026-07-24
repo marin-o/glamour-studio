@@ -32,7 +32,7 @@ export function createBookingHandler(runtime, { maxBodyBytes = 4096, getRequestC
       const text = await readBoundedBody(request, maxBodyBytes);
       let input; try { input = JSON.parse(text); } catch { throw new BookingError('INVALID_REQUEST', 400); }
       const key = request.headers.get('idempotency-key'); const result = await runtime.book(input, key, getRequestContext(request));
-      if (!result || result.status !== 'confirmed' || typeof result.serviceId !== 'string' || typeof result.start !== 'string' || typeof result.end !== 'string' || !['not_requested', 'requested', 'unknown'].includes(result.notification)) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
+      if (!result || result.status !== 'confirmed' || typeof result.serviceId !== 'string' || typeof result.start !== 'string' || typeof result.end !== 'string' || !['requested', 'unknown'].includes(result.notification)) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
       return response(201, { ok: true, booking: { status: 'confirmed', serviceId: result.serviceId, start: result.start, end: result.end, notification: result.notification } });
     } catch (error) { return errorResponse(error); }
   };

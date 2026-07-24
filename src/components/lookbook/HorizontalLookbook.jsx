@@ -153,20 +153,12 @@ export default function HorizontalLookbook({ items }) {
         current="lookbook"
         position="top"
       />
-      <p
-        id="lookbook-media-notice"
-        className="pointer-events-none fixed top-24 left-1/2 z-20 m-0 w-[min(90vw,44rem)] -translate-x-1/2 rounded-full border border-line bg-surface/92 px-4 py-2 text-center text-[0.7rem] leading-[1.35] text-muted shadow-[0_8px_24px_rgb(52_36_31/0.08)] md:top-[5.75rem] md:text-[0.76rem]"
-      >
-        {copy.disclosure}
-      </p>
-
       <section
         ref={scrollerRef}
         className={`lookbook-scroller h-svh overflow-x-auto overflow-y-hidden [overscroll-behavior-x:contain] [scrollbar-width:none] ${
           isLenisActive ? "" : "snap-x snap-mandatory"
         }`}
         aria-label={copy.regionLabel}
-        aria-describedby="lookbook-media-notice"
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >

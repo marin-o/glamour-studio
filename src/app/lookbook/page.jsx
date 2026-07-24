@@ -1,10 +1,10 @@
 import HorizontalLookbook from "../../components/lookbook/HorizontalLookbook";
+import { homepageCopy } from "../../lib/homepage-copy";
 import { lookbookMedia } from "../../lib/lookbook-media";
 
 export const metadata = {
   title: "Lookbook | Glamour Studio",
-  description:
-    "Привремен уреднички Lookbook со развојни локални медиуми од јавниот Instagram профил на Glamour Studio.",
+  description: homepageCopy.mk.metadata.description,
   robots: {
     index: false,
     follow: false,

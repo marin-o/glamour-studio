@@ -15,6 +15,7 @@ test('the catalog contains exactly the confirmed services', () => {
   assert.deepEqual(SERVICES, [
     { id: 'short-hair-haircut', name: 'Short-hair haircut', priceLabel: '400–500 MKD', durationMinutes: 30 },
     { id: 'long-hair-haircut', name: 'Long-hair haircut', priceLabel: '700–900 MKD', durationMinutes: 30 },
+    { id: 'hairstyling', name: 'Hairstyling', priceLabel: '1300–1800 MKD', durationMinutes: 30 },
     { id: 'hair-straightening-ironing', name: 'Hair straightening/ironing', priceLabel: '500 MKD', durationMinutes: 30 },
     { id: 'hair-curling', name: 'Hair curling', priceLabel: '500–1500 MKD', durationMinutes: 30 },
     { id: 'hair-coloring', name: 'Hair coloring', priceLabel: '1200–2000 MKD', durationMinutes: 90 },
@@ -22,7 +23,6 @@ test('the catalog contains exactly the confirmed services', () => {
     { id: 'keratin-treatment', name: 'Keratin treatment', priceLabel: '1500–2000 MKD', durationMinutes: 90 },
     { id: 'makeup', name: 'Makeup', priceLabel: '1500 MKD', durationMinutes: 60 },
     { id: 'balayage', name: 'Balayage', priceLabel: 'from 4500 MKD', durationMinutes: 300 },
-    { id: 'hairstyling', name: 'Hairstyling', priceLabel: '1300–1800 MKD', durationMinutes: 30 },
   ]);
   assert.throws(() => getService('unconfirmed-service'), /confirmed service/);
 });

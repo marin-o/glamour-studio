@@ -12,9 +12,9 @@ colors:
   on-muted: "#6F5650"
   outline: "#D8BDB2"
 typography:
-  display: "Elegant high-contrast serif or refined editorial display face; exact font remains owner-approved later."
-  body: "Warm, readable sans-serif with calm spacing; exact font remains owner-approved later."
-  label: "Small, clear sans-serif labels with normal letter spacing."
+  display: "Review candidate: Cormorant Garamond variable, weights 300–700, with Cyrillic Extended coverage; use 600 as the default heading weight."
+  body: "Review candidate: Manrope variable, weights 200–800, with Cyrillic Extended coverage."
+  label: "Manrope in clear 600–800 weights with restrained letter spacing."
 spacing:
   compact: "8px"
   rhythm: "16px"
@@ -80,17 +80,18 @@ Do not use cramped tracking, tiny all-caps labels, or decorative scripts for
 critical information. Button text, contact labels, hours, prices, and address
 details must be plain and scannable.
 
-Exact font choices are open owner decisions and should be validated for
-Macedonian support before adoption.
+The current review pair is Cormorant Garamond for editorial display text and
+Manrope for body/interface text. Both are loaded as variable fonts with
+`cyrillic` and `cyrillic-ext` subsets. Keep fallbacks in place until the owner
+accepts or replaces the pair.
 
 ## Layout And Spacing
 
 Build a single-page, mobile-first flow with strong section rhythm:
 
 - hero;
-- localized four-group service overview leading to the authoritative `/booking` catalog;
-- gallery or studio vibe;
-- about and trust;
+- localized three-group service overview leading to the authoritative `/booking` catalog;
+- gallery or studio vibe with the concise about-and-trust copy integrated;
 - contact and location;
 - persistent bottom contact or booking CTA.
 
@@ -151,10 +152,9 @@ Where an original needed upscaling, a localized patch was composited onto the
 original before Lanczos3/sharpen processing and JPEG derivative export. These
 are high-quality 4K delivery derivatives, not a claim of recovered true detail.
 
-All four images carry the shared localized disclosure (English:
-`Provisional selection of real photographs — final media approval is pending`).
-Alt text and captions describe only visible scenes and must not identify people,
-approval state, internal placeholder wording, or unseen claims. Booking may
+The imagery does not carry a visible provisional disclosure. Accurate alt text
+and captions remain required: describe only visible scenes and must not identify
+people, approval state, internal placeholder wording, or unseen claims. Booking may
 reuse the hero image because it is a separate route; Open Graph metadata also
 uses the hero role. Client images remain unused pending explicit permission.
 
@@ -172,10 +172,10 @@ pages place the bar at the bottom; Lookbook uses the same bar at the top so its
 horizontal progress footer remains unobstructed.
 
 The services section uses one concise, centered display heading without an
-eyebrow or an empty alignment column. It presents four broad localized groups —
-haircuts, styling, colour & treatments, and makeup — without prices, durations,
-or individual catalog names. One clear localized CTA routes to `/booking` for
-the full authoritative service catalog.
+eyebrow or an empty alignment column. It presents three broad localized groups —
+haircuts and styling, colour and treatments, and makeup — without prices,
+durations, or individual catalog names. One clear localized CTA routes to
+`/booking` for the full authoritative service catalog.
 
 The homepage is Macedonian-first. Its server-rendered and no-JavaScript copy
 must be Macedonian, with a single plain-text language toggle inside the homepage
@@ -185,10 +185,17 @@ selection is held in root-level memory for the current app visit, follows
 client-side navigation to Booking and Lookbook, updates the document language, and
 resets to Macedonian on a full reload. It must not introduce locale routes,
 cookies, local storage, or duplicate language controls on subpages. Keep both
-provisional language sets
-structurally aligned in
+language sets structurally aligned in
 `src/lib/homepage-copy.js` so owner-approved replacements do not require layout
 or interaction changes.
+
+The hero is brand-led and pairs the studio name with one concise,
+customer-facing introduction. It does not carry concept, provisional, or
+launch-status paragraphs. The studio-media band relies on its heading and
+accurate image alternatives rather than visible media-status copy. The brief
+salon introduction belongs inside that media band rather than in a standalone
+full-width section. It and the contact section use owner-directed Macedonian
+customer-facing copy; English remains a later editorial refinement.
 
 Gallery and media components should distinguish real salon media from temporary
 placeholders. Confirmed services, prices, durations, and studio time zone are
@@ -287,15 +294,15 @@ Texture, if used, should be subtle: soft grain, paper-like warmth, or gentle
 material cues that support the creamy studio mood. Avoid decorative blobs,
 heavy gradients, neon glow, or ornate glamour effects.
 
-### Development Lookbook
+### Lookbook
 
 `/lookbook` is a full-viewport, noindex horizontal editorial sequence rather
-than a general gallery. Its development media should move sideways from one
+than a general gallery. Its media should move sideways from one
 large image to the next with stable cover crops and warm cream breathing room.
 Keep `Lookbook` as the untranslated product label. Its surrounding interface,
-development disclosures, instructions, and accessibility copy follow the
-root-level language selected on the homepage; a direct or refreshed route load
-uses Macedonian by default.
+instructions, source links, and accessibility copy follow the root-level
+language selected on the homepage; a direct or refreshed route load uses
+Macedonian by default.
 A route-local horizontal Lenis instance owns continuous wheel and trackpad
 momentum; after input stops, the bundled Lenis snap layer eases the nearest
 image into the viewport center. Touch swiping remains native and receives the
@@ -333,16 +340,17 @@ Lookbook uses the same shared site-navigation bar as every other route, fixed at
 the top rather than the bottom. Preserve its arrow-only Studio return action as
 the leading control inside that shared bar, while removing the old header's
 duplicate language, Services, Studio, and Call controls. Mark Lookbook as the
-current item in the shared bar and keep the development-media disclosure visible
-directly beneath it. Keep the progress rail and image count in the
+current item in the shared bar. Keep the progress rail and image count in the
 footer without a separate input-method legend. Linked images must
 not enlarge on hover or keyboard focus, and their focus-visible treatment must
 remain clear.
 
 The current nine local Instagram frames are development-only media. Keep the
-visible disclosure and noindex metadata until the owner records website-reuse
-approval, recognizable-person permissions, and production-resolution
-replacements. Descriptive alt text must describe only the visible frame and
+route noindex until the owner records website-reuse approval,
+recognizable-person permissions, and production-resolution replacements. The
+owner directed removal of the visible development disclosure on 2026-07-24;
+that content decision does not itself record or imply media permission.
+Descriptive alt text must describe only the visible frame and
 must never reuse Instagram captions or make unverified service claims. Each
 visual links to its original source and identifies Reel cover frames as stills
 rather than local video. The route uses the top-positioned shared navigation and
@@ -389,13 +397,15 @@ clear hover, disabled, and focus-visible states. Action bars keep controls
 separated and stack on narrow screens. The booking route consumes the global
 language selected on the homepage and must not duplicate the language picker.
 It has a meaningful phone fallback when JavaScript or online availability is
-unavailable.
+unavailable. Name, phone, and a syntactically valid customer email are mandatory
+at both the client and public server boundary so every accepted booking can
+request a Calendar invitation.
 
 On wide screens, compose Booking as one editorial appointment desk: one
 image-led summary at the left and one substantial working sheet at the right,
 top- and bottom-aligned to the same row height. The summary reuses the
-provisional interior photograph and must carry its localized media disclosure
-and honest alt text. It shows only useful live state—service, duration, price, date, and time—
+interior photograph with honest localized alt text and no visible media-status
+label. It shows only useful live state—service, duration, price, date, and time—
 with truthful pending copy before selection. On narrow screens it becomes a
 compact summary above the working sheet rather than disappearing. Service
 choices may use a two-column grid where space permits. Appointment selection
@@ -497,7 +507,7 @@ Don't:
 ## Open Design Decisions
 
 - Final salon name and any wordmark direction.
-- Exact fonts, including Macedonian character support.
+- Owner approval or replacement of the Cormorant Garamond + Manrope review pair.
 - Final media assets: hero video, studio photos, service imagery, and staff
   photos.
 - Final Macedonian copy tone and later English translation tone.

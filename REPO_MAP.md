@@ -12,16 +12,15 @@ common work so agents can inspect the smallest relevant file set.
 - `src/app/layout.jsx`: root metadata/app shell, visit-local language provider, and pre-hydration browser-history transition bridge.
 - `src/app/page.jsx`: typography-led homepage at `/`.
 - `src/app/booking/page.jsx`: server route entry for the customer booking experience.
-- `src/app/typography/page.jsx`: comparison alias for the shared homepage.
 - `src/app/lookbook/page.jsx`: noindex lookbook route and development-media handoff to the client sequence.
 - `src/app/globals.css`: Tailwind v4 tokens, base styles, and progressive-enhancement reveal guard.
 - `next.config.mjs`: Next image quality allowlist for quality-100 responsive delivery.
-- `src/components/TypographySalonPage.jsx`: shared `/` and `/typography` composition, role-separated hero and work-area studio media band, localized service-group overview with a full-catalog booking CTA, contact booking action, and shared bottom navigation placement.
+- `src/components/TypographySalonPage.jsx`: homepage composition with a brand-led hero, role-separated work-area studio media band, localized three-group service overview, salon introduction, contact booking action, and shared bottom navigation placement.
 - `src/components/LanguageProvider.jsx`: root-persistent in-memory language state and document-language synchronization across client-side routes.
 - `src/components/SiteNavigation.jsx`: shared language-aware site navigation, bottom-positioned on standard routes and top-positioned with current-route state on Lookbook.
-- `src/components/lookbook/HorizontalLookbook.jsx`: full-viewport horizontal media sequence with shared top navigation, route-local Lenis momentum/settling, responsive quality-100 images, input handling, disclosure, and brushstroke progress.
+- `src/components/lookbook/HorizontalLookbook.jsx`: full-viewport horizontal media sequence with shared top navigation, route-local Lenis momentum/settling, responsive quality-100 images, input handling, and brushstroke progress.
 - `src/lib/lookbook-media.js`: development-only lookbook image metadata, source links, bilingual alt text, and crop positions.
-- `src/lib/booking/`: server-owned, provider-neutral service catalog, studio rules, validation, and pure availability calculation from supplied busy intervals.
+- `src/lib/booking/`: server-owned, provider-neutral ordered service catalog, studio rules, mandatory customer-email validation, and pure availability calculation from supplied busy intervals.
 - `src/lib/booking/google/`: server-only Google Calendar/OAuth adapter with strict secret configuration, injected-fetch REST boundary, deterministic event IDs, and sanitized operational errors.
 - `src/lib/booking/orchestration/`: server-only dependency-injected booking coordination, safe public failure mapping, and test-only fakes; production coordination is deliberately absent.
 - `src/lib/booking/local/coordination.mjs`: explicitly localhost-only single-process lock, idempotency, and rate-limit ports shared across development hot reloads.
@@ -40,8 +39,8 @@ common work so agents can inspect the smallest relevant file set.
 - `src/components/motion/Reveal.jsx`: role-based Motion editorial and stroke-pass text entrances.
 - `src/components/motion/TypewriterTitle.jsx`: hero-only sequential typewriter with semantic static fallback.
 - `src/components/motion/SmoothScroll.jsx`: reduced-motion-aware document Lenis integration, disabled in favor of route-local horizontal Lenis on the lookbook.
-- `src/lib/homepage-copy.js`: structurally aligned Macedonian-default and English provisional homepage copy, metadata, and language-control labels.
-- `src/lib/lookbook-copy.js`: aligned Macedonian and English Lookbook interface, disclosure, instruction, and accessibility copy.
+- `src/lib/homepage-copy.js`: structurally aligned Macedonian-default and English homepage copy, metadata, and language-control labels.
+- `src/lib/lookbook-copy.js`: aligned Macedonian and English Lookbook interface, source-link, instruction, and accessibility copy.
 - `src/lib/homepage-media.js`: explicit hero and studio-band role metadata for provisional real-studio 4K delivery derivatives.
 - `src/generated/lookbook-media-manifest.js`: generated intrinsic dimensions for lookbook `next/image` rendering.
 - `scripts/media/lookbook-manifest.mjs`: lookbook dimension-manifest generator and read-only media build gate.
