@@ -1,6 +1,6 @@
 import { Temporal } from '@js-temporal/polyfill';
 
-import { getService } from './services.mjs';
+import { getService, getServiceOccupancyMinutes, POST_SERVICE_BUFFER_MINUTES } from './services.mjs';
 import { getWorkingWindow, parseStudioDate, SLOT_INTERVAL_MINUTES, STUDIO_TIME_ZONE } from './studio-rules.mjs';
 
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/i;
@@ -41,6 +41,11 @@ function parseInstant(value, label) {
 
 function compareInstants(left, right) {
   return Temporal.Instant.compare(left, right);
+}
+
+function alignedToInterval(start, opening, intervalMinutes) {
+  return start.epochMilliseconds >= opening.epochMilliseconds
+    && (start.epochMilliseconds - opening.epochMilliseconds) % (intervalMinutes * 60_000) === 0;
 }
 
 export function normalizeBusyIntervals(busyIntervals) {
@@ -133,10 +138,26 @@ export function getAvailableStarts(request) {
   const earliestStart = parsedConstraints?.now
     ? parsedConstraints.now.add({ minutes: parsedConstraints.leadTimeMinutes })
     : null;
+  const occupancyMinutes = getServiceOccupancyMinutes(service.id);
+  const candidates = [];
+
+  for (let start = opening; compareInstants(start.add({ minutes: occupancyMinutes }), closing) <= 0; start = start.add({ minutes: SLOT_INTERVAL_MINUTES })) {
+    candidates.push(start);
+  }
+  for (const busy of normalizedBusy) {
+    const start = busy.end;
+    if (alignedToInterval(start, opening, POST_SERVICE_BUFFER_MINUTES)
+      && !alignedToInterval(start, opening, SLOT_INTERVAL_MINUTES)
+      && compareInstants(start.add({ minutes: occupancyMinutes }), closing) <= 0) {
+      candidates.push(start);
+    }
+  }
+
   const starts = [];
 
-  for (let start = opening; compareInstants(start.add({ minutes: service.durationMinutes }), closing) <= 0; start = start.add({ minutes: SLOT_INTERVAL_MINUTES })) {
-    const end = start.add({ minutes: service.durationMinutes });
+  for (const start of candidates.sort(compareInstants)) {
+    if (starts.at(-1) === start.toString()) continue;
+    const end = start.add({ minutes: occupancyMinutes });
     const conflicts = normalizedBusy.some(
       (busy) => compareInstants(start, busy.end) < 0 && compareInstants(end, busy.start) > 0,
     );

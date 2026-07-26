@@ -5,7 +5,7 @@ import {
   getAvailableStarts,
   normalizeBusyIntervals,
 } from '../../src/lib/booking/availability.mjs';
-import { getService, SERVICES } from '../../src/lib/booking/services.mjs';
+import { getService, getServiceBookingDurationMinutes, getServiceOccupancyMinutes, SERVICES } from '../../src/lib/booking/services.mjs';
 import { getWorkingWindow } from '../../src/lib/booking/studio-rules.mjs';
 
 const summerDate = '2026-07-15';
@@ -46,7 +46,7 @@ test('seasonal working windows use the requested Skopje date and DST offset', ()
   assert.equal(getWorkingWindow('2026-10-01').opening, '2026-10-01T08:00:00Z');
 });
 
-test('every service duration produces aligned starts that fit the complete appointment', () => {
+test('every service occupancy produces aligned regular starts that fit the complete calendar reservation', () => {
   for (const service of SERVICES) {
     const starts = getAvailableStarts({ serviceId: service.id, date: summerDate });
     assert.ok(starts.length > 0);
@@ -54,9 +54,29 @@ test('every service duration produces aligned starts that fit the complete appoi
     const lastStart = starts.at(-1);
     const lastStartMinute = new Date(lastStart).getUTCMinutes();
     assert.equal(lastStartMinute % 30, 0);
-    assert.ok(new Date(lastStart).getTime() + service.durationMinutes * 60_000 <= new Date('2026-07-15T16:00:00Z').getTime());
+    assert.ok(new Date(lastStart).getTime() + getServiceOccupancyMinutes(service.id) * 60_000 <= new Date('2026-07-15T16:00:00Z').getTime());
   }
-  assert.equal(getAvailableStarts({ serviceId: 'balayage', date: summerDate }).at(-1), '2026-07-15T11:00:00Z');
+  assert.equal(getAvailableStarts({ serviceId: 'balayage', date: summerDate }).at(-1), '2026-07-15T14:30:00Z');
+});
+
+test('a 30-minute service occupies its post-service buffer while an exact busy-end adjacency remains available', () => {
+  const starts = getAvailableStarts({
+    serviceId: 'short-hair-haircut',
+    date: winterDate,
+    busyIntervals: [{ start: '2026-01-15T12:00:00Z', end: '2026-01-15T12:45:00Z' }],
+  });
+  assert.equal(starts.includes('2026-01-15T12:00:00Z'), false);
+  assert.equal(starts.includes('2026-01-15T12:30:00Z'), false);
+  assert.equal(starts.includes('2026-01-15T12:45:00Z'), true);
+});
+
+test('long customer-facing durations retain their display values but reserve 60 active minutes plus the shared buffer', () => {
+  assert.equal(getService('highlights').durationMinutes, 240);
+  assert.equal(getService('balayage').durationMinutes, 300);
+  assert.equal(getServiceBookingDurationMinutes('highlights'), 60);
+  assert.equal(getServiceBookingDurationMinutes('balayage'), 60);
+  assert.equal(getServiceOccupancyMinutes('highlights'), 75);
+  assert.equal(getServiceOccupancyMinutes('balayage'), 75);
 });
 
 test('partial busy intervals use inclusive starts and exclusive ends', () => {
@@ -65,7 +85,7 @@ test('partial busy intervals use inclusive starts and exclusive ends', () => {
     date: winterDate,
     busyIntervals: [{ start: '2026-01-15T10:00:00Z', end: '2026-01-15T11:00:00Z' }],
   });
-  assert.equal(starts.includes('2026-01-15T09:30:00Z'), true);
+  assert.equal(starts.includes('2026-01-15T09:30:00Z'), false);
   assert.equal(starts.includes('2026-01-15T10:00:00Z'), false);
   assert.equal(starts.includes('2026-01-15T11:00:00Z'), true);
 });
@@ -73,7 +93,7 @@ test('partial busy intervals use inclusive starts and exclusive ends', () => {
 test('opening and exact-closing boundaries remain available unless a crossing interval overlaps', () => {
   const unblocked = getAvailableStarts({ serviceId: 'makeup', date: winterDate });
   assert.equal(unblocked[0], '2026-01-15T09:00:00Z');
-  assert.equal(unblocked.at(-1), '2026-01-15T16:00:00Z');
+  assert.equal(unblocked.at(-1), '2026-01-15T15:30:00Z');
   assert.equal(getAvailableStarts({
     serviceId: 'makeup',
     date: winterDate,

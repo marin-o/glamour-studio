@@ -11,7 +11,7 @@ const input = { serviceId: 'makeup', start, name: 'Ana', phone: '+38970000000', 
 const context = { subjectDigest: 'a'.repeat(64) };
 
 function fakes({ staffBlocker = false, productionTransition = false } = {}) {
-  const records = new Map(); const events = new Map(); const attendeeEventIds = []; let activeLease = null; let inserts = 0; let invites = 0; let deleted = false;
+  const records = new Map(); const events = new Map(); const attendeeEventIds = []; const busyQueries = []; const blockingQueries = []; let activeLease = null; let inserts = 0; let invites = 0; let deleted = false;
   const ports = {
     lock: {
       async acquire({ owner }) { while (activeLease) await new Promise((resolve) => setTimeout(resolve, 1)); const lease = { owner, fencingToken: `f-${owner}`, expiresAt: Date.now() + 10_000 }; activeLease = lease; return { ...lease, async release(candidate) { if (!candidate || candidate.owner !== lease.owner || candidate.fencingToken !== lease.fencingToken || activeLease !== lease) throw new Error('compare-owner release rejected'); activeLease = null; } }; },
@@ -38,15 +38,32 @@ function fakes({ staffBlocker = false, productionTransition = false } = {}) {
     rateLimit: { async check() { return { allowed: true }; } },
   };
   const calendar = {
-    async getBusyIntervals() { return [...events.values()].map(({ start: eventStart, end: eventEnd }) => ({ start: eventStart, end: eventEnd })); },
+    async getBusyIntervals(request) { busyQueries.push(request); return [...events.values()].map(({ start: eventStart, end: eventEnd }) => ({ start: eventStart, end: eventEnd })); },
     async reconcilePrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; if (!events.has(id)) throw Object.assign(new Error('event absent'), { code: 'NOT_FOUND' }); return { event: events.get(id) }; },
     async createPrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; if (!events.has(id)) { inserts += 1; events.set(id, { id, ...event }); } return { event: events.get(id) }; },
-    async listBlockingEvents() { return [...events.values()].map(({ id, start: eventStart, end: eventEnd }) => ({ id, start: eventStart, end: eventEnd })).concat(staffBlocker ? [{ id: 'staff', start, end, allDay: false }] : []); },
+    async listBlockingEvents(request) { blockingQueries.push(request); return [...events.values()].map(({ id, start: eventStart, end: eventEnd }) => ({ id, start: eventStart, end: eventEnd })).concat(staffBlocker ? [{ id: 'staff', start, end, allDay: false }] : []); },
     async deleteEventForCompensation(id) { deleted = events.delete(id); return { deleted }; },
     async addOrUpdateAttendee({ eventId }) { invites += 1; attendeeEventIds.push(eventId); },
   };
-  return { ports, calendar, records, attendeeEventIds, get inserts() { return inserts; }, get invites() { return invites; }, get deleted() { return deleted; } };
+  return { ports, calendar, records, events, attendeeEventIds, busyQueries, blockingQueries, get inserts() { return inserts; }, get invites() { return invites; }, get deleted() { return deleted; } };
 }
+
+test('occupancy end drives Calendar event, conflict-query, and public-response boundaries', async () => {
+  const fake = fakes(); const service = createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now });
+  const result = await service.book({ ...input, serviceId: 'highlights' }, 'booking-key-occupancy-boundaries', context);
+  assert.equal(result.end, '2026-07-24T05:15:00Z');
+  assert.equal([...fake.events.values()][0].end, '2026-07-24T05:15:00Z');
+  assert.deepEqual(fake.busyQueries[0], { timeMin: '2026-07-24T03:45:00Z', timeMax: '2026-07-24T05:15:00Z' });
+  assert.deepEqual(fake.blockingQueries[0], { timeMin: start, timeMax: '2026-07-24T05:15:00Z' });
+});
+
+test('availability recalculates starts from busy booking occupancy', async () => {
+  const fake = fakes(); const service = createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now });
+  await fake.calendar.createPrivateEvent({ idempotencyKey: 'busy-booking', start: '2026-07-24T07:00:00Z', end: '2026-07-24T07:45:00Z' });
+  const availability = await service.availability({ serviceId: 'short-hair-haircut', date: '2026-07-24' }, context);
+  assert.equal(availability.starts.includes('2026-07-24T07:00:00Z'), false);
+  assert.equal(availability.starts.includes('2026-07-24T07:45:00Z'), true);
+});
 
 test('concurrent same-slot attempts serialize and only one confirms', async () => {
   const fake = fakes(); const service = createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now });
@@ -209,7 +226,7 @@ test('confirmed replay is bound to the trusted current service, canonical instan
   const cases = [
     ['wrong service', { serviceId: 'hair-styling' }, input],
     ['wrong canonical start', { start: '2026-07-24T04:15:00Z' }, input],
-    ['wrong derived end', { end: '2026-07-24T05:15:00Z' }, input],
+    ['wrong derived end', { end: '2026-07-24T05:00:00Z' }, input],
     ['missing invitation disposition', { notification: 'not_requested' }, input],
   ];
   for (const [name, patch, request] of cases) await t.test(name, async () => {

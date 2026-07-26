@@ -19,11 +19,16 @@ function integer(env, name, minimum, maximum) {
 }
 
 export function isProductionBookingEnabled(env = process.env, nodeEnv = process.env.NODE_ENV) {
-  return nodeEnv === 'production' && env?.BOOKING_PRODUCTION_ENABLED === '1' && env?.VERCEL === '1';
+  const vercel = env?.VERCEL === '1';
+  const netlify = env?.BOOKING_DEPLOYMENT_PLATFORM === 'netlify';
+  return nodeEnv === 'production'
+    && env?.BOOKING_PRODUCTION_ENABLED === '1'
+    && (vercel !== netlify);
 }
 
 export function getProductionBookingConfig(env = process.env, nodeEnv = process.env.NODE_ENV) {
   if (!isProductionBookingEnabled(env, nodeEnv)) throw new TypeError('Production booking is not enabled.');
+  const platform = env?.VERCEL === '1' ? 'vercel' : 'netlify';
   const lockTimeoutMs = integer(env, 'BOOKING_LOCK_TIMEOUT_MS', 1, 30_000);
   const lockLeaseMs = integer(env, 'BOOKING_LOCK_LEASE_MS', 1_000, 120_000);
   const providerOperationBudgetMs = integer(env, 'BOOKING_PROVIDER_OPERATION_BUDGET_MS', 1_000, 120_000);
@@ -31,6 +36,7 @@ export function getProductionBookingConfig(env = process.env, nodeEnv = process.
   if (lockLeaseMs <= providerOperationBudgetMs + leaseSafetyMs) throw new TypeError('Production booking configuration is invalid.');
   try { getGoogleCalendarConfig(env); } catch { throw new TypeError('Production booking configuration is invalid.'); }
   return Object.freeze({
+    platform,
     redisUrl: required(env, 'UPSTASH_REDIS_REST_URL', URL_VALUE),
     redisToken: required(env, 'UPSTASH_REDIS_REST_TOKEN', SECRET),
     requestHmacSecret: required(env, 'BOOKING_REQUEST_HMAC_SECRET', SECRET),

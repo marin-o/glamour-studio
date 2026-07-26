@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "056-dynamic-booking-occupancy-and-service-active-time.md",
+  "status": "DONE",
+  "evidence": "Owner approved completion; all acceptance criteria are checked; focused availability/orchestration/client tests passed 47/47 and confirmation action tests passed 18/18. The unrelated legacy homepage-media contract mismatch remains outside this task.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-26T11:33:51.446Z"
+}

@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash, randomUUID } from 'node:crypto';
 import { Temporal } from '@js-temporal/polyfill';
 import { getAvailableStarts } from '../availability.mjs';
-import { getService } from '../services.mjs';
+import { getService, getServiceOccupancyMinutes, POST_SERVICE_BUFFER_MINUTES } from '../services.mjs';
 import { getWorkingWindow, STUDIO_TIME_ZONE } from '../studio-rules.mjs';
 import { BookingError, asBookingError } from './errors.mjs';
 import { assertCoordinationPorts, assertLease, assertState } from './ports.mjs';
@@ -70,8 +70,7 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
     if (!validText(idempotencyKey, 8, 512)) throw new BookingError('INVALID_IDEMPOTENCY_KEY', 400);
     if (!requestContext || !validText(requestContext.subjectDigest, 32, 128)) throw new BookingError('BOOKING_NOT_CONFIGURED', 503);
     let service; try { service = getService(input.serviceId); } catch { throw new BookingError('INVALID_REQUEST', 400); }
-    const start = instant(input.start); const end = start.add({ minutes: service.durationMinutes }); const date = start.toZonedDateTimeISO(STUDIO_TIME_ZONE).toPlainDate().toString();
-    try { if (!getAvailableStarts({ serviceId: service.id, date, busyIntervals: [], constraints: { now: Temporal.Instant.from(now()).toString(), leadTimeMinutes: policy.leadTimeMinutes, bookingHorizonDays: policy.bookingHorizonDays } }).includes(start.toString())) throw new BookingError('SLOT_UNAVAILABLE', 409); } catch (error) { throw error instanceof BookingError ? error : new BookingError('INVALID_REQUEST', 400); }
+    const start = instant(input.start); const end = start.add({ minutes: getServiceOccupancyMinutes(service.id) }); const date = start.toZonedDateTimeISO(STUDIO_TIME_ZONE).toPlainDate().toString();
     const contactDigest = digest(`${input.name}\u0000${input.phone}\u0000${input.email}`); const rate = validRate(await ports.rateLimit.check({ action: 'booking', subjectDigest: requestContext.subjectDigest, contactDigest }));
     if (!rate.allowed) throw new BookingError('RATE_LIMITED', 429, { retryAfter: rate.retryAfter });
     let lease;
@@ -88,9 +87,9 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
       else { record = assertState(await ports.idempotency.create({ keyDigest, fingerprint, state: 'pending', ttlSeconds: policy.idempotencyTtlSeconds })); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) return prior; }
       let creationIntentIsRecovered = record.state === 'creation_intent';
       if (record.state === 'pending') {
-        await protectOperation(lease); const busy = await calendar.getBusyIntervals({ timeMin: start.toString(), timeMax: end.toString() });
+        await protectOperation(lease); const busy = await calendar.getBusyIntervals({ timeMin: start.subtract({ minutes: POST_SERVICE_BUFFER_MINUTES }).toString(), timeMax: end.toString() });
         if (!Array.isArray(busy) || busy.some((entry) => !entry || typeof entry.start !== 'string' || typeof entry.end !== 'string')) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
-        if (busy.some((entry) => overlaps(start, end, providerInstant(entry.start), providerInstant(entry.end)))) {
+        if (!getAvailableStarts({ serviceId: service.id, date, busyIntervals: busy, constraints: { now: Temporal.Instant.from(now()).toString(), leadTimeMinutes: policy.leadTimeMinutes, bookingHorizonDays: policy.bookingHorizonDays } }).includes(start.toString())) {
           try { await transition(keyDigest, record, 'conflict', { code: 'SLOT_UNAVAILABLE' }); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); }
           throw new BookingError('SLOT_UNAVAILABLE', 409);
         }
@@ -108,9 +107,9 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
             if (error?.code !== 'NOT_FOUND') throw asBookingError(error);
             await protectOperation(lease);
             let busy;
-            try { busy = await calendar.getBusyIntervals({ timeMin: start.toString(), timeMax: end.toString() }); } catch (availabilityError) { throw asBookingError(availabilityError); }
+            try { busy = await calendar.getBusyIntervals({ timeMin: start.subtract({ minutes: POST_SERVICE_BUFFER_MINUTES }).toString(), timeMax: end.toString() }); } catch (availabilityError) { throw asBookingError(availabilityError); }
             if (!Array.isArray(busy) || busy.some((entry) => !entry || typeof entry.start !== 'string' || typeof entry.end !== 'string')) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
-            if (busy.some((entry) => overlaps(start, end, providerInstant(entry.start), providerInstant(entry.end)))) {
+            if (!getAvailableStarts({ serviceId: service.id, date, busyIntervals: busy, constraints: { now: Temporal.Instant.from(now()).toString(), leadTimeMinutes: policy.leadTimeMinutes, bookingHorizonDays: policy.bookingHorizonDays } }).includes(start.toString())) {
               try { await transition(keyDigest, record, 'conflict', { code: 'SLOT_UNAVAILABLE' }); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); }
               throw new BookingError('SLOT_UNAVAILABLE', 409);
             }

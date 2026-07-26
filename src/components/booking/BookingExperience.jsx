@@ -360,6 +360,7 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
   const carouselTransitioningRef = useRef(false);
   const availabilityCacheRef = useRef(new Map());
   const availabilityPendingRef = useRef(new Map());
+  const availabilityCacheGenerationRef = useRef(0);
   const successStepRef = useRef();
   const serviceStepRef = useRef();
   const appointmentStepRef = useRef();
@@ -389,12 +390,13 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
     if (cached) return Promise.resolve(cached);
 
     const key = availabilityCacheKey(serviceId, date);
+    const requestGeneration = availabilityCacheGenerationRef.current;
     const pending = availabilityPendingRef.current.get(key);
     if (pending) return pending.promise;
 
     let promise;
     promise = api.availability({ serviceId, date, signal }).then((result) => {
-      if (result.ok) {
+      if (result.ok && requestGeneration === availabilityCacheGenerationRef.current && !signal.aborted) {
         availabilityCacheRef.current.set(key, {
           result,
           expiresAt: Date.now() + availabilityCacheTtlMs,
@@ -540,6 +542,14 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
     : { ...current, [field]: value, notice: "" });
   const changeService = () => {
     setFlow((current) => ({ ...current, step: "service", notice: "" }));
+  };
+  const startNewBooking = () => {
+    gateRef.current.clear();
+    availabilityCacheGenerationRef.current += 1;
+    availabilityCacheRef.current.clear();
+    availabilityPendingRef.current.clear();
+    setRetry(0);
+    setFlow(initialBookingFlow);
   };
   const goBack = () => {
     setFlow(moveBack(flow));
@@ -745,7 +755,10 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
                 <p className="mt-3 text-lg text-muted">{skopjeLabel(flow.confirmation.start, language)}</p>
                 <p className="mt-7 rounded-[1.5rem] border border-line bg-surface p-5 text-sm leading-relaxed">{t.invitation[flow.confirmation.notification]}</p>
                 <p className="mt-4 text-sm leading-relaxed text-muted">{t.invitationGuidance}</p>
-                <TransitionLink className="mt-8 inline-flex min-h-12 items-center rounded-full border border-line-strong bg-surface px-6 font-extrabold text-accent-deep transition-colors hover:border-accent-deep hover:bg-peach focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent" href="/">Glamour Studio</TransitionLink>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <PrimaryButton onClick={startNewBooking} type="button">{t.newBooking}</PrimaryButton>
+                  <TransitionLink className="inline-flex min-h-12 items-center rounded-full border border-line-strong bg-surface px-6 font-extrabold text-accent-deep transition-colors hover:border-accent-deep hover:bg-peach focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent" href="/">{t.backHome}</TransitionLink>
+                </div>
               </section>
               )}
               </CarouselPanel>

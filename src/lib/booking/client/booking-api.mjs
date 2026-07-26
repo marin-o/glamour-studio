@@ -1,4 +1,4 @@
-import { SERVICES } from '../services.mjs';
+import { SERVICES, getServiceOccupancyMinutes } from '../services.mjs';
 
 const serviceById = new Map(SERVICES.map((service) => [service.id, service]));
 const MAX_RESPONSE_BYTES = 16 * 1024;
@@ -22,7 +22,7 @@ const canonicalInstant = (value) => {
 };
 const strictDate = (value) => typeof value === 'string' && DATE.test(value) && new Date(`${value}T00:00:00.000Z`).toISOString().slice(0, 10) === value;
 const expectedEnd = (start, serviceId) => {
-  const end = new Date(Date.parse(start) + serviceById.get(serviceId).durationMinutes * 60_000).toISOString();
+  const end = new Date(Date.parse(start) + getServiceOccupancyMinutes(serviceId) * 60_000).toISOString();
   return start.endsWith('.000Z') ? end : end.replace('.000Z', 'Z');
 };
 

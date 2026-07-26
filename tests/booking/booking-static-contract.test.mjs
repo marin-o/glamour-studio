@@ -175,3 +175,23 @@ test('success guidance covers Google Calendar unknown-sender confirmation in bot
   assert.match(booking, /t\.invitation\[flow\.confirmation\.notification\]/);
   assert.doesNotMatch(booking, /invitationGuidance[^\n]*aria-live/);
 });
+
+test('confirmation actions are localized, reset the client flow, and preserve home navigation', async () => {
+  const booking = await read('src/components/booking/BookingExperience.jsx');
+  assert.equal(bookingCopy.en.newBooking, 'New booking');
+  assert.equal(bookingCopy.mk.newBooking, 'Нов термин');
+  assert.equal(bookingCopy.en.backHome, 'Back to home');
+  assert.equal(bookingCopy.mk.backHome, 'Назад на почетна');
+  assert.match(booking, /const startNewBooking = \(\) => \{/);
+  for (const contract of [
+    /gateRef\.current\.clear\(\)/,
+    /availabilityCacheGenerationRef\.current \+= 1/,
+    /availabilityCacheRef\.current\.clear\(\)/,
+    /availabilityPendingRef\.current\.clear\(\)/,
+    /setFlow\(initialBookingFlow\)/,
+    /<PrimaryButton onClick=\{startNewBooking\} type="button">\{t\.newBooking\}<\/PrimaryButton>/,
+    /<TransitionLink[^>]*href="\/"[^>]*>\{t\.backHome\}<\/TransitionLink>/,
+    /flex flex-wrap items-center gap-3/,
+  ]) assert.match(booking, contract);
+  assert.match(booking, /requestGeneration === availabilityCacheGenerationRef\.current && !signal\.aborted/);
+});
