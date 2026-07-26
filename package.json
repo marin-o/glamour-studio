@@ -4,14 +4,16 @@
   "packageManager": "pnpm@11.14.0",
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm media:check && next build",
+    "build": "pnpm media:check && pnpm media:homepage:check && next build",
     "start": "next start",
     "lint": "eslint .",
     "test:booking": "node --conditions=react-server --test tests/booking/*.test.mjs",
     "test:booking-google": "node --conditions=react-server --test tests/booking/google-calendar-adapter.test.mjs",
     "booking:google:authorize": "node --env-file=.env.local scripts/booking/google-oauth-local.mjs",
     "media:optimize": "node scripts/media/lookbook-manifest.mjs",
-    "media:check": "node scripts/media/lookbook-manifest.mjs --check"
+    "media:check": "node scripts/media/lookbook-manifest.mjs --check",
+    "media:homepage:optimize": "node scripts/media/homepage-webp.mjs",
+    "media:homepage:check": "node scripts/media/homepage-webp.mjs --check"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

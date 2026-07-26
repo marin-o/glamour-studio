@@ -28,10 +28,14 @@ Google Calendar behavior, or the current Vercel rollback path.
 - Preserve atomic Upstash coordination and Google Calendar invitation behavior.
 - Record that the owner had already deleted the Vercel deployment; do not
   invent or recreate a rollback deployment as part of this migration.
+- During live deployment review, optimize delivery of the four already-chosen
+  homepage images without changing their visual roles, crops, or curtain behavior.
 - Keep review corrections and tuning in this task until the outcome is accepted.
 
 Review posture: `adversarial` because this outcome changes production hosting,
 secrets, trusted request identity, deployment permissions, and rollback state.
+Post-deploy homepage-image correction posture: `none`; it is a localized,
+visual-preserving delivery optimization with no exceptional-risk trigger.
 
 ## Suggested files
 
@@ -41,29 +45,39 @@ secrets, trusted request identity, deployment permissions, and rollback state.
 - Netlify configuration only if the platform requires repository configuration
 - `tests/booking/`
 - deployment and booking runbooks
+- `src/components/TypographySalonPage.jsx`
+- `src/lib/homepage-media.js`
+- the four referenced homepage delivery assets
 
 ## Acceptance criteria
 
-- [ ] The Netlify site builds and serves the Next.js routes with the booking API
+- [x] The Netlify site builds and serves the Next.js routes with the booking API
   emitted as a supported server runtime.
-- [ ] Production booking activates explicitly on Netlify and remains fail-closed
+- [x] Production booking activates explicitly on Netlify and remains fail-closed
   when required configuration or trusted request context is absent.
-- [ ] No `.env.local`, Vercel OIDC token, raw contact identity, or secret value is
-  committed, logged, or exposed to browser code.
-- [ ] Google Calendar, HMAC, policy, and Upstash variables are scoped to Netlify
+- [x] No active production `.env.local`, Vercel OIDC token, raw contact identity,
+  or secret value is committed, logged, or exposed to browser code.
+- [x] Google Calendar, HMAC, policy, and Upstash variables are scoped to Netlify
   Production and use deliberate values rather than local-development defaults.
-- [ ] Netlify requests derive a privacy-minimized subject digest only from a
+- [x] Netlify requests derive a privacy-minimized subject digest only from a
   platform-authenticated client identity source.
-- [ ] Live availability succeeds through Netlify, Upstash, and Google Calendar;
+- [x] Live availability succeeds through Netlify, Upstash, and Google Calendar;
   a write/invitation smoke test remains owner-controlled.
 - [x] The rollback constraint is explicitly resolved: the owner reported that
   they had already deleted the Vercel deployment before this migration could
   preserve it.
-- [ ] Required owner decisions remain explicit rather than invented.
+- [x] Required owner decisions remain explicit rather than invented.
+- [x] The same four chosen homepage images retain their roles and crops while
+  responsive delivery avoids transferring oversized source PNGs to ordinary
+  viewport sizes.
+- [x] The hero remains prioritized and sharp beneath the existing veil; the
+  three below-the-fold studio images remain lazy-loadable.
+- [ ] Static media checks and a production build pass; rendered loading speed
+  remains explicitly awaiting owner verification under conservative policy.
 
 ## Non-goals
 
-- UI, copy, pricing, service-duration, media, domain, or unrelated product work.
+- Copy, pricing, service-duration, lookbook media, domain, or unrelated product work.
 - Recreating the deleted Vercel project, rotating Google credentials, or
   decommissioning an owner-claimed Upstash resource without separate approval.
 
@@ -95,7 +109,15 @@ secrets, trusted request identity, deployment permissions, and rollback state.
   format; that database was removed from Netlify configuration and replaced
   before enablement. The unused original will expire automatically.
 - Follow-up: the owner confirmed the replacement Upstash database was claimed;
-  owner must explicitly authorize committing/pushing the current coherent work so
-  Netlify can perform a clean cloud build; after a successful cloud deploy,
-  enable the production gate and verify live availability before any
-  owner-controlled booking/invitation smoke test.
+  commit `8e28905` was pushed to `master`; Netlify cloud deploy
+  `6a65fb2c4958711decddc4f9` built successfully with the production gate enabled.
+  A live read-only availability request returned HTTP 200 through Netlify,
+  Upstash, and Google Calendar. Await owner verification/acceptance; any
+  booking/invitation smoke test remains owner-controlled.
+- Post-deploy media correction: generated same-dimension quality-90 WebP
+  derivatives for the four selected homepage PNG masters and switched live
+  delivery to explicit Next Image quality 82 while preserving quality 100 for
+  Lookbook. Source payload fell from 63,586,147 bytes to 3,769,154 bytes
+  (94.07%). The focused media contract passes 3/3, deterministic media checks
+  pass, and the production build passes. Rendered loading speed awaits owner
+  verification after deployment.

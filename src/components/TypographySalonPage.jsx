@@ -122,6 +122,7 @@ export default function TypographySalonPage() {
             className="h-full w-full object-cover"
             height={heroMedia.height}
             priority
+            quality={82}
             sizes="100vw"
             src={heroMedia.src}
             style={{
@@ -249,6 +250,8 @@ export default function TypographySalonPage() {
                 alt={copy.media.items[anchorMedia.id].alt}
                 className="h-auto w-full object-cover md:h-full"
                 height={anchorMedia.height}
+                loading="lazy"
+                quality={82}
                 sizes="(min-width: 768px) 45vw, 100vw"
                 src={anchorMedia.src}
                 style={{ objectPosition: anchorMedia.objectPosition }}
@@ -266,6 +269,8 @@ export default function TypographySalonPage() {
                     alt={copy.media.items[media.id].alt}
                     className="h-auto w-full object-cover md:h-full"
                     height={media.height}
+                    loading="lazy"
+                    quality={82}
                     sizes="(min-width: 768px) 15vw, 50vw"
                     src={media.src}
                     style={{ objectPosition: media.objectPosition }}

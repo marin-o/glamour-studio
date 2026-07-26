@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import sharp from "sharp";
@@ -19,33 +19,33 @@ const expectedMedia = [
     media: homepageHeroMedia,
     id: "interior",
     role: "hero",
-    src: "/media/placeholders/glamour-studio-hero-clean-4k.jpg",
-    width: 4096,
-    height: 3072,
+    src: "/media/homepage/glamour-studio-hero-clean-4k.webp",
+    width: 4344,
+    height: 3258,
   },
   {
     media: homepageStudioMedia[0],
     id: "work-area",
     role: "anchor",
-    src: "/media/placeholders/glamour-studio-work-area-4k.jpg",
-    width: 4096,
-    height: 3072,
+    src: "/media/homepage/glamour-studio-work-area-4k.webp",
+    width: 4344,
+    height: 3258,
   },
   {
     media: homepageStudioMedia[1],
     id: "reception-detail",
     role: "supporting",
-    src: "/media/placeholders/glamour-studio-reception-detail-4k.jpg",
-    width: 3072,
-    height: 4096,
+    src: "/media/homepage/glamour-studio-reception-detail-4k.webp",
+    width: 3258,
+    height: 4344,
   },
   {
     media: homepageStudioMedia[2],
     id: "lounge-detail",
     role: "supporting",
-    src: "/media/placeholders/glamour-studio-lounge-clean-4k.jpg",
-    width: 3072,
-    height: 4096,
+    src: "/media/homepage/glamour-studio-lounge-clean-4k.webp",
+    width: 3258,
+    height: 4344,
   },
 ];
 
@@ -70,6 +70,9 @@ test("homepage media has one hero and a distinct work-area studio band", async (
     "hero and studio sources must all be distinct",
   );
 
+  let masterBytes = 0;
+  let optimizedBytes = 0;
+
   for (const expected of expectedMedia) {
     assert.equal(expected.media.id, expected.id);
     assert.equal(expected.media.role, expected.role);
@@ -79,6 +82,9 @@ test("homepage media has one hero and a distinct work-area studio band", async (
 
     const filePath = resolve(root, "public", expected.src.slice(1));
     assert.ok(existsSync(filePath), expected.src);
+    assert.match(expected.src, /^\/media\/homepage\/[^/]+\.webp$/);
+    const masterPath = filePath.replace(/\.webp$/i, ".png");
+    assert.ok(existsSync(masterPath), `${expected.id} PNG master`);
     const digest = createHash("sha256")
       .update(readFileSync(filePath))
       .digest("hex");
@@ -86,6 +92,11 @@ test("homepage media has one hero and a distinct work-area studio band", async (
     const dimensions = await sharp(filePath).metadata();
     assert.equal(dimensions.width, expected.width, `${expected.id} width`);
     assert.equal(dimensions.height, expected.height, `${expected.id} height`);
+    const masterDimensions = await sharp(masterPath).metadata();
+    assert.equal(masterDimensions.width, expected.width, `${expected.id} master width`);
+    assert.equal(masterDimensions.height, expected.height, `${expected.id} master height`);
+    masterBytes += statSync(masterPath).size;
+    optimizedBytes += statSync(filePath).size;
     assert.doesNotMatch(expected.src, /concept|interior-wide|styling-chairs/i);
   }
 
@@ -93,6 +104,10 @@ test("homepage media has one hero and a distinct work-area studio band", async (
     new Set(expectedMedia.map(({ digest }) => digest)).size,
     expectedMedia.length,
     "hero and studio derivatives must have distinct binary contents",
+  );
+  assert.ok(
+    1 - optimizedBytes / masterBytes >= 0.75,
+    `homepage WebP derivatives must reduce PNG bytes by at least 75% (got ${((1 - optimizedBytes / masterBytes) * 100).toFixed(2)}%)`,
   );
 });
 
@@ -137,6 +152,42 @@ test("homepage, booking, and Open Graph consumers keep media roles explicit", ()
     /supportingMedia\.map\(\(media\) => \([\s\S]*?<Image[\s\S]*?height=\{media\.height\}[\s\S]*?src=\{media\.src\}[\s\S]*?width=\{media\.width\}/,
     "supporting images must consume each media entry fields",
   );
+  const imageBlocks = [...home.matchAll(/<Image\b[\s\S]*?\/>/g)].map(
+    ([block]) => block,
+  );
+  assert.equal(imageBlocks.length, 3, "homepage must render exactly three Image blocks");
+  assert.equal(
+    imageBlocks.filter((block) => block.includes("quality={82}")).length,
+    3,
+    "all homepage images must request quality 82",
+  );
+  const heroBlock = imageBlocks.find((block) =>
+    block.includes("src={heroMedia.src}"),
+  );
+  const anchorBlock = imageBlocks.find((block) =>
+    block.includes("src={anchorMedia.src}"),
+  );
+  const supportingBlocks = imageBlocks.filter((block) =>
+    block.includes("src={media.src}"),
+  );
+  assert.ok(heroBlock, "homepage hero image must be present");
+  assert.ok(anchorBlock, "homepage anchor image must be present");
+  assert.equal(
+    supportingBlocks.length,
+    1,
+    "homepage must render supporting images through one map block",
+  );
+  assert.equal(
+    homepageStudioMedia.filter(({ role }) => role === "supporting").length,
+    2,
+    "supporting image map must represent two runtime images",
+  );
+  assert.match(heroBlock, /\bpriority\b/);
+  assert.doesNotMatch(heroBlock, /loading=["']lazy["']/);
+  for (const block of [anchorBlock, ...supportingBlocks]) {
+    assert.match(block, /loading=["']lazy["']/);
+    assert.doesNotMatch(block, /\bpriority\b/);
+  }
   assert.doesNotMatch(home, /homepageMedia/);
 
   assert.match(booking, /homepageHeroMedia/);

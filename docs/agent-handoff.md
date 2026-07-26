@@ -26,11 +26,13 @@
   confirmation reports `requested` or the safe `unknown` fallback.
 - Task 057 is migrating production booking to the owner-created Netlify site
   `fanciful-rolypoly-a33659.netlify.app`. Netlify Production has the Google,
-  policy, HMAC, explicit platform, and replacement Upstash variables staged
-  with `BOOKING_PRODUCTION_ENABLED=0`. The reviewed runtime uses Netlify's
-  server-derived Functions context IP and fails closed on missing or
-  contradictory platform context. The owner reported that the prior Vercel
-  deployment was already deleted, so no deployment rollback remains.
+  policy, HMAC, explicit platform, and owner-claimed replacement Upstash
+  variables configured. Commit `8e28905` deployed successfully as
+  `6a65fb2c4958711decddc4f9` with production booking enabled; a live read-only
+  availability request returned HTTP 200 through Netlify, Upstash, and Google
+  Calendar. The reviewed runtime uses Netlify's server-derived Functions
+  context IP and fails closed on missing or contradictory platform context.
+  The prior Vercel deployment was already deleted, so no rollback remains.
 - `/lookbook` retains its noindex horizontal sequence, source tracing,
   meaningful bilingual alt text, quality-100 responsive images, route-local
   Lenis, and exact progress. Owner-directed customer copy removes visible
@@ -63,10 +65,9 @@
   `f2218049-c728-44af-97e3-6223a5811ed1` was claimed with the Glamour Studio
   account. The initial disposable database was removed from Netlify
   configuration after its token appeared in diagnostics and will expire unused.
-- Explicit owner authorization is required before committing and pushing the
-  current task 056/057 work. After the clean Netlify cloud build, enable the
-  production gate, verify live availability, and leave the write/invitation
-  smoke test under owner control.
+- Task 056/057 code is pushed and the enabled Netlify cloud deployment has
+  passed live availability. Await the owner's website verification and explicit
+  completion acceptance; any write/invitation smoke test remains owner-controlled.
 
 ## Durable gotchas
 
