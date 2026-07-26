@@ -119,7 +119,7 @@ export default function TypographySalonPage() {
         >
           <Image
             alt=""
-            className="h-full w-full scale-105 object-cover"
+            className="h-full w-full object-cover"
             height={heroMedia.height}
             priority
             sizes="100vw"
@@ -161,9 +161,10 @@ export default function TypographySalonPage() {
       </section>
 
       <section
+        id="type-services"
         className="relative z-[2] bg-surface-warm px-pad pt-[70px] pb-[84px] md:py-24"
         data-hero-curtain-services
-        aria-labelledby="type-services"
+        aria-labelledby="type-services-title"
       >
         <span
           aria-hidden="true"
@@ -176,7 +177,7 @@ export default function TypographySalonPage() {
         />
         <Reveal
           as="h2"
-          id="type-services"
+          id="type-services-title"
           className={`${sectionH2} mx-auto text-center`}
           revealId="services-title"
           side="end"
@@ -214,15 +215,16 @@ export default function TypographySalonPage() {
         </HeroCurtainReveal>
 
       <section
+        id="type-studio"
         className="border-y border-line bg-surface px-pad pt-[70px] pb-[84px] md:py-24"
-        aria-labelledby="type-studio"
+        aria-labelledby="type-studio-title"
       >
         <div className="grid gap-8 md:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] md:gap-[clamp(32px,7vw,96px)]">
           <div className="text-right md:text-left">
             <p className={kicker}>{copy.studioIntro.eyebrow}</p>
             <Reveal
               as="h2"
-              id="type-studio"
+              id="type-studio-title"
               className="mt-4 ml-auto max-w-none break-normal text-balance text-[clamp(2.25rem,4.2vw,4.6rem)] leading-[0.96] md:ml-0 md:leading-[0.92]"
               revealId="studio-title"
               role="editorial"

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { homepageCopy } from '../../src/lib/homepage-copy.js';
+import { bookingCopy } from '../../src/lib/booking/booking-copy.js';
 
 const read = (file) => readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
 
@@ -16,6 +17,16 @@ test('booking SSR entry validates search params, provides a stable Skopje date, 
   assert.match(page, /Закажување \| Glamour Studio/);
   assert.match(page, /Закажете термин во Glamour Studio во Радовиш/);
   assert.match(page, /openGraph/);
+});
+
+test('booking API routes stay Node-only, dynamic, no-store, and use the server request-context boundary', async () => {
+  const [availability, booking] = await Promise.all([read('src/app/api/booking/availability/route.js'), read('src/app/api/booking/route.js')]);
+  for (const route of [availability, booking]) {
+    assert.match(route, /export const runtime = 'nodejs'/);
+    assert.match(route, /export const dynamic = 'force-dynamic'/);
+    assert.match(route, /export const revalidate = 0/);
+    assert.match(route, /getProductionRequestContext/);
+  }
 });
 
 test('route service preselection uses a stable empty hydration snapshot before joining interactive flow state', async () => {
@@ -121,4 +132,46 @@ test('confirmation remains authoritative over deep-link service state and succes
   assert.match(booking, /flow\.step === "success" && confirmationService/);
   assert.match(booking, /step === "success" \? copy\.success : copy\.steps\[current\]/);
   assert.match(booking, /serviceNames\[flow\.confirmation\.serviceId\]/);
+});
+
+test('success guidance covers Google Calendar unknown-sender confirmation in both languages', async () => {
+  const booking = await read('src/components/booking/BookingExperience.jsx');
+  const guidance = {
+    mk: bookingCopy.mk.invitationGuidance,
+    en: bookingCopy.en.invitationGuidance,
+  };
+
+  assert.match(booking, /<p className="mt-4 text-sm leading-relaxed text-muted">\{t\.invitationGuidance\}<\/p>/);
+  assert.equal(typeof guidance.mk, 'string');
+  assert.equal(typeof guidance.en, 'string');
+  for (const requirement of [
+    /Google Calendar/,
+    /Glamour Studio/,
+    /Проверете ја е-поштата/,
+    /Првата покана/,
+    /непознат испраќач/,
+    /Го познавам испраќачот/,
+    /одговорете со [„"]Да[“"]/,
+    /за да го додадете терминот/,
+    /може[^.]*автоматски/,
+    /не е загарантирано/,
+  ]) {
+    assert.match(guidance.mk, requirement);
+  }
+  for (const requirement of [
+    /Google Calendar/,
+    /Glamour Studio/,
+    /Check your email/,
+    /The first invitation/,
+    /unknown sender/,
+    /I know the sender/,
+    /reply [“"]Yes[”"]/,
+    /to add the appointment/,
+    /may[^.]*automatically/,
+    /not guaranteed/,
+  ]) {
+    assert.match(guidance.en, requirement);
+  }
+  assert.match(booking, /t\.invitation\[flow\.confirmation\.notification\]/);
+  assert.doesNotMatch(booking, /invitationGuidance[^\n]*aria-live/);
 });

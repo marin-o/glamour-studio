@@ -19,8 +19,34 @@ test('hero curtain keeps blur static behind a lightweight animated boundary', as
     /<div[^>]*data-hero-curtain-veil-clip[^>]*>\s*<div[^>]*data-hero-curtain-veil(?:\s|=|["'])/,
   );
   assert.match(hero, /data-hero-curtain-veil-clip/);
-  assert.match(hero, /\.to\(veilClip,[\s\S]*clipPath/);
-  assert.match(hero, /\.to\([\s\S]*foreground,[\s\S]*clipPath/);
+  assert.match(
+    hero,
+    /\.fromTo\(\s*veilClip,[\s\S]*?clipPath:\s*\(\)\s*=>\s*clipPathForBoundary\(restingBoundary\)\.veil[\s\S]*?clipPath:\s*\(\)\s*=>\s*clipPathForBoundary\(revealedBoundary\)\.veil/,
+    'veil resting and revealed clips must both resolve from current refresh geometry',
+  );
+  assert.match(
+    hero,
+    /\.fromTo\([\s\S]*?foreground,[\s\S]*?clipPath:\s*\(\)\s*=>\s*clipPathForBoundary\(restingBoundary\)\.foreground[\s\S]*?clipPath:\s*\(\)\s*=>\s*clipPathForBoundary\(revealedBoundary\)\.foreground/,
+    'foreground resting and revealed clips must both resolve from current refresh geometry',
+  );
+  assert.match(hero, /veilRect = veilClip\.getBoundingClientRect\(\)/);
+  assert.match(
+    hero,
+    /const clipPathForBoundary = \(boundary\) => \(\{[\s\S]*veilRect\.bottom - boundary[\s\S]*foregroundRect\.bottom - boundary/,
+    'both clips must derive their local insets from one veil-coordinate boundary',
+  );
+  assert.match(hero, /restingBoundary = veilRect\.bottom/);
+  assert.match(hero, /revealedBoundary = restingBoundary - revealDepth/);
+  assert.doesNotMatch(
+    hero,
+    /offsetHeight|foregroundBottomOffset|heroRect\.bottom - foregroundRect\.bottom/,
+    'curtain geometry must not mix integer height or hero-relative seam offsets',
+  );
+  assert.doesNotMatch(
+    hero,
+    /Math\.max\(0,\s*bottomInset\)/,
+    'local clip insets must preserve negative resting geometry for seam-free interpolation',
+  );
   assert.doesNotMatch(hero, /onUpdate\s*:/);
   assert.doesNotMatch(hero, /onUpdate\s*:[\s\S]*?gsap\.set/);
   assert.doesNotMatch(hero, /const state = \{\s*veilClip/);

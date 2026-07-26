@@ -40,16 +40,21 @@ function validRate(rate) {
 function providerInstant(value) { try { return instant(value); } catch { throw new BookingError('CALENDAR_UNAVAILABLE', 503); } }
 
 export function createBookingService({ calendar, ports, policy, now = () => Temporal.Now.instant() }) {
-  if (!calendar || typeof calendar.getBusyIntervals !== 'function' || typeof calendar.createPrivateEvent !== 'function' || typeof calendar.listBlockingEvents !== 'function' || typeof calendar.deleteEventForCompensation !== 'function' || typeof calendar.addOrUpdateAttendee !== 'function') throw new TypeError('Calendar provider is required.');
+  if (!calendar || typeof calendar.getBusyIntervals !== 'function' || typeof calendar.reconcilePrivateEvent !== 'function' || typeof calendar.createPrivateEvent !== 'function' || typeof calendar.listBlockingEvents !== 'function' || typeof calendar.deleteEventForCompensation !== 'function' || typeof calendar.addOrUpdateAttendee !== 'function') throw new TypeError('Calendar provider is required.');
   assertCoordinationPorts(ports); validatePolicy(policy);
   const transition = async (keyDigest, record, state, patch = {}) => {
-    const next = assertState(await ports.idempotency.transition({ keyDigest, expectedVersion: record.version, expectedState: record.state, state, ttlSeconds: policy.idempotencyTtlSeconds, ...patch }));
-    if (next.state !== state || next.version !== record.version + 1 || next.fingerprint !== record.fingerprint || (patch.eventId !== undefined && next.eventId !== patch.eventId) || (patch.code !== undefined && next.code !== patch.code) || (patch.outcome !== undefined && JSON.stringify(next.outcome) !== JSON.stringify(patch.outcome))) throw new TypeError('Idempotency provider returned an invalid transition.');
+    // Durable production adapters reconstruct target records instead of merging
+    // them, so carry the event identity across the notification states explicitly.
+    const requestPatch = ['confirmed_notification_pending', 'confirmed'].includes(state)
+      ? { ...patch, eventId: record.eventId }
+      : patch;
+    const next = assertState(await ports.idempotency.transition({ keyDigest, fingerprint: record.fingerprint, expectedVersion: record.version, expectedState: record.state, state, ttlSeconds: policy.idempotencyTtlSeconds, ...requestPatch }));
+    if (next.state !== state || next.version !== record.version + 1 || next.fingerprint !== record.fingerprint || (requestPatch.eventId !== undefined && next.eventId !== requestPatch.eventId) || (requestPatch.code !== undefined && next.code !== requestPatch.code) || (requestPatch.outcome !== undefined && JSON.stringify(next.outcome) !== JSON.stringify(requestPatch.outcome))) throw new TypeError('Idempotency provider returned an invalid transition.');
     return next;
   };
   const protectOperation = async (lease) => {
     const renewed = assertLease(await ports.lock.renew({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken, leaseMs: policy.lockLeaseMs, minimumRemainingMs: policy.providerOperationBudgetMs + policy.leaseSafetyMs }));
-    if (renewed.owner !== lease.owner || renewed.fencingToken !== lease.fencingToken || renewed.expiresAt - Date.now() <= policy.providerOperationBudgetMs + policy.leaseSafetyMs) throw new BookingError('BOOKING_UNAVAILABLE', 503);
+    if (renewed.owner !== lease.owner || renewed.fencingToken !== lease.fencingToken) throw new BookingError('BOOKING_UNAVAILABLE', 503);
     await ports.lock.assertOwnership({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken, minimumRemainingMs: policy.providerOperationBudgetMs + policy.leaseSafetyMs });
   };
   async function availability({ serviceId, date }, requestContext) {
@@ -81,6 +86,7 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
       let record = await ports.idempotency.get({ keyDigest });
       if (record) { record = assertState(record); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) return prior; }
       else { record = assertState(await ports.idempotency.create({ keyDigest, fingerprint, state: 'pending', ttlSeconds: policy.idempotencyTtlSeconds })); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) return prior; }
+      let creationIntentIsRecovered = record.state === 'creation_intent';
       if (record.state === 'pending') {
         await protectOperation(lease); const busy = await calendar.getBusyIntervals({ timeMin: start.toString(), timeMax: end.toString() });
         if (!Array.isArray(busy) || busy.some((entry) => !entry || typeof entry.start !== 'string' || typeof entry.end !== 'string')) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
@@ -88,14 +94,34 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
           try { await transition(keyDigest, record, 'conflict', { code: 'SLOT_UNAVAILABLE' }); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); }
           throw new BookingError('SLOT_UNAVAILABLE', 409);
         }
-        try { record = await transition(keyDigest, record, 'creation_intent'); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); }
+        try { record = await transition(keyDigest, record, 'creation_intent'); creationIntentIsRecovered = false; } catch { throw new BookingError('BOOKING_UNKNOWN', 503); }
       }
       // Creation intent is persisted before the irreversible deterministic insert. A retry
       // may safely reissue it: the Calendar adapter verifies the deterministic ID.
       if (record.state === 'creation_intent') {
         await protectOperation(lease);
+        if (creationIntentIsRecovered) {
+          try {
+            const reconciled = await calendar.reconcilePrivateEvent(expected);
+            record = await transition(keyDigest, record, 'event_created', { eventId: reconciled.event.id });
+          } catch (error) {
+            if (error?.code !== 'NOT_FOUND') throw asBookingError(error);
+            await protectOperation(lease);
+            let busy;
+            try { busy = await calendar.getBusyIntervals({ timeMin: start.toString(), timeMax: end.toString() }); } catch (availabilityError) { throw asBookingError(availabilityError); }
+            if (!Array.isArray(busy) || busy.some((entry) => !entry || typeof entry.start !== 'string' || typeof entry.end !== 'string')) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
+            if (busy.some((entry) => overlaps(start, end, providerInstant(entry.start), providerInstant(entry.end)))) {
+              try { await transition(keyDigest, record, 'conflict', { code: 'SLOT_UNAVAILABLE' }); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); }
+              throw new BookingError('SLOT_UNAVAILABLE', 409);
+            }
+          }
+        }
+        if (record.state !== 'creation_intent') {
+          // A deterministic event was reconciled; continue through post-insert checks.
+        } else {
         try { const created = await calendar.createPrivateEvent(expected); record = await transition(keyDigest, record, 'event_created', { eventId: created.event.id }); }
         catch (error) { throw asBookingError(error); }
+        }
       }
       await protectOperation(lease);
       const blockers = await calendar.listBlockingEvents({ timeMin: start.toString(), timeMax: end.toString() });

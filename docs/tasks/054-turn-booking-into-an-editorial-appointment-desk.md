@@ -1,6 +1,6 @@
 # Turn booking into an editorial appointment desk
 
-Status: IN PROGRESS
+Status: DONE
 Depends on: None
 Owner: AI-assisted implementation
 Approver: Unassigned
@@ -75,6 +75,10 @@ desk that feels native to the existing salon site.
 - Task, evidence, and handoff-only edits do not invalidate successful runtime checks.
 
 ## Completion notes
+
+- Transition: complete at 2026-07-26T01:18:11.297Z
+- Validation: Owner approved the rendered booking/homepage UI outcome on 2026-07-26; focused booking/static tests, lint, and production build evidence are recorded in the task, with final hero media and veil tuning accepted.
+- Approved by: Owner
 
 - Transition: start at 2026-07-23T15:27:39.844Z
 
@@ -268,3 +272,36 @@ desk that feels native to the existing salon site.
   height with an inner emergency scroller for short viewports. The focused
   static contract passed 9/9 and scoped ESLint passed; rendered mobile behavior
   remains pending owner verification under the conservative validation policy.
+- Calendar-invitation guidance: the confirmed-booking panel now gives aligned
+  Macedonian and English guidance for Google's first-invitation unknown-sender
+  handling, including the customer action required to add the appointment and
+  conditional wording for future automatic additions. The existing
+  `requested`/`unknown` invitation status remains authoritative and the
+  guidance is ordinary text rather than a duplicate live region. Adversarial
+  review strengthened the static truthfulness contract; the final focused
+  contract passed 10/10 and targeted ESLint passed. No rendered validation was
+  run under the conservative policy.
+- Selected-time hover correction: a checked time pill now overrides the
+  unselected cream hover with the same lighter `accent` brown used by the
+  primary Continue action, while retaining its selected border, text, focus,
+  and native radio behavior. Scoped ESLint passed; rendered hover behavior
+  remains pending owner verification under the conservative validation policy.
+- Homepage section-anchor correction: the Services and Studio nav hashes now
+  target their section boundaries, so native hash scrolling aligns the
+  Hero/Services and Services/Studio dividers with the viewport top. Each
+  heading retains a distinct ID referenced by its section's `aria-labelledby`.
+  Review posture was `none` for this localized, explicit correction. The
+  focused navigation contract passed 3/3 and targeted ESLint passed; rendered
+  scroll alignment remains pending owner verification under the conservative
+  validation policy.
+- Hero veil/text-boundary correction: the blur veil and hero foreground now
+  derive their local clip insets from one fractional, rect-measured physical
+  boundary. Function-valued `fromTo` starts and endpoints keep both layers
+  synchronized through normal scroll progress and ScrollTrigger refreshes
+  after resizing or wrapping changes, without hardcoded seam offsets, per-frame
+  layout reads, or changes to the static blur child. Adversarial review first
+  exposed and corrected negative-inset interpolation and stale refreshed-start
+  defects; re-review approved the final implementation with no actionable
+  findings. The focused motion/booking contracts passed 12/12, targeted ESLint
+  passed, and the reviewer contract passed 2/2. Rendered confirmation remains
+  pending owner verification under the conservative validation policy.

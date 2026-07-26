@@ -1,7 +1,8 @@
 # Media Replacement Plan
 
-Current files in this folder are temporary placeholders. Replace them only with
-owner-approved salon media from the real studio.
+The `homepage/` folder contains the currently selected homepage media. The
+`placeholders/` folder contains provisional or replacement candidates. Replace
+them only with owner-approved salon media from the real studio.
 
 ## Target Slots
 

@@ -22,7 +22,8 @@ common work so agents can inspect the smallest relevant file set.
 - `src/lib/lookbook-media.js`: development-only lookbook image metadata, source links, bilingual alt text, and crop positions.
 - `src/lib/booking/`: server-owned, provider-neutral ordered service catalog, studio rules, mandatory customer-email validation, and pure availability calculation from supplied busy intervals.
 - `src/lib/booking/google/`: server-only Google Calendar/OAuth adapter with strict secret configuration, injected-fetch REST boundary, deterministic event IDs, and sanitized operational errors.
-- `src/lib/booking/orchestration/`: server-only dependency-injected booking coordination, safe public failure mapping, and test-only fakes; production coordination is deliberately absent.
+- `src/lib/booking/orchestration/`: server-only dependency-injected booking coordination, safe public failure mapping, and test-only fakes.
+- `src/lib/booking/production/`: Vercel-only fail-closed composition, HMAC request context, validated policy/configuration, and atomic Upstash Redis coordination ports.
 - `src/lib/booking/local/coordination.mjs`: explicitly localhost-only single-process lock, idempotency, and rate-limit ports shared across development hot reloads.
 - `src/lib/booking/http/handlers.mjs`: no-store, exact-schema, injectable public booking HTTP boundary.
 - `src/components/booking/BookingExperience.jsx`: language-aware service, availability, contact, and confirmation client flow with an explicit booking-route hero media relationship and shared bottom navigation.

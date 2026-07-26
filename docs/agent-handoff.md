@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=b24a29fc94ce19fc -->
+<!-- sitewright:fingerprint=987c9d2018b3a907 -->
 ## Sitewright state
 
-- Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
-- The repository has structured intent, coherent planning, and an executable task.
-- Active task: 054-turn-booking-into-an-editorial-appointment-desk.md.
+- Sitewright Doctor reports `PLANNING_REQUIRED` using `nextjs-app-router` policy pack.
+- Reconcile planning artifacts and keep one executable task.
+- Active task: none.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -24,6 +24,14 @@
   IDs, prices, and durations, with Hairstyling third after both haircut
   options. Accepted bookings request a Google Calendar invitation; the public
   confirmation reports `requested` or the safe `unknown` fallback.
+- Task 055 has a READY production Vercel deployment
+  (`dpl_Cv28EuSoEf2erfU7RS5fspcWpiPJ`) at `glamourstudio.vercel.app` with the
+  explicit booking gate enabled, a production-only Upstash resource connected,
+  and Google Calendar FreeBusy returning live slots. The first owner write test
+  exposed and now includes a fix for event-ID loss between `event_created` and
+  notification states. One event-created record remains pending recovery; the
+  owner should retry from the original still-open tab to reuse its idempotency
+  key, or explicitly decide how to handle the orphaned event if the tab is gone.
 - `/lookbook` retains its noindex horizontal sequence, source tracing,
   meaningful bilingual alt text, quality-100 responsive images, route-local
   Lenis, and exact progress. Owner-directed customer copy removes visible
@@ -50,8 +58,15 @@
 - The owner rejected managed booking services and approved the phased custom
   Next.js and Google Calendar direction in
   `docs/booking-google-calendar-implementation-plan.md`. Production Google
-  changes, external service provisioning, deployment, and launch remain
-  owner-gated.
+  OAuth, Upstash provisioning, production activation, and the live
+  booking/invitation smoke test are complete. The owner accepted the deployed
+  outcome and task 055 is done.
+- The current Vercel project and production deployment belong to Marin's
+  personal Vercel account only as an interim arrangement. Before final business
+  handoff, migrate the project, production environment variables, Upstash
+  integration/resource ownership, domains, and deployment access to a Vercel
+  account owned by the official Glamour Studio email; verify booking again after
+  migration before removing access from the personal account.
 
 ## Durable gotchas
 

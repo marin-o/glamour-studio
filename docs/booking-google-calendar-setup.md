@@ -141,3 +141,41 @@ deployment, replace all three ports with one durable, atomic backend and add
 monitoring, secret management, trusted request identity/rate limiting, recovery
 procedures, and production OAuth review. Until then, any non-development
 runtime returns `BOOKING_NOT_CONFIGURED`.
+
+## Owner-gated Vercel production runbook
+
+The code now has a separate Vercel composition, but this repository has not
+provisioned Upstash, linked a Vercel project, created production Google OAuth
+credentials, set secrets, or deployed anything. Those actions remain owner
+controlled.
+
+Before setting `BOOKING_PRODUCTION_ENABLED=1`, the owner must:
+
+1. Create one owner-controlled Upstash Redis database and provide its REST URL
+   and token as Vercel server secrets using the common
+   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` names.
+2. Create a production Google OAuth grant for the dedicated booking calendar,
+   move the consent configuration out of Testing as appropriate, and add the
+   existing `GOOGLE_*` values as Vercel server secrets. Never reuse the local
+   desktop-evaluation token without an owner security review.
+3. Generate and store a separate random `BOOKING_REQUEST_HMAC_SECRET`; do not
+   reuse a Google or Redis secret. Vercel supplies `VERCEL=1`; do not manually
+   emulate it in a public environment.
+4. Deliberately choose and set every `BOOKING_*` policy/rate-limit value listed
+   in `.env.example`. The examples are not studio policy approval. The lock
+   lease must exceed the provider-operation budget plus safety margin. That
+   budget is one whole Google adapter method, including token refresh, retry,
+   pagination, verification, and response-body parsing.
+5. Keep production disabled while verifying the preview environment. When all
+   secrets and policy decisions are present, the owner may set the exact value
+   `BOOKING_PRODUCTION_ENABLED=1` for the intended Vercel environment.
+
+Both API routes use the Node.js runtime and derive a privacy-minimized rate
+subject from Vercel's `x-vercel-forwarded-for`, HMAC-hashed before Redis sees
+it. No raw client address, customer contact, or OAuth token is a Redis key,
+API response, or log value. Google Calendar attendee invitations remain the
+only booking-email behavior; no SMTP or transactional provider is configured.
+Each action has one aggregate subject bucket; varying service, date, or contact
+does not create another rate-limit bucket. Lease, idempotency, and rate records
+expire, while the one fixed-scope fencing sequence deliberately persists for
+the Redis database lifetime so expired/released leases cannot reuse a token.

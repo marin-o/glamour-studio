@@ -27,7 +27,8 @@ commands to that package manager without changing the workflow.
 
 ## Context budget rules
 
-- Start with `AGENTS.md`, `docs/agent-handoff.md`, and `REPO_MAP.md`.
+- Start with `docs/README.md`, `AGENTS.md`, `docs/agent-handoff.md`, and
+  `REPO_MAP.md`.
 - Read only the smallest file set needed for the current task.
 - Prefer durable docs and helper output over long chat history.
 - Use targeted searches and file-scoped reads instead of broad source scans.
@@ -52,6 +53,32 @@ commands to that package manager without changing the workflow.
 - Decide the validation checklist up front and measure each item once.
 - Do not reload a skill or durable project document already read in the current
   turn unless it changed or a concrete missing detail requires it.
+
+## Delegated reconnaissance
+
+- Keep the main agent's direct reading compact: it may read the mandatory
+  startup documents (`docs/README.md`, `AGENTS.md`, `docs/agent-handoff.md`,
+  and `REPO_MAP.md`), the exact files named by the active task's change recipe,
+  active task and review artifacts, final diffs, and the smallest
+  integration-critical code regions needed for orchestration or verification.
+  Exact targeted searches and a tiny, obvious code slice may remain direct main
+  work. Broader spec, design, or ADR reading beyond those exact sections must
+  be delegated to bounded Luna reconnaissance.
+- Broad or multi-file codebase reading and understanding MUST use a read-only
+  Luna reconnaissance subagent. Use `luna_medium` for bounded questions about
+  symbols, modules, components, or flows across related files; use `luna_high`
+  for ambiguous cross-module, cross-subsystem, architectural, or data-flow
+  synthesis.
+- Do not ask a reconnaissance subagent to "understand the whole repo" or give
+  another vague scope. Spawn it with `fork_turns: "none"`, a self-contained
+  bounded question, relevant paths, and the active-task pointer. It must not
+  edit files. Require a report with file/line citations, relevant
+  symbols/relationships, facts versus inferences, uncertainties, and suggested
+  next reads.
+- The main agent synthesizes reconnaissance reports and verifies only
+  high-risk or integration-critical details. Do not reread everything already
+  summarized by a report; read a new region only when a cited uncertainty or
+  concrete dependency requires it.
 
 ## Working rules
 
@@ -164,8 +191,71 @@ changes settle.
 
 ## Coding subagent orchestration
 
-- For substantive coding work, the main agent must orchestrate implementation,
-  adversarial review, and correction through role-appropriate subagents.
+### Mandatory implementation delegation
+
+- Before making any implementation-file edit, the main agent MUST delegate
+  every coding implementation to a role-appropriate subagent, regardless of
+  size. This includes source code, tests, styles, scripts, migrations,
+  implementation configuration, UI/component/layout implementation, generated
+  code, direct asset files or replacements, and asset mappings.
+- The main agent MUST NOT directly write or edit source code, tests, styles,
+  scripts, migrations, implementation configuration, UI/components/layouts,
+  generated code or generated files, direct asset files or replacements, or
+  asset mappings.
+- Atomic one-line changes such as flipping an explicit boolean or literal and a
+  single exact image/asset replacement are not exceptions; delegate the single
+  exact replacement to `luna_low`.
+- The only override is an explicit user instruction for this task that the main
+  agent should implement directly. General user preferences or instructions
+  for another task do not authorize direct coding here. Urgency, perceived
+  simplicity, unavailable subagents, or orchestration overhead are not implicit
+  exceptions.
+- If the required subagent role or capability is unavailable, the main agent
+  must stop and report the blocker rather than silently implementing.
+- The main agent may act directly on planning, bounded read-only inspection
+  within the direct-read set above, task/lifecycle/handoff documentation, and
+  spawning and orchestration. Direct validation is limited to read-only checks,
+  build/test commands, and
+  deterministic generation from already-delegated canonical sources. Auto-fix,
+  codegen, and any command that authors implementation remain delegated. Git is
+  limited to staging, committing, and integrating already-delegated changes;
+  implementation conflict resolution remains delegated. Generated files cannot
+  be manually corrected.
+
+### Direct deterministic filesystem operations
+
+- A narrow exception expressly supersedes mandatory implementation delegation
+  only when the main agent executes fully specified filesystem choreography:
+  create a known destination directory, then move, copy, or rename explicitly
+  identified individual files using exact literal source and destination paths
+  or an exact supplied mapping.
+- Before any mutation, perform read-only verification that every source exists;
+  resolve and verify that the destination remains within the intended
+  repository or scope; confirm there is no destination collision, overwrite, or
+  ambiguous merge; and preserve file contents. The operation must require no
+  discovery, candidate selection, transformation, design judgment, or
+  content/code edit. Exact targeted searches for old references are allowed as
+  direct read-only verification.
+- Source removal is allowed only when it is inherent to an exact move or
+  rename. Independent deletion, recursive directory moves, wildcard or
+  glob-driven mutation, destination overwrite, ambiguous merge, broad computed
+  targets, unresolved environment variables, and guessed paths identifying
+  mutation targets are excluded.
+- Exact asset replacement remains delegated to `luna_low`. Image
+  transformation or optimization, generated asset mappings,
+  import/reference/manifest edits, code/config/test/style changes, and choosing
+  or discovering which files should move remain delegated through the
+  Luna/Terra ladder.
+- A command that formats, generates, rewrites, auto-fixes, or otherwise authors
+  implementation content remains delegated even when it runs in a shell. The
+  main agent should not spawn a subagent solely to type an allowed `mkdir`,
+  move, copy, or rename command. If a relocation also requires reference or
+  code changes, the main agent performs only the allowed filesystem portion
+  directly and delegates the implementation edits.
+- Mandatory coding delegation and the Luna/Terra ladder otherwise remain
+  unchanged; an unavailable coding subagent remains a blocker for actual
+  implementation edits. This exception does not alter the exceptional-risk
+  review gate.
 
 ### Implementation role selection
 
@@ -173,7 +263,8 @@ changes settle.
 - Choose Luna reasoning proportionally for non-complex implementation:
   - Use `luna_low` for a fully specified atomic mechanical edit that needs
     virtually no discovery or judgment, such as flipping an explicit boolean or
-    literal, or replacing one asset with an exact source-to-target mapping.
+    literal, or a single exact image/asset replacement with an exact
+    source-to-target mapping.
   - Use `luna_medium` for a small localized change that needs light context or
     coordination, such as a batch of explicitly mapped image swaps,
     straightforward copy/prop/config updates, or a mechanical UI adjustment
@@ -187,14 +278,58 @@ changes settle.
 
 ### Review and execution protocol
 
-- Spawn a `sol_high` reviewer (Sol high) only after the implementer finishes.
-  Give the reviewer the task, acceptance criteria, changed-file context, and
-  instructions to inspect the implementation adversarially.
-- If the review finds actionable issues, spawn a separate fixer. Choose
-  `terra_high`, `luna_xhigh`, `luna_medium`, or `luna_low` from the correction's
-  actual complexity and required judgment, not automatically from the original
-  task. Give the fixer the complete adversarial review report plus focused
-  correction and validation instructions.
+### Proportional review gate
+
+  - Before implementation, the main agent MUST classify the changed surface and
+    record the default review posture in the task brief or active task: `none`
+    or `adversarial`. This default classification is mandatory unless the user
+    explicitly requests a different review posture or review ceremony for this
+    task. Do not infer or volunteer adversarial review for ordinary low-risk
+    work merely because an override is possible.
+#### Exceptional-risk threshold
+
+  - Apply this automatic classification: use `adversarial` when one hard
+    trigger applies, or when at least two distinct soft factors coexist. A
+    single soft factor is insufficient. Otherwise use `none`. Concrete hard or
+    combined-soft risk takes precedence over the non-triggers below, even for a
+    mechanically small edit.
+  - Hard triggers are security; authentication or authorization; secrets;
+    privacy; payments; destructive or persistent data changes; migrations;
+    concurrency or race-condition risk; production infrastructure, deployment,
+    permissions, or rollback-sensitive changes; public API or schema
+    compatibility; genuinely cross-cutting architecture with a large blast
+    radius; or an explicit user request for adversarial review or a different
+    review ceremony.
+  - Soft factors are unresolved ambiguity; changes across several independently
+    owned subsystems; meaningful automated validation unavailable; an unfamiliar
+    or historically fragile area; a large dependency or runtime upgrade; and
+    failure that is difficult to detect or recover from. Two distinct soft
+    factors must coexist before they trigger `adversarial`.
+  - Multiple files; an ordinary component or feature; UI, styling, or animation;
+    copy or assets; a localized bug fix with clear reproduction and validation;
+    and a behavior-preserving refactor are not adversarial triggers on their
+    own.
+  - Under `none`, use the default flow: implementer, then main-agent final-diff
+    inspection, then proportional validation. Do not spawn Sol or plan a fixer.
+    If validation fails, delegate a correction through the Luna or Terra ladder
+    and revalidate; retain `none` unless new risk or scope changes the
+    classification.
+  - Under `adversarial`, use the exceptional flow: implementer, then main-agent
+    integration inspection and proportional validation, then one `sol_high`
+    reviewer (Sol high) for the coherent task. Give the reviewer the task,
+    acceptance criteria, changed-file context, and instructions to inspect the
+    implementation adversarially. Spawn a separate fixer only when the complete
+    review report has actionable findings. Choose `terra_high`, `luna_xhigh`,
+    `luna_medium`, or `luna_low` from the correction's actual complexity and
+    required judgment, and give the fixer the complete report plus focused
+    correction and validation instructions. No fixer is needed when the report
+    has no actionable findings.
+  - Review one coherent task once. Do not adversarially review incremental
+    corrections or review the fixer again unless its correction materially
+    expands scope or introduces a new hard-risk surface. Do not create a
+    recursive review loop.
+- Implementation and any review-fix corrections remain delegated through the
+  role ladder, regardless of review posture.
 - Spawn each subagent with no inherited conversation turns (`fork_turns:
   "none"`) unless the user explicitly asks for conversation context to be
   inherited. Never rely on prior chat context that the subagent did not receive.
@@ -205,18 +340,22 @@ changes settle.
 - Treat implementation briefs as informed guidance, not an inflexible design.
   The subagent may choose a better approach when it explains the reason and
   still satisfies the task.
-- The default substantive-work cycle is implementer, then reviewer, then fixer
-  when review findings exist. The main agent remains responsible for
-  orchestration, integrating the result, and final validation.
-- User instructions override this workflow. The main agent may also handle very
-  simple incremental fixes or implementations directly when the full cycle
-  would be disproportionate.
+- The `adversarial` cycle is exceptional and has one reviewer for the coherent
+  task, then a conditional fixer when actionable findings exist. The main agent
+  remains responsible for orchestration, integrating the result, and final
+  validation.
+- Any review-fix implementation must be delegated through the same role ladder,
+  including atomic corrections. A direct review fix requires the same explicit
+  per-task user instruction described above.
 
 ## Workflow
 
 1. Read `docs/README.md`, `AGENTS.md`, `docs/agent-handoff.md`, and
    `REPO_MAP.md`.
-2. Read only the relevant task, spec, design, or ADR sections for the change.
+2. Read only the exact task, review artifact, or spec, design, or ADR section
+   named by the active task/change recipe or required for an integration-critical
+   slice. Delegate broader spec, design, or ADR reading to bounded Luna
+   reconnaissance.
 3. Make the smallest coherent change and avoid duplicate guidance or scripts.
 4. Update `DESIGN.md` when durable visual language, tokens, components, motion,
    media, interaction states, or anti-patterns change, not for correctness fixes

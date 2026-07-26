@@ -48,25 +48,35 @@ export default function HeroCurtainReveal({ children }) {
         return undefined;
       }
 
-      let foregroundBottomOffset = 0;
+      let veilRect;
+      let foregroundRect;
+      let heroPageTop = 0;
+      let heroPageBottom = 0;
       let revealDepth = 0;
       let scrollDistance = 0;
+      let restingBoundary = 0;
+      let revealedBoundary = 0;
 
-      const clipPathFor = (bottom) =>
-        `inset(0 0 ${Math.max(0, bottom)}px 0)`;
+      const clipPathFor = (bottomInset) =>
+        `inset(0 0 ${bottomInset}px 0)`;
+
+      const clipPathForBoundary = (boundary) => ({
+        veil: clipPathFor(veilRect.bottom - boundary),
+        foreground: clipPathFor(foregroundRect.bottom - boundary),
+      });
 
       const measure = () => {
         const heroRect = hero.getBoundingClientRect();
-        const foregroundRect = foreground.getBoundingClientRect();
-
-        foregroundBottomOffset = Math.max(
-          0,
-          heroRect.bottom - foregroundRect.bottom,
-        );
+        veilRect = veilClip.getBoundingClientRect();
+        foregroundRect = foreground.getBoundingClientRect();
+        heroPageTop = heroRect.top + window.scrollY;
+        heroPageBottom = heroRect.bottom + window.scrollY;
         revealDepth = Math.min(
           Math.max(window.innerHeight * 0.78, 360),
-          hero.offsetHeight * 0.82,
+          veilRect.height * 0.82,
         );
+        restingBoundary = veilRect.bottom;
+        revealedBoundary = restingBoundary - revealDepth;
         scrollDistance = Math.max(window.innerHeight * 1.22, 680);
 
         wrapper.dataset.heroCurtainRevealDepth = String(revealDepth);
@@ -74,7 +84,6 @@ export default function HeroCurtainReveal({ children }) {
       };
 
       measure();
-      gsap.set([veilClip, foreground], { clipPath: clipPathFor(0) });
 
       const timeline = gsap.timeline({
         defaults: { ease: "none" },
@@ -86,30 +95,35 @@ export default function HeroCurtainReveal({ children }) {
           },
           onRefreshInit: measure,
           scrub: true,
-          start: () => {
-            const heroTop =
-              hero.getBoundingClientRect().top + window.scrollY;
-
-            return Math.max(
-              heroTop,
-              heroTop + hero.offsetHeight - window.innerHeight * 1.18,
-            );
-          },
+          start: () =>
+            Math.max(
+              heroPageTop,
+              heroPageBottom - window.innerHeight * 1.18,
+            ),
           trigger: hero,
         },
       });
 
       timeline
-        .to(veilClip, {
-          duration: 0.22,
-          clipPath: () => clipPathFor(revealDepth),
-        })
-        .to(
+        .fromTo(
+          veilClip,
+          {
+            clipPath: () => clipPathForBoundary(restingBoundary).veil,
+          },
+          {
+            duration: 0.22,
+            clipPath: () => clipPathForBoundary(revealedBoundary).veil,
+          },
+        )
+        .fromTo(
           foreground,
+          {
+            clipPath: () => clipPathForBoundary(restingBoundary).foreground,
+          },
           {
             duration: 0.22,
             clipPath: () =>
-              clipPathFor(Math.max(0, revealDepth - foregroundBottomOffset)),
+              clipPathForBoundary(revealedBoundary).foreground,
           },
           0,
         )

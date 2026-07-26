@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "054-turn-booking-into-an-editorial-appointment-desk.md",
+  "status": "DONE",
+  "evidence": "Owner approved the rendered booking/homepage UI outcome on 2026-07-26; focused booking/static tests, lint, and production build evidence are recorded in the task, with final hero media and veil tuning accepted.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-26T01:18:11.299Z"
+}

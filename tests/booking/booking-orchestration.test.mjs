@@ -10,8 +10,8 @@ const now = () => Temporal.Instant.from('2026-07-23T00:00:00Z');
 const input = { serviceId: 'makeup', start, name: 'Ana', phone: '+38970000000', email: 'ana@example.com' };
 const context = { subjectDigest: 'a'.repeat(64) };
 
-function fakes({ staffBlocker = false } = {}) {
-  const records = new Map(); const events = new Map(); let activeLease = null; let inserts = 0; let invites = 0; let deleted = false;
+function fakes({ staffBlocker = false, productionTransition = false } = {}) {
+  const records = new Map(); const events = new Map(); const attendeeEventIds = []; let activeLease = null; let inserts = 0; let invites = 0; let deleted = false;
   const ports = {
     lock: {
       async acquire({ owner }) { while (activeLease) await new Promise((resolve) => setTimeout(resolve, 1)); const lease = { owner, fencingToken: `f-${owner}`, expiresAt: Date.now() + 10_000 }; activeLease = lease; return { ...lease, async release(candidate) { if (!candidate || candidate.owner !== lease.owner || candidate.fencingToken !== lease.fencingToken || activeLease !== lease) throw new Error('compare-owner release rejected'); activeLease = null; } }; },
@@ -21,18 +21,31 @@ function fakes({ staffBlocker = false } = {}) {
     idempotency: {
       async get({ keyDigest }) { return records.get(keyDigest) ?? null; },
       async create({ keyDigest, fingerprint, state }) { const existing = records.get(keyDigest); if (existing) return existing; const record = { fingerprint, state, version: 1 }; records.set(keyDigest, record); return record; },
-      async transition({ keyDigest, expectedVersion, expectedState, state, ttlSeconds: _ttlSeconds, ...patch }) { const record = records.get(keyDigest); if (!record || record.version !== expectedVersion || record.state !== expectedState) throw new Error('transition conflict'); const next = { ...record, ...patch, state, version: record.version + 1 }; records.set(keyDigest, next); return next; },
+      async transition({ keyDigest, expectedVersion, expectedState, state, ttlSeconds: _ttlSeconds, eventId, code, outcome, ...patch }) {
+        const record = records.get(keyDigest); if (!record || record.version !== expectedVersion || record.state !== expectedState) throw new Error('transition conflict');
+        if (productionTransition) {
+          const next = { fingerprint: record.fingerprint, state, version: record.version + 1 };
+          if (state === 'event_created') next.eventId = eventId;
+          if (state === 'confirmed_notification_pending' || state === 'confirmed') { next.eventId = eventId; next.outcome = outcome; }
+          if (state === 'conflict') { if (eventId !== undefined) next.eventId = eventId; next.code = code; }
+          if (state === 'manual_review') { next.eventId = eventId; next.code = code; }
+          records.set(keyDigest, next); return next;
+        }
+        const next = { ...record, ...patch, ...(eventId === undefined ? {} : { eventId }), ...(code === undefined ? {} : { code }), ...(outcome === undefined ? {} : { outcome }), state, version: record.version + 1 };
+        records.set(keyDigest, next); return next;
+      },
     },
     rateLimit: { async check() { return { allowed: true }; } },
   };
   const calendar = {
     async getBusyIntervals() { return [...events.values()].map(({ start: eventStart, end: eventEnd }) => ({ start: eventStart, end: eventEnd })); },
+    async reconcilePrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; if (!events.has(id)) throw Object.assign(new Error('event absent'), { code: 'NOT_FOUND' }); return { event: events.get(id) }; },
     async createPrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; if (!events.has(id)) { inserts += 1; events.set(id, { id, ...event }); } return { event: events.get(id) }; },
     async listBlockingEvents() { return [...events.values()].map(({ id, start: eventStart, end: eventEnd }) => ({ id, start: eventStart, end: eventEnd })).concat(staffBlocker ? [{ id: 'staff', start, end, allDay: false }] : []); },
     async deleteEventForCompensation(id) { deleted = events.delete(id); return { deleted }; },
-    async addOrUpdateAttendee() { invites += 1; },
+    async addOrUpdateAttendee({ eventId }) { invites += 1; attendeeEventIds.push(eventId); },
   };
-  return { ports, calendar, records, get inserts() { return inserts; }, get invites() { return invites; }, get deleted() { return deleted; } };
+  return { ports, calendar, records, attendeeEventIds, get inserts() { return inserts; }, get invites() { return invites; }, get deleted() { return deleted; } };
 }
 
 test('concurrent same-slot attempts serialize and only one confirms', async () => {
@@ -99,6 +112,49 @@ test('creation intent is durable before insert, and an event-created write outag
   await assert.rejects(service.book(input, 'booking-key-902', context), { code: 'CALENDAR_UNAVAILABLE' });
   const replay = await service.book(input, 'booking-key-902', context);
   assert.equal(replay.status, 'confirmed'); assert.equal(afterInsert.inserts, 1);
+});
+
+test('a recovered creation intent reconciles first, then rechecks availability before any absent-event insert', async () => {
+  const key = 'booking-key-recovered-conflict'; const fake = fakes(); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
+  const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
+  fake.records.set(keyDigest, { fingerprint, state: 'creation_intent', version: 2 });
+  fake.calendar.getBusyIntervals = async () => [{ start, end }];
+  await assert.rejects(createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context), { code: 'SLOT_UNAVAILABLE' });
+  assert.equal(fake.inserts, 0);
+});
+
+test('a recovered creation intent with the deterministic event confirms without a duplicate insert', async () => {
+  const key = 'booking-key-recovered-event'; const fake = fakes(); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
+  const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
+  await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end, summary: 'Glamour Studio: Makeup', description: 'Customer: Ana' });
+  fake.records.set(keyDigest, { fingerprint, state: 'creation_intent', version: 2 });
+  const result = await createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context);
+  assert.equal(result.status, 'confirmed'); assert.equal(fake.inserts, 1);
+});
+
+test('a recovered event-created record preserves its event through notification and confirmation transitions', async () => {
+  const key = 'booking-key-recovered-event-created'; const fake = fakes({ productionTransition: true }); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
+  const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
+  const { event } = await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end, summary: 'Glamour Studio: Makeup', description: 'Customer: Ana' });
+  fake.records.set(keyDigest, { fingerprint, state: 'event_created', version: 3, eventId: event.id });
+
+  const result = await createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context);
+  const record = fake.records.get(keyDigest);
+  assert.equal(result.notification, 'requested'); assert.equal(record.state, 'confirmed'); assert.equal(record.eventId, event.id);
+  assert.equal(fake.inserts, 1); assert.equal(fake.invites, 1); assert.deepEqual(fake.attendeeEventIds, [event.id]);
+});
+
+test('a recovered creation-intent reconciliation failure remains safely unavailable', async () => {
+  const key = 'booking-key-recovered-provider-failure'; const fake = fakes(); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
+  const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
+  fake.records.set(keyDigest, { fingerprint, state: 'creation_intent', version: 2 });
+  fake.calendar.reconcilePrivateEvent = async () => { throw Object.assign(new Error('provider unavailable'), { code: 'GOOGLE_UNAVAILABLE' }); };
+  await assert.rejects(createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context), { code: 'CALENDAR_UNAVAILABLE' });
+  assert.equal(fake.inserts, 0);
 });
 
 test('blocker-list outage and compensation ambiguity stay unknown, preserve the event record, and release leases', async () => {

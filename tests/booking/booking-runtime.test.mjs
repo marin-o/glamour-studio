@@ -7,6 +7,7 @@ import {
   createLocalCoordinationState,
 } from '../../src/lib/booking/local/coordination.mjs';
 import { createBookingRuntime } from '../../src/lib/booking/runtime.mjs';
+import { getProductionRequestContext } from '../../src/lib/booking/production/request-context.mjs';
 
 test('booking runtime remains fail-closed unless explicit local development mode is active', async () => {
   for (const runtime of [
@@ -22,6 +23,7 @@ test('booking runtime remains fail-closed unless explicit local development mode
 test('explicit local development mode composes the booking service with a local request identity', async () => {
   const calendar = {
     async getBusyIntervals() { return []; },
+    async reconcilePrivateEvent() { throw Object.assign(new Error('not used'), { code: 'NOT_FOUND' }); },
     async createPrivateEvent() { throw new Error('not used'); },
     async listBlockingEvents() { return []; },
     async deleteEventForCompensation() { return { deleted: true }; },
@@ -38,4 +40,22 @@ test('explicit local development mode composes the booking service with a local 
   assert.equal(result.serviceId, 'makeup');
   assert.equal(result.date, '2026-07-24');
   assert.ok(result.starts.length > 0);
+});
+
+test('production activation validates every policy/provider value and hashes only trusted Vercel request identity', async () => {
+  const env = {
+    BOOKING_PRODUCTION_ENABLED: '1', VERCEL: '1', UPSTASH_REDIS_REST_URL: 'https://example.upstash.io', UPSTASH_REDIS_REST_TOKEN: 'a'.repeat(20), BOOKING_REQUEST_HMAC_SECRET: 'b'.repeat(20),
+    GOOGLE_CALENDAR_ID: 'dedicated@example.com', GOOGLE_OAUTH_CLIENT_ID: '123456789012-client.apps.googleusercontent.com', GOOGLE_OAUTH_CLIENT_SECRET: 'c'.repeat(20), GOOGLE_OAUTH_REFRESH_TOKEN: 'd'.repeat(20),
+    BOOKING_LEAD_TIME_MINUTES: '0', BOOKING_HORIZON_DAYS: '180', BOOKING_IDEMPOTENCY_TTL_SECONDS: '86400', BOOKING_LOCK_TIMEOUT_MS: '5000', BOOKING_LOCK_LEASE_MS: '60000', BOOKING_PROVIDER_OPERATION_BUDGET_MS: '45000', BOOKING_LEASE_SAFETY_MS: '5000',
+    BOOKING_RATE_LIMIT_AVAILABILITY_LIMIT: '120', BOOKING_RATE_LIMIT_AVAILABILITY_WINDOW_SECONDS: '60', BOOKING_RATE_LIMIT_BOOKING_LIMIT: '20', BOOKING_RATE_LIMIT_BOOKING_WINDOW_SECONDS: '60',
+  };
+  const context = getProductionRequestContext(new Request('https://example.test', { headers: { 'x-vercel-forwarded-for': '203.0.113.8, 10.0.0.1', 'x-forwarded-for': 'raw-untrusted' } }), { env, nodeEnv: 'production' });
+  assert.match(context.subjectDigest, /^[a-f0-9]{64}$/); assert.doesNotMatch(JSON.stringify(context), /203\.0\.113\.8|raw-untrusted/);
+  const calendar = { async getBusyIntervals() { return []; }, async reconcilePrivateEvent() { throw Object.assign(new Error('not used'), { code: 'NOT_FOUND' }); }, async createPrivateEvent() { throw new Error('not used'); }, async listBlockingEvents() { return []; }, async deleteEventForCompensation() { return { deleted: true }; }, async addOrUpdateAttendee() {} };
+  const redis = { async eval(script) { if (script.includes('rate-limit')) return [1, 60_000]; throw new Error('not used'); } };
+  const runtime = createBookingRuntime({ env, nodeEnv: 'production', calendar, redis, now: () => Temporal.Instant.from('2026-07-23T00:00:00Z') });
+  assert.equal((await runtime.availability({ serviceId: 'makeup', date: '2026-07-24' }, context)).serviceId, 'makeup');
+  const unavailable = createBookingRuntime({ env: { ...env, BOOKING_RATE_LIMIT_BOOKING_LIMIT: undefined }, nodeEnv: 'production', calendar, redis });
+  await assert.rejects(unavailable.availability({ serviceId: 'makeup', date: '2026-07-24' }), { code: 'BOOKING_NOT_CONFIGURED' });
+  assert.throws(() => getProductionRequestContext(new Request('https://example.test', { headers: { 'x-forwarded-for': 'spoofed' } }), { env, nodeEnv: 'production' }), { code: 'BOOKING_NOT_CONFIGURED' });
 });

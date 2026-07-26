@@ -226,13 +226,7 @@ function createIdempotencyPort(state, now) {
 function rateKey(request) {
   requiredString(request.action, 'Rate-limit action', 32);
   requiredString(request.subjectDigest, 'Rate-limit subject', 128);
-  return [
-    request.action,
-    request.subjectDigest,
-    request.contactDigest ?? '',
-    request.serviceId ?? '',
-    request.date ?? '',
-  ].join(':');
+  return `${request.action}:${request.subjectDigest}`;
 }
 
 function createRateLimitPort(state, now, policy) {

@@ -111,9 +111,9 @@ for the reception detail and lounge detail. Keep the layout calm and asymmetric;
 this is one visual moment, not a gallery, carousel, or lookbook. The band must
 never reuse the hero source.
 
-The type-first hero uses its separate interior hero image as a full-section,
-softly blurred background behind the intro copy. Keep the studio name and
-primary message first, use a warm stable contrast veil, and keep the shared
+The type-first hero uses its separate interior hero image as a sharp, crisp
+full-section image beneath a warm stable contrast veil and the intro copy. Keep
+the studio name and primary message first, and keep the shared
 `Provisional selection of real photographs — final media approval is pending` label visible in the foreground.
 The background is decorative and static; it must not obscure focus, reading, or
 the contact path, and it must not add a new animation treatment.
@@ -121,8 +121,8 @@ the contact path, and it must not add a new animation treatment.
 For motion-enabled visitors, the hero-to-services boundary may briefly open as
 a scroll-driven curtain onto a sharp, tightly cropped band of that same
 interior photograph. Use the hero's existing image element as the only photograph:
-the resting veil supplies the soft blur, then retracts to expose the sharp
-pixels already beneath it. The warm services-colored surface advances across
+the resting veil supplies soft blur, warm tint, and contrast, then retracts to
+expose the same untinted sharp pixels already beneath it. The warm services-colored surface advances across
 the page only as the real services section reaches it through normal document
 scroll. Do not add a synthetic upward-closing cover after the sharp window
 opens; let the revealed hero image leave the viewport naturally. Keep the

@@ -38,3 +38,20 @@ test('subpages inherit global language and Lookbook no longer owns duplicate nav
   assert.doesNotMatch(lookbook, /lookbook-media-notice|aria-describedby/);
   assert.match(lookbook, /brushProgress/);
 });
+
+test('home section anchors land on boundaries while headings provide semantic labels', async () => {
+  const home = await read('src/components/TypographySalonPage.jsx');
+
+  assert.match(
+    home,
+    /<section\s+id="type-services"[\s\S]*?data-hero-curtain-services[\s\S]*?aria-labelledby="type-services-title"/,
+  );
+  assert.match(home, /as="h2"\s+id="type-services-title"/);
+  assert.match(
+    home,
+    /<section\s+id="type-studio"[\s\S]*?aria-labelledby="type-studio-title"/,
+  );
+  assert.match(home, /as="h2"\s+id="type-studio-title"/);
+  assert.doesNotMatch(home, /<section[^>]*aria-labelledby="type-services"/);
+  assert.doesNotMatch(home, /<section[^>]*aria-labelledby="type-studio"/);
+});

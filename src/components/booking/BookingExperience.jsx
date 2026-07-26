@@ -286,7 +286,7 @@ function SlotGroup({ label, starts, selected, invalid, language, copy, onSelect 
         {starts.map((start) => (
           <label className="group relative cursor-pointer" key={start}>
             <input checked={selected === start} onChange={() => onSelect(start)} className="peer sr-only" name="slot" type="radio" />
-            <span className="flex min-h-10 items-center justify-center rounded-full border border-line-strong bg-surface px-2 text-center text-[0.82rem] font-bold text-ink transition-colors hover:border-accent hover:bg-peach/60 peer-checked:border-accent-deep peer-checked:bg-accent-deep peer-checked:text-surface peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+            <span className="flex min-h-10 items-center justify-center rounded-full border border-line-strong bg-surface px-2 text-center text-[0.82rem] font-bold text-ink transition-colors hover:border-accent hover:bg-peach/60 peer-checked:border-accent-deep peer-checked:bg-accent-deep peer-checked:hover:bg-accent peer-checked:text-surface peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
               {timeLabel(start, language)}
               <span className="sr-only">, {selected === start ? copy.selected : ""}</span>
             </span>
@@ -744,6 +744,7 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
                 <p className="mt-4 text-2xl font-bold">{serviceNames[flow.confirmation.serviceId][language]}</p>
                 <p className="mt-3 text-lg text-muted">{skopjeLabel(flow.confirmation.start, language)}</p>
                 <p className="mt-7 rounded-[1.5rem] border border-line bg-surface p-5 text-sm leading-relaxed">{t.invitation[flow.confirmation.notification]}</p>
+                <p className="mt-4 text-sm leading-relaxed text-muted">{t.invitationGuidance}</p>
                 <TransitionLink className="mt-8 inline-flex min-h-12 items-center rounded-full border border-line-strong bg-surface px-6 font-extrabold text-accent-deep transition-colors hover:border-accent-deep hover:bg-peach focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent" href="/">Glamour Studio</TransitionLink>
               </section>
               )}

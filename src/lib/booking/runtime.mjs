@@ -6,6 +6,7 @@ import { createGoogleCalendarAdapter } from './google/calendar-adapter.mjs';
 import { createLocalCoordinationPorts, getLocalCoordinationState } from './local/coordination.mjs';
 import { createBookingService } from './orchestration/booking-service.mjs';
 import { BookingError } from './orchestration/errors.mjs';
+import { createProductionCoordinationPorts, createProductionRedisClient, getProductionBookingConfig } from './production/index.mjs';
 
 const LOCAL_MODE_FLAG = 'BOOKING_LOCAL_TEST_MODE';
 const RUNTIME = Symbol.for('glamour-studio.booking.runtime.v1');
@@ -34,23 +35,33 @@ export function createBookingRuntime({
   nodeEnv = process.env.NODE_ENV,
   calendar,
   ports,
+  redis,
   now,
 } = {}) {
-  if (env?.[LOCAL_MODE_FLAG] !== '1' || nodeEnv !== 'development') return unavailableRuntime();
-  const service = createBookingService({
-    calendar: calendar ?? createGoogleCalendarAdapter({ env }),
-    ports: ports ?? createLocalCoordinationPorts({ state: getLocalCoordinationState() }),
-    policy: LOCAL_POLICY,
-    ...(now ? { now } : {}),
-  });
-  return Object.freeze({
-    availability(input, requestContext) {
-      return service.availability(input, requestContext ?? LOCAL_REQUEST_CONTEXT);
-    },
-    book(input, idempotencyKey, requestContext) {
-      return service.book(input, idempotencyKey, requestContext ?? LOCAL_REQUEST_CONTEXT);
-    },
-  });
+  if (env?.[LOCAL_MODE_FLAG] === '1' && nodeEnv === 'development') {
+    const service = createBookingService({
+      calendar: calendar ?? createGoogleCalendarAdapter({ env }),
+      ports: ports ?? createLocalCoordinationPorts({ state: getLocalCoordinationState() }),
+      policy: LOCAL_POLICY,
+      ...(now ? { now } : {}),
+    });
+    return Object.freeze({
+      availability(input, requestContext) { return service.availability(input, requestContext ?? LOCAL_REQUEST_CONTEXT); },
+      book(input, idempotencyKey, requestContext) { return service.book(input, idempotencyKey, requestContext ?? LOCAL_REQUEST_CONTEXT); },
+    });
+  }
+  try {
+    const config = getProductionBookingConfig(env, nodeEnv);
+    const service = createBookingService({
+      calendar: calendar ?? createGoogleCalendarAdapter({ env, timeoutMs: config.policy.providerOperationBudgetMs }),
+      ports: ports ?? createProductionCoordinationPorts({ redis: redis ?? createProductionRedisClient({ url: config.redisUrl, token: config.redisToken }), ratePolicy: config.ratePolicy }),
+      policy: config.policy,
+      ...(now ? { now } : {}),
+    });
+    return Object.freeze({ availability: (input, requestContext) => service.availability(input, requestContext), book: (input, idempotencyKey, requestContext) => service.book(input, idempotencyKey, requestContext) });
+  } catch {
+    return unavailableRuntime();
+  }
 }
 
 export function getBookingRuntime() {

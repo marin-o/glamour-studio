@@ -131,6 +131,33 @@ test('passes an abort signal for bounded request timeout', async () => {
   assert.ok(signal instanceof AbortSignal);
 });
 
+test('enforces one public-method deadline across response parsing and multi-request recovery', async () => {
+  let bodySignal; const parsing = createGoogleCalendarAdapter({
+    env,
+    timeoutMs: 5,
+    fetch: async (url, init) => {
+      if (String(url).includes('/token')) return token();
+      bodySignal = init.signal;
+      return { ok: true, status: 200, json: () => new Promise((resolve) => setTimeout(() => resolve({ calendars: { [env.GOOGLE_CALENDAR_ID]: { busy: [] } } }), 30)) };
+    },
+  });
+  await assert.rejects(parsing.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end }), { code: 'TRANSPORT_FAILED' });
+  assert.equal(bodySignal.aborted, true);
+
+  const signals = [];
+  const retrying = createGoogleCalendarAdapter({
+    env,
+    timeoutMs: 15,
+    fetch: async (url, init) => {
+      signals.push(init.signal);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return String(url).includes('/token') ? token() : empty(401);
+    },
+  });
+  await assert.rejects(retrying.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end }), { code: 'TRANSPORT_FAILED' });
+  assert.ok(signals.some((signal) => signal.aborted));
+});
+
 test('lists only valid opaque timed or Skopje all-day blockers with bounded recurring pagination', async () => {
   const calls = [];
   const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ items: [

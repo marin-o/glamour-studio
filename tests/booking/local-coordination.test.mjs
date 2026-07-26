@@ -116,3 +116,15 @@ test('local rate limiting is bounded and resets without storing raw contact data
   currentTime += 1_001;
   assert.deepEqual(await ports.rateLimit.check(request), { allowed: true });
 });
+
+test('local rate limiting mirrors the production action/subject aggregation', async () => {
+  const state = createLocalCoordinationState(); const subject = digest('shared-subject');
+  const ports = createLocalCoordinationPorts({ state, ratePolicy: { availability: { limit: 2, windowMs: 1_000 }, booking: { limit: 1, windowMs: 1_000 } } });
+  await ports.rateLimit.check({ action: 'availability', subjectDigest: subject, serviceId: 'makeup', date: '2026-07-24' });
+  await ports.rateLimit.check({ action: 'availability', subjectDigest: subject, serviceId: 'haircut', date: '2026-07-25' });
+  assert.equal((await ports.rateLimit.check({ action: 'availability', subjectDigest: subject, serviceId: 'hair-styling', date: '2026-07-26' })).allowed, false);
+  await ports.rateLimit.check({ action: 'booking', subjectDigest: subject, contactDigest: digest('first') });
+  assert.equal((await ports.rateLimit.check({ action: 'booking', subjectDigest: subject, contactDigest: digest('second') })).allowed, false);
+  assert.equal((await ports.rateLimit.check({ action: 'booking', subjectDigest: digest('independent') })).allowed, true);
+  assert.equal(state.rateLimits.size, 3);
+});
