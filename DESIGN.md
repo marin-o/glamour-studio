@@ -147,12 +147,17 @@ The role-separated contract lives in `src/lib/homepage-media.js`: the hero is
 `homepageHeroMedia`, while `homepageStudioMedia` contains the work-area anchor,
 reception-detail support image, and lounge-detail support image. The originals
 remain as PNG masters under `public/media/homepage`; live routes use deterministic,
-same-dimension WebP derivatives. Homepage `next/image` consumers request explicit
-`quality={82}` with responsive `sizes` so delivery stays crisp without needless
-transfer cost. The localized AI edits were object-removal edits only. Where an
-original needed upscaling, a localized patch was composited onto the original
-before Lanczos3/sharpen processing and WebP derivative export. These are
-high-quality 4K delivery derivatives, not a claim of recovered true detail.
+same-dimension WebP derivatives. Preserve extra fidelity for the hero: its
+derivative is encoded at WebP quality 98 and its homepage `next/image` consumer
+requests `quality={95}` with `priority` beneath the existing veil and curtain.
+Studio derivatives remain around quality 90 and their consumers request
+`quality={82}` with responsive `sizes`, `loading="eager"`, and
+`fetchPriority="low"` so all three scenes are discovered on initial page load
+without competing with the hero request. The localized AI edits were
+object-removal edits only. Where an original needed upscaling, a localized patch
+was composited onto the original before Lanczos3/sharpen processing and WebP
+derivative export. These are high-quality 4K delivery derivatives, not a claim
+of recovered true detail.
 
 The imagery does not carry a visible provisional disclosure. Accurate alt text
 and captions remain required: describe only visible scenes and must not identify

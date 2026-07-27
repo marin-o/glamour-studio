@@ -70,8 +70,9 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
 - [x] The same four chosen homepage images retain their roles and crops while
   responsive delivery avoids transferring oversized source PNGs to ordinary
   viewport sizes.
-- [x] The hero remains prioritized and sharp beneath the existing veil; the
-  three below-the-fold studio images remain lazy-loadable.
+- [x] The hero remains prioritized and uses a higher-fidelity derivative and
+  delivery quality beneath the existing veil; the three studio images begin
+  loading on initial page load at low fetch priority instead of waiting for scroll.
 - [ ] Static media checks and a production build pass; rendered loading speed
   remains explicitly awaiting owner verification under conservative policy.
 
@@ -121,3 +122,13 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
   (94.07%). The focused media contract passes 3/3, deterministic media checks
   pass, and the production build passes. Rendered loading speed awaits owner
   verification after deployment.
+- Owner review correction: the first optimized deploy made the hero visibly too
+  soft and the studio images visibly arrived during scrolling. Retune hero-only
+  source/delivery quality and eagerly discover the studio images at low fetch
+  priority while keeping the hero request highest priority.
+- Retune validation: hero source WebP quality is 98 and homepage delivery quality
+  is 95; studio images use eager discovery with low fetch priority. The hero
+  derivative increased from 934,126 to 2,135,114 bytes while total WebP delivery
+  assets remain 92.18% smaller than the PNG masters. Focused tests pass 3/3,
+  deterministic media checks pass, and the production build passes. Owner-rendered
+  verification remains pending after deployment.

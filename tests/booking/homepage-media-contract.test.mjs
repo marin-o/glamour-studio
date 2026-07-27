@@ -130,6 +130,7 @@ test("localized media copy follows the four visible scene IDs", () => {
 
 test("homepage, booking, and Open Graph consumers keep media roles explicit", () => {
   const home = read("src/components/TypographySalonPage.jsx");
+  const mediaScript = read("scripts/media/homepage-webp.mjs");
   const booking = read("src/components/booking/BookingExperience.jsx");
   const layout = read("src/app/layout.jsx");
 
@@ -156,11 +157,6 @@ test("homepage, booking, and Open Graph consumers keep media roles explicit", ()
     ([block]) => block,
   );
   assert.equal(imageBlocks.length, 3, "homepage must render exactly three Image blocks");
-  assert.equal(
-    imageBlocks.filter((block) => block.includes("quality={82}")).length,
-    3,
-    "all homepage images must request quality 82",
-  );
   const heroBlock = imageBlocks.find((block) =>
     block.includes("src={heroMedia.src}"),
   );
@@ -182,12 +178,37 @@ test("homepage, booking, and Open Graph consumers keep media roles explicit", ()
     2,
     "supporting image map must represent two runtime images",
   );
+  assert.match(heroBlock, /quality=\{95\}/, "hero image must request high fidelity");
+  assert.doesNotMatch(heroBlock, /quality=\{82\}/);
   assert.match(heroBlock, /\bpriority\b/);
   assert.doesNotMatch(heroBlock, /loading=["']lazy["']/);
   for (const block of [anchorBlock, ...supportingBlocks]) {
-    assert.match(block, /loading=["']lazy["']/);
+    assert.match(block, /loading=["']eager["']/);
+    assert.match(block, /fetchPriority=["']low["']/);
+    assert.match(block, /quality=\{82\}/);
+    assert.doesNotMatch(block, /loading=["']lazy["']/);
     assert.doesNotMatch(block, /\bpriority\b/);
   }
+  assert.match(
+    mediaScript,
+    /masterName:\s*["']glamour-studio-hero-clean-4k\.png["'][\s\S]*?quality:\s*98[\s\S]*?role:\s*["']hero["']/,
+    "hero derivative must use high source quality",
+  );
+  assert.match(
+    mediaScript,
+    /masterName:\s*["']glamour-studio-work-area-4k\.png["'][\s\S]*?quality:\s*90[\s\S]*?role:\s*["']anchor["']/,
+    "studio anchor derivative must use the studio quality",
+  );
+  assert.match(
+    mediaScript,
+    /masterName:\s*["']glamour-studio-reception-detail-4k\.png["'][\s\S]*?quality:\s*90[\s\S]*?role:\s*["']supporting["']/,
+    "reception derivative must use the studio quality",
+  );
+  assert.match(
+    mediaScript,
+    /masterName:\s*["']glamour-studio-lounge-clean-4k\.png["'][\s\S]*?quality:\s*90[\s\S]*?role:\s*["']supporting["']/,
+    "lounge derivative must use the studio quality",
+  );
   assert.doesNotMatch(home, /homepageMedia/);
 
   assert.match(booking, /homepageHeroMedia/);

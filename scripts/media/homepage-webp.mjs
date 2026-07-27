@@ -4,14 +4,31 @@ import process from "node:process";
 import sharp from "sharp";
 
 const MEDIA_ROOT = path.resolve("public/media/homepage");
-const WEBP_QUALITY = 90;
 const MIN_REDUCTION = 0.75;
-const HOMEPAGE_MASTERS = [
-  "glamour-studio-hero-clean-4k.png",
-  "glamour-studio-work-area-4k.png",
-  "glamour-studio-reception-detail-4k.png",
-  "glamour-studio-lounge-clean-4k.png",
+const HOMEPAGE_MEDIA = [
+  {
+    masterName: "glamour-studio-hero-clean-4k.png",
+    quality: 98,
+    role: "hero",
+  },
+  {
+    masterName: "glamour-studio-work-area-4k.png",
+    quality: 90,
+    role: "anchor",
+  },
+  {
+    masterName: "glamour-studio-reception-detail-4k.png",
+    quality: 90,
+    role: "supporting",
+  },
+  {
+    masterName: "glamour-studio-lounge-clean-4k.png",
+    quality: 90,
+    role: "supporting",
+  },
 ];
+
+const HOMEPAGE_MASTERS = HOMEPAGE_MEDIA.map(({ masterName }) => masterName);
 
 const derivativePath = (masterName) =>
   path.join(MEDIA_ROOT, masterName.replace(/\.png$/i, ".webp"));
@@ -68,17 +85,21 @@ async function checkDerivatives() {
 async function optimizeDerivatives() {
   await mkdir(MEDIA_ROOT, { recursive: true });
 
-  for (const masterName of HOMEPAGE_MASTERS) {
+  for (const { masterName, quality, role } of HOMEPAGE_MEDIA) {
     const masterPath = path.join(MEDIA_ROOT, masterName);
     const derivative = derivativePath(masterName);
 
     await sharp(masterPath)
       .webp({
         effort: 6,
-        quality: WEBP_QUALITY,
+        quality,
         smartSubsample: true,
       })
       .toFile(derivative);
+
+    console.log(
+      `Generated ${role} ${path.basename(derivative)} at WebP quality ${quality}.`,
+    );
   }
 
   await checkDerivatives();
