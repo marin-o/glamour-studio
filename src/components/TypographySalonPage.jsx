@@ -8,6 +8,7 @@ import {
   homepageHeroMedia,
   homepageStudioMedia,
 } from "../lib/homepage-media";
+import homepageImageLoader from "../lib/homepage-image-loader";
 import { useLanguage } from "./LanguageProvider";
 import SiteNavigation from "./SiteNavigation";
 import MakeupStroke, {
@@ -121,6 +122,7 @@ export default function TypographySalonPage() {
             alt=""
             className="h-full w-full object-cover"
             height={heroMedia.height}
+            loader={homepageImageLoader}
             priority
             quality={95}
             sizes="100vw"
@@ -252,6 +254,7 @@ export default function TypographySalonPage() {
                 height={anchorMedia.height}
                 fetchPriority="low"
                 loading="eager"
+                loader={homepageImageLoader}
                 quality={82}
                 sizes="(min-width: 768px) 45vw, 100vw"
                 src={anchorMedia.src}
@@ -272,6 +275,7 @@ export default function TypographySalonPage() {
                     height={media.height}
                     fetchPriority="low"
                     loading="eager"
+                    loader={homepageImageLoader}
                     quality={82}
                     sizes="(min-width: 768px) 15vw, 50vw"
                     src={media.src}

@@ -75,6 +75,9 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
   loading on initial page load at low fetch priority instead of waiting for scroll.
 - [ ] Static media checks and a production build pass; rendered loading speed
   remains explicitly awaiting owner verification under conservative policy.
+- [x] Homepage SSR emits a responsive static-file hero preload and static
+  studio `srcset` URLs, avoiding Netlify's first-request `/_next/image`
+  transformation latency while preserving current scheduling and fidelity.
 
 ## Non-goals
 
@@ -132,3 +135,14 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
   assets remain 92.18% smaller than the PNG masters. Focused tests pass 3/3,
   deterministic media checks pass, and the production build passes. Owner-rendered
   verification remains pending after deployment.
+- Live loading diagnosis: SSR already emitted the hero preload correctly. A
+  production 1920px quality-95 `/_next/image` request measured 1.084s TTFB and
+  1.321s total on the first request, then 0.163s TTFB and 0.368s total after the
+  transformed variant was cached. The next correction should remove that cold
+  transformation by pre-generating responsive static variants from PNG masters.
+- Static responsive correction: generated all 47 widths requested by the current
+  homepage `sizes` contracts directly from PNG masters and added a homepage-only
+  custom loader. Generated SSR contains direct static preload/srcset URLs and no
+  `/_next/image` homepage requests. The responsive set totals 8,194,238 bytes;
+  the representative 1920px quality-95 hero is 545,740 bytes. Focused tests pass
+  4/4, deterministic media checks pass, and the production build passes.

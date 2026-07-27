@@ -42,9 +42,11 @@ common work so agents can inspect the smallest relevant file set.
 - `src/components/motion/SmoothScroll.jsx`: reduced-motion-aware document Lenis integration, disabled in favor of route-local horizontal Lenis on the lookbook.
 - `src/lib/homepage-copy.js`: structurally aligned Macedonian-default and English homepage copy, metadata, and language-control labels.
 - `src/lib/lookbook-copy.js`: aligned Macedonian and English Lookbook interface, source-link, instruction, and accessibility copy.
-- `src/lib/homepage-media.js`: explicit hero and studio-band role metadata for provisional real-studio 4K delivery derivatives.
+- `src/lib/homepage-media.js`: explicit hero and studio-band role metadata for canonical provisional real-studio 4K delivery derivatives.
+- `src/lib/homepage-image-loader.js`: browser/server-safe role-aware loader mapping homepage Image requests to static responsive WebP variants.
 - `src/generated/lookbook-media-manifest.js`: generated intrinsic dimensions for lookbook `next/image` rendering.
 - `scripts/media/lookbook-manifest.mjs`: lookbook dimension-manifest generator and read-only media build gate.
+- `scripts/media/homepage-webp.mjs`: deterministic canonical and responsive homepage WebP generator/check using PNG masters.
 - `src/lib/`: shared helpers and product-facing data utilities when needed.
 - `docs/`: durable product intent, design constraints, implementation plan, tasks, ADRs, and handoff.
 - `docs/owner-content-media-intake.md`: owner checklist for launch facts, copy, media, permissions, and privacy.
