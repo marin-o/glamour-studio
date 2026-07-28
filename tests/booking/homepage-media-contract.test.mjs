@@ -14,6 +14,7 @@ import homepageImageLoader from "../../src/lib/homepage-image-loader.js";
 
 const root = resolve(import.meta.dirname, "../..");
 const read = (file) => readFileSync(resolve(root, file), "utf8");
+const instrumentationClient = read("src/instrumentation-client.js");
 
 const expectedMedia = [
   {
@@ -292,6 +293,11 @@ test("homepage, booking, and Open Graph consumers keep media roles explicit", ()
   assert.match(layout, /height: homepageOgImage\.height/);
   assert.match(layout, /metadataBase: new URL\("https:\/\/example\.com"\)/);
   assert.doesNotMatch(layout, /salon-interior-concept\.png/);
+  assert.doesNotMatch(layout, /next\/script|beforeInteractive|historyTransitionBridge/);
+  assert.match(instrumentationClient, /__glamourHistoryTransitionBridge/);
+  assert.match(instrumentationClient, /addEventListener\(\s*["']popstate["']/);
+  assert.match(instrumentationClient, /glamour:history-transition/);
+  assert.match(instrumentationClient, /2400/);
 });
 
 test("homepage static loader maps every requested width to generated files", () => {
@@ -314,6 +320,14 @@ test("homepage static loader maps every requested width to generated files", () 
         2048, 3840,
       ],
     },
+    {
+      src: homepageStudioMedia[2].src,
+      quality: 82,
+      widths: [
+        32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920,
+        2048, 3840,
+      ],
+    },
   ];
 
   for (const { src, quality, widths } of roleCases) {
@@ -328,9 +342,46 @@ test("homepage static loader maps every requested width to generated files", () 
     }
   }
 
+  for (const expected of expectedMedia) {
+    assert.equal(
+      homepageImageLoader({
+        src: expected.src,
+        width: expected.width,
+        quality: expected.responsiveQuality,
+      }),
+      `/media/homepage/responsive/${expected.src
+        .split("/")
+        .pop()
+        .replace(/\.webp$/i, "")}-3840w-q${expected.responsiveQuality}.webp`,
+      `${expected.id} intrinsic width maps to the largest generated variant`,
+    );
+  }
+
+  assert.equal(
+    homepageImageLoader({
+      src: homepageHeroMedia.src,
+      width: homepageHeroMedia.width,
+      quality: 95,
+    }),
+    `/media/homepage/responsive/glamour-studio-hero-clean-4k-3840w-q95.webp`,
+  );
+  assert.equal(
+    homepageImageLoader({ src: homepageHeroMedia.src, width: 5000, quality: 95 }),
+    `/media/homepage/responsive/glamour-studio-hero-clean-4k-3840w-q95.webp`,
+  );
+
   assert.throws(
     () => homepageImageLoader({ src: homepageHeroMedia.src, width: 384, quality: 95 }),
     /Unsupported hero homepage image width/,
+  );
+  assert.throws(
+    () =>
+      homepageImageLoader({
+        src: homepageStudioMedia[1].src,
+        width: 3257,
+        quality: 82,
+      }),
+    /Unsupported supporting homepage image width/,
   );
   assert.throws(
     () => homepageImageLoader({ src: homepageHeroMedia.src, width: 640, quality: 82 }),

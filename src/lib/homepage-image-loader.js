@@ -27,6 +27,15 @@ const MEDIA_ROLES = Object.freeze({
   "glamour-studio-lounge-clean-4k": "supporting",
 });
 
+const INTRINSIC_WIDTHS = Object.freeze({
+  hero: 4344,
+  anchor: 4344,
+  supporting: 3258,
+});
+
+const largestResponsiveWidthFor = (role) =>
+  Math.max(...RESPONSIVE_WIDTHS[role]);
+
 const roleForSource = (src) => {
   const basename = src.split("/").pop()?.replace(/\.webp$/i, "");
   const role = MEDIA_ROLES[basename];
@@ -40,8 +49,15 @@ export default function homepageImageLoader({ src, width, quality }) {
   const role = roleForSource(src);
   const numericWidth = Number(width);
   const numericQuality = Number(quality);
+  const largestResponsiveWidth = largestResponsiveWidthFor(role);
+  const intrinsicWidth = INTRINSIC_WIDTHS[role];
 
-  if (!Number.isInteger(numericWidth) || !RESPONSIVE_WIDTHS[role].has(numericWidth)) {
+  if (
+    !Number.isInteger(numericWidth) ||
+    (numericWidth <= largestResponsiveWidth &&
+      !RESPONSIVE_WIDTHS[role].has(numericWidth) &&
+      numericWidth !== intrinsicWidth)
+  ) {
     throw new Error(`Unsupported ${role} homepage image width: ${width}`);
   }
   if (![82, 95].includes(numericQuality)) {
@@ -54,9 +70,17 @@ export default function homepageImageLoader({ src, width, quality }) {
     throw new Error(`Homepage studio media must use quality 82, received ${quality}`);
   }
 
+  const generatedWidth =
+    numericWidth > largestResponsiveWidth
+      ? largestResponsiveWidth
+      : RESPONSIVE_WIDTHS[role].has(numericWidth)
+        ? numericWidth
+        : [...RESPONSIVE_WIDTHS[role]]
+            .sort((a, b) => a - b)
+            .find((candidate) => candidate >= numericWidth);
+
   return `/media/homepage/responsive/${src
     .split("/")
     .pop()
-    .replace(/\.webp$/i, "")}-${numericWidth}w-q${numericQuality}.webp`;
+    .replace(/\.webp$/i, "")}-${generatedWidth}w-q${numericQuality}.webp`;
 }
-
