@@ -1,6 +1,6 @@
 # Run production booking on Netlify
 
-Status: IN PROGRESS
+Status: DONE
 Depends on: None
 Owner: AI-assisted implementation
 Approver: Unassigned
@@ -73,8 +73,8 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
 - [x] The hero remains prioritized and uses a higher-fidelity derivative and
   delivery quality beneath the existing veil; the three studio images begin
   loading on initial page load at low fetch priority instead of waiting for scroll.
-- [ ] Static media checks and a production build pass; rendered loading speed
-  remains explicitly awaiting owner verification under conservative policy.
+- [x] Static media checks and a production build pass; the owner verified the
+  final rendered loading speed after deployment.
 - [x] Homepage SSR emits a responsive static-file hero preload and static
   studio `srcset` URLs, avoiding Netlify's first-request `/_next/image`
   transformation latency while preserving current scheduling and fidelity.
@@ -93,6 +93,10 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
 - Task, evidence, and handoff-only edits do not invalidate successful runtime checks.
 
 ## Completion notes
+
+- Transition: complete at 2026-07-27T01:40:55.321Z
+- Validation: Netlify production booking and claimed Upstash-backed availability are live; adversarial runtime review was resolved; responsive homepage delivery bypasses cold image transforms; focused tests and production builds pass; live 1920px first-request total improved from 1.321s to 0.848s; owner verified and accepted the deployed result on 2026-07-27.
+- Approved by: Owner
 
 - Transition: start at 2026-07-26T11:34:32.032Z
 
@@ -146,3 +150,11 @@ visual-preserving delivery optimization with no exceptional-risk trigger.
   `/_next/image` homepage requests. The responsive set totals 8,194,238 bytes;
   the representative 1920px quality-95 hero is 545,740 bytes. Focused tests pass
   4/4, deterministic media checks pass, and the production build passes.
+- Live static delivery validation: commit `982f278` deployed successfully as
+  `6a66b5b8956465000851e342`. Production SSR contains the direct responsive hero
+  preload and zero homepage `/_next/image` references. A first 1920px static
+  request measured 0.474s TTFB / 0.848s total versus the prior transformed
+  1.084s / 1.321s; its repeat measured 0.160s / 0.397s. A first 1080px request
+  measured 0.291s / 0.458s. Owner-perceived verification remains pending.
+- Owner acceptance: on 2026-07-27 the owner verified the final deployed image
+  loading behavior and accepted the result (“good shit”).

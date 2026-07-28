@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=ded7d2658082c90a -->
+<!-- sitewright:fingerprint=c9baf5b6cebe9633 -->
 ## Sitewright state
 
-- Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
-- The repository has structured intent, coherent planning, and an executable task.
-- Active task: 057-run-production-booking-on-netlify.md.
+- Sitewright Doctor reports `PLANNING_REQUIRED` using `nextjs-app-router` policy pack.
+- Reconcile planning artifacts and keep one executable task.
+- Active task: none.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -24,15 +24,17 @@
   IDs, prices, and durations, with Hairstyling third after both haircut
   options. Accepted bookings request a Google Calendar invitation; the public
   confirmation reports `requested` or the safe `unknown` fallback.
-- Task 057 is migrating production booking to the owner-created Netlify site
+- Task 057 completed production booking migration to the owner-created Netlify site
   `fanciful-rolypoly-a33659.netlify.app`. Netlify Production has the Google,
   policy, HMAC, explicit platform, and owner-claimed replacement Upstash
-  variables configured. Commit `8e28905` deployed successfully as
-  `6a65fb2c4958711decddc4f9` with production booking enabled; a live read-only
+  variables configured. Production booking is enabled; a live read-only
   availability request returned HTTP 200 through Netlify, Upstash, and Google
   Calendar. The reviewed runtime uses Netlify's server-derived Functions
   context IP and fails closed on missing or contradictory platform context.
-  The prior Vercel deployment was already deleted, so no rollback remains.
+  Homepage media now uses prebuilt static responsive WebPs instead of cold
+  Netlify image transforms; deploy `6a66b5b8956465000851e342` from commit
+  `982f278` passed live timing checks and owner review. The prior Vercel
+  deployment was already deleted, so no rollback remains.
 - `/lookbook` retains its noindex horizontal sequence, source tracing,
   meaningful bilingual alt text, quality-100 responsive images, route-local
   Lenis, and exact progress. Owner-directed customer copy removes visible
@@ -59,15 +61,15 @@
 - The owner rejected managed booking services and approved the phased custom
   Next.js and Google Calendar direction in
   `docs/booking-google-calendar-implementation-plan.md`. The earlier Vercel
-  implementation was accepted, but that deployment has since been deleted and
-  Netlify migration task 057 is the active production path.
+  implementation was accepted, that deployment was deleted, and the owner has
+  now accepted the completed Netlify production migration in task 057.
 - The owner confirmed replacement Upstash database
   `f2218049-c728-44af-97e3-6223a5811ed1` was claimed with the Glamour Studio
   account. The initial disposable database was removed from Netlify
   configuration after its token appeared in diagnostics and will expire unused.
-- Task 056/057 code is pushed and the enabled Netlify cloud deployment has
-  passed live availability. Await the owner's website verification and explicit
-  completion acceptance; any write/invitation smoke test remains owner-controlled.
+- Task 056/057 code is pushed, the enabled Netlify deployment passed live
+  availability and media timing checks, and the owner accepted the result on
+  2026-07-27. Any further write/invitation smoke test remains owner-controlled.
 
 ## Durable gotchas
 

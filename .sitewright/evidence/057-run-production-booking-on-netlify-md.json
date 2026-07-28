@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "057-run-production-booking-on-netlify.md",
+  "status": "DONE",
+  "evidence": "Netlify production booking and claimed Upstash-backed availability are live; adversarial runtime review was resolved; responsive homepage delivery bypasses cold image transforms; focused tests and production builds pass; live 1920px first-request total improved from 1.321s to 0.848s; owner verified and accepted the deployed result on 2026-07-27.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-07-27T01:40:55.326Z"
+}
