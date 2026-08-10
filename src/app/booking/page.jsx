@@ -1,30 +1,9 @@
 import BookingExperience from '../../components/booking/BookingExperience';
 import { SERVICES } from '../../lib/booking/services.mjs';
 import { skopjeToday } from '../../lib/booking/client/booking-flow.mjs';
-import { homepageCopy } from '../../lib/homepage-copy';
-import { homepageHeroMedia } from '../../lib/homepage-media';
+import { bookingSeo, createSeoMetadata } from '../../lib/site-seo';
 
-const title = 'Закажување | Glamour Studio';
-const description = 'Закажете термин во Glamour Studio во Радовиш. Изберете услуга, датум и слободен термин онлајн.';
-
-export const metadata = {
-  title,
-  description,
-  openGraph: {
-    title,
-    description,
-    type: 'website',
-    locale: 'mk_MK',
-    images: [
-      {
-        url: homepageHeroMedia.src,
-        width: homepageHeroMedia.width,
-        height: homepageHeroMedia.height,
-        alt: homepageCopy.mk.metadata.imageAlt,
-      },
-    ],
-  },
-};
+export const metadata = createSeoMetadata(bookingSeo);
 
 export default async function BookingPage({ searchParams }) {
   const params = await searchParams;

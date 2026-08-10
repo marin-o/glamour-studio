@@ -5,10 +5,11 @@ import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { LanguageProvider } from "../components/LanguageProvider";
 import { PageTransitionProvider } from "../components/motion/PageTransition";
 import SmoothScroll from "../components/motion/SmoothScroll";
-import { homepageCopy } from "../lib/homepage-copy";
-import { homepageHeroMedia } from "../lib/homepage-media";
-
-const homepageOgImage = homepageHeroMedia;
+import {
+  SITE_ORIGIN,
+  createSeoMetadata,
+  homepageSeo,
+} from "../lib/site-seo";
 
 const displayFont = Cormorant_Garamond({
   display: "swap",
@@ -29,23 +30,8 @@ const bodyFont = Manrope({
 });
 
 export const metadata = {
-  title: homepageCopy.mk.metadata.title,
-  description: homepageCopy.mk.metadata.description,
-  metadataBase: new URL("https://example.com"),
-  openGraph: {
-    title: homepageCopy.mk.metadata.title,
-    description: homepageCopy.mk.metadata.openGraphDescription,
-    type: "website",
-    locale: "mk_MK",
-    images: [
-      {
-        url: homepageOgImage.src,
-        width: homepageOgImage.width,
-        height: homepageOgImage.height,
-        alt: homepageCopy.mk.metadata.imageAlt,
-      },
-    ],
-  },
+  metadataBase: new URL(SITE_ORIGIN),
+  ...createSeoMetadata(homepageSeo),
 };
 
 export default function RootLayout({ children }) {
