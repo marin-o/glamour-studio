@@ -24,17 +24,26 @@
   IDs, prices, and durations, with Hairstyling third after both haircut
   options. Accepted bookings request a Google Calendar invitation; the public
   confirmation reports `requested` or the safe `unknown` fallback.
-- Task 057 completed production booking migration to the owner-created Netlify site
-  `fanciful-rolypoly-a33659.netlify.app`. Netlify Production has the Google,
-  policy, HMAC, explicit platform, and owner-claimed replacement Upstash
-  variables configured. Production booking is enabled; a live read-only
-  availability request returned HTTP 200 through Netlify, Upstash, and Google
-  Calendar. The reviewed runtime uses Netlify's server-derived Functions
-  context IP and fails closed on missing or contradictory platform context.
-  Homepage media now uses prebuilt static responsive WebPs instead of cold
-  Netlify image transforms; deploy `6a66b5b8956465000851e342` from commit
-  `982f278` passed live timing checks and owner review. The prior Vercel
-  deployment was already deleted, so no rollback remains.
+- Task 057 completed migration to the owner-created Netlify site
+  `fanciful-rolypoly-a33659.netlify.app`. Production booking availability was
+  restored on 2026-08-10 by replacing the unavailable Upstash database,
+  rotating the two Netlify production Redis secrets, and publishing ready
+  deploy `6a7a227d55da1ecf2326154b`. The replacement database
+  `4114d4bb-01f4-4512-bf42-67e2da268b06` passed non-mutating `PING` and Lua
+  `EVAL` checks; live availability returned HTTP 200 on
+  `www.glamourstudio.mk`, the default Netlify domain, and the immutable deploy
+  URL. No temporary diagnostic gate remains live. The replacement must be
+  claimed in Upstash by 2026-08-13 to avoid expiry. The reviewed runtime still
+  uses Netlify's server-derived Functions context IP and fails closed on missing
+  or contradictory platform context. The prior Vercel deployment was deleted,
+  so no rollback remains.
+- The canonical production domain is now `https://glamourstudio.mk`. On
+  2026-08-10 the owner authorized switching Netlify's primary custom domain
+  from `www.glamourstudio.mk` to the apex. The apex serves directly over
+  verified HTTPS; `www` preserves paths and redirects once with HTTP 301 to
+  the apex. Homepage and booking canonicals/Open Graph URLs, robots, sitemap,
+  structured data, and live booking availability were reverified after the
+  switch. The adversarial infrastructure review found no actionable issue.
 - `/lookbook` retains its noindex horizontal sequence, source tracing,
   meaningful bilingual alt text, quality-100 responsive images, route-local
   Lenis, and exact progress. Owner-directed customer copy removes visible
@@ -63,13 +72,13 @@
   `docs/booking-google-calendar-implementation-plan.md`. The earlier Vercel
   implementation was accepted, that deployment was deleted, and the owner has
   now accepted the completed Netlify production migration in task 057.
-- The owner confirmed replacement Upstash database
-  `f2218049-c728-44af-97e3-6223a5811ed1` was claimed with the Glamour Studio
-  account. The initial disposable database was removed from Netlify
-  configuration after its token appeared in diagnostics and will expire unused.
-- Task 056/057 code is pushed, the enabled Netlify deployment passed live
-  availability and media timing checks, and the owner accepted the result on
-  2026-07-27. Any further write/invitation smoke test remains owner-controlled.
+- The owner approved provisioning Upstash's official free no-signup replacement
+  database `4114d4bb-01f4-4512-bf42-67e2da268b06`. It is live in Netlify
+  production but must be claimed through the private claim link by 2026-08-13
+  to become permanent.
+- Task 056/057 code is pushed and the owner accepted the migration on
+  2026-07-27. Live read-only availability was reverified on 2026-08-10 after
+  Redis replacement. A write/invitation smoke test remains owner-controlled.
 
 ## Durable gotchas
 
