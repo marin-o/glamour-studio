@@ -139,6 +139,7 @@ function getStrokePoint(element, rootRect, rootWidth, rootHeight, isNarrow) {
   return {
     boundary: element.dataset.strokeBoundary === "true",
     id: element.dataset.revealId,
+    side,
     x: clamp(x, inset, rootWidth - inset),
     y: clamp(
       rect.top - rootRect.top + rect.height * clamp(yRatio, 0.12, 0.88),
@@ -148,24 +149,54 @@ function getStrokePoint(element, rootRect, rootWidth, rootHeight, isNarrow) {
   };
 }
 
+function sideDirection(side) {
+  if (side === "start" || side === "outer-start") {
+    return -1;
+  }
+
+  if (side === "end" || side === "outer-end") {
+    return 1;
+  }
+
+  return null;
+}
+
 function buildRoutePoints(measuredPoints, width, height, isNarrow) {
-  const groupingDistance = isNarrow ? 250 : 340;
+  if (!measuredPoints.length) {
+    return [];
+  }
+
+  const groupingDistance = isNarrow ? 360 : 340;
   const sideInset = isNarrow
     ? clamp(width * 0.09, 28, 56)
     : clamp(width * 0.08, 72, 140);
+  const corridorInset = isNarrow
+    ? clamp(width * 0.22, 64, 94)
+    : sideInset + clamp(width * 0.03, 10, 18);
+  const narrowCorridorEdge = width * 0.46;
   const groups = [];
 
   measuredPoints.forEach((point) => {
     const group = groups[groups.length - 1];
+    const direction = isNarrow ? sideDirection(point.side) : null;
+    const directionConflict =
+      isNarrow &&
+      group &&
+      direction !== null &&
+      group.direction !== null &&
+      group.direction !== direction;
 
     if (
       !group ||
       point.boundary ||
       group.boundary ||
-      point.y - group.startY > groupingDistance
+      point.y - group.startY > groupingDistance ||
+      directionConflict
     ) {
       groups.push({
         boundary: point.boundary,
+        direction,
+        outerTarget: point.side === "outer-end",
         points: [point],
         startY: point.y,
       });
@@ -173,24 +204,110 @@ function buildRoutePoints(measuredPoints, width, height, isNarrow) {
     }
 
     group.points.push(point);
+    if (point.side === "outer-end") {
+      group.outerTarget = true;
+    }
+
+    if (group.direction === null && direction !== null) {
+      group.direction = direction;
+    }
   });
 
-  const routePoints = groups.map((group, index) => {
+  const routePoints = groups.flatMap((group, index) => {
+    const directionalPoints =
+      isNarrow && group.direction !== null
+        ? group.points.filter(
+            (point) => sideDirection(point.side) === group.direction,
+          )
+        : group.points;
+    const points = directionalPoints.length ? directionalPoints : group.points;
     const averageX =
-      group.points.reduce((sum, point) => sum + point.x, 0) /
-      group.points.length;
+      points.reduce((sum, point) => sum + point.x, 0) / points.length;
     const averageY =
-      group.points.reduce((sum, point) => sum + point.y, 0) /
-      group.points.length;
+      points.reduce((sum, point) => sum + point.y, 0) / points.length;
     const previous = index > 0 ? groups[index - 1].routePoint : null;
-    const softenedX = previous ? previous.x * 0.24 + averageX * 0.76 : averageX;
+    let corridorX = averageX;
+
+    if (isNarrow && group.direction === -1) {
+      corridorX = clamp(averageX, corridorInset, narrowCorridorEdge);
+    }
+
+    if (isNarrow && group.direction === 1) {
+      corridorX = clamp(averageX, width - narrowCorridorEdge, width - corridorInset);
+    }
+
+    const directionChanged =
+      isNarrow &&
+      previous &&
+      previous.direction !== null &&
+      group.direction !== null &&
+      previous.direction !== group.direction;
+    const routeY = isNarrow
+      ? clamp(
+          Math.max(averageY, previous?.y ?? 24),
+          24,
+          height - 24,
+        )
+      : clamp(averageY, 24, height - 24);
+
+    const turnGap = previous ? routeY - previous.y : 0;
+    const hasDirectionTurn = directionChanged && turnGap >= 2;
+    const isSparseTurn = hasDirectionTurn && turnGap >= 260;
+    const turnPoint = hasDirectionTurn
+      ? {
+          direction: group.direction,
+          x: clamp(
+            isSparseTurn
+              ? previous.x
+              : previous.x * 0.58 + corridorX * 0.42,
+            sideInset,
+            width - sideInset,
+          ),
+          y: previous.y + turnGap * (isSparseTurn ? 0.25 : 0.5),
+        }
+      : null;
+    const approachPoint = isSparseTurn
+      ? {
+          direction: group.direction,
+          x: clamp(
+            previous.x * 0.5 + corridorX * 0.5,
+            sideInset,
+            width - sideInset,
+          ),
+          y: previous.y + turnGap * 0.7,
+        }
+      : null;
+
+    // Keep narrow-screen turns visibly lateral while carrying each change
+    // through an easing corridor. Large gaps retain the old corridor first,
+    // approach halfway toward the new side, then arrive near its edge.
+    const endpointTargetWeight = isSparseTurn
+      ? 0.8
+      : group.outerTarget
+        ? 0.84
+        : 0.65;
+    const softenedX = previous
+      ? hasDirectionTurn
+        ? previous.x * (1 - endpointTargetWeight) +
+          corridorX * endpointTargetWeight
+        : previous.x * (isNarrow ? 0.72 : 0.24) +
+          corridorX * (isNarrow ? 0.28 : 0.76)
+      : corridorX;
     const routePoint = {
       x: clamp(softenedX, sideInset, width - sideInset),
-      y: clamp(averageY, 24, height - 24),
+      y: routeY,
     };
 
+    if (isNarrow) {
+      routePoint.direction = group.direction;
+    }
+
     group.routePoint = routePoint;
-    return routePoint;
+    return approachPoint
+      ? [turnPoint, approachPoint, routePoint]
+      : turnPoint
+        ? [turnPoint, routePoint]
+        : [routePoint];
   });
 
   const first = routePoints[0];
@@ -557,6 +674,11 @@ function getGeometry(root) {
   const boundaryIndex = measuredPoints.findIndex((point) => point.boundary);
   const routeMeasuredPoints =
     boundaryIndex >= 0 ? measuredPoints.slice(boundaryIndex) : measuredPoints;
+
+  if (routeMeasuredPoints.length < 2) {
+    return null;
+  }
+
   const startsAtBoundary = routeMeasuredPoints[0]?.boundary === true;
   const routePoints = buildRoutePoints(
     routeMeasuredPoints,
@@ -564,6 +686,11 @@ function getGeometry(root) {
     height,
     isNarrow,
   );
+
+  if (routePoints.length < 2) {
+    return null;
+  }
+
   const segments = buildSegments(routePoints, isNarrow);
   const samples = sampleSegments(segments);
   const strokeWidth = isNarrow ? 30 : 58;
