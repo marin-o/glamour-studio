@@ -13,7 +13,7 @@ const socialImage = Object.freeze({
 });
 
 export const homepageSeo = Object.freeze({
-  title: "Glamour Studio | Коса, шминка и убавина во Радовиш",
+  title: "Glamour Studio | Фризерски и мејкап салон во Радовиш",
   description: homepageCopy.mk.metadata.description,
   path: "/",
 });
@@ -59,7 +59,7 @@ export const beautySalonJsonLd = Object.freeze({
   image: siteUrl(homepageHeroMedia.src),
   address: {
     "@type": "PostalAddress",
-    streetAddress: "ул. Илија Алексов 11",
+    streetAddress: "ул. Илија Алексов 6",
     addressLocality: "Радовиш",
     addressCountry: "MK",
   },

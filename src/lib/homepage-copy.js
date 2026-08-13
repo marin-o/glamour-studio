@@ -3,16 +3,16 @@ const bilingual = (mk, en) => Object.freeze({ mk, en });
 const homepageContent = {
   metadata: {
     title: bilingual(
-      "Glamour Studio",
-      "Glamour Studio",
+      "Glamour Studio | Фризерски и мејкап салон во Радовиш",
+      "Glamour Studio | Hair & makeup salon in Radovish",
     ),
     description: bilingual(
-      "Glamour Studio во Радовиш е елегантен салон со широк и топол простор, создаден за вашиот изглед. Закажете термин онлајн.",
-      "Glamour Studio in Radovish is an elegant salon with a spacious, warm setting for your look. Book an appointment online.",
+      "Glamour Studio во Радовиш е фризерски и мејкап салон за шишање, стилизирање, боење, третмани и шминка. Изберете услуга и закажете термин онлајн.",
+      "Glamour Studio is a hair and makeup salon in Radovish for haircuts, styling, colour, treatments and makeup. Choose a service and book online.",
     ),
     openGraphDescription: bilingual(
-      "Glamour Studio во Радовиш е елегантен салон со широк и топол простор, создаден за вашиот изглед. Закажете термин онлајн.",
-      "Glamour Studio in Radovish is an elegant salon with a spacious, warm setting for your look. Book an appointment online.",
+      "Glamour Studio во Радовиш е фризерски и мејкап салон за шишање, стилизирање, боење, третмани и шминка. Изберете услуга и закажете термин онлајн.",
+      "Glamour Studio is a hair and makeup salon in Radovish for haircuts, styling, colour, treatments and makeup. Choose a service and book online.",
     ),
     imageAlt: bilingual(
       "Ентериер на Glamour Studio со огледала и топли детали.",
@@ -32,8 +32,8 @@ const homepageContent = {
       bilingual("Studio", "Studio"),
     ],
     intro: bilingual(
-      "Вашето место за коса, шминка и убавина во Радовиш.\nТопол простор, внимателна работа и изглед создаден за вас.",
-      "Your place for hair, makeup, and beauty in Radovish.\nA warm space, attentive work, and a look created for you.",
+      "Фризерски и мејкап салон во Радовиш со топол простор и внимателна работа за вашиот изглед.\nИзберете услуга и закажете термин онлајн.",
+      "A hair and makeup salon in Radovish with a warm space and attentive work for your look.\nChoose a service and book an appointment online.",
     ),
   },
   media: {
@@ -86,12 +86,27 @@ const homepageContent = {
       {
         id: "haircuts-styling",
         label: bilingual("Шишање и стилизирање", "Haircuts & styling"),
+        description: bilingual(
+          "Кратка и долга коса, исправување и виткање.",
+          "Short and long hair, straightening and curling.",
+        ),
       },
       {
         id: "colour-treatments",
         label: bilingual("Боење и третмани", "Colour & treatments"),
+        description: bilingual(
+          "Боење, прамени, балајаж и кератински третман.",
+          "Colouring, highlights, balayage and a keratin treatment.",
+        ),
       },
-      { id: "makeup", label: bilingual("Шминка", "Makeup") },
+      {
+        id: "makeup",
+        label: bilingual("Шминка", "Makeup"),
+        description: bilingual(
+          "Шминка за изгледот што го замислувате.",
+          "Makeup for the look you have in mind.",
+        ),
+      },
     ],
     cta: bilingual(
       "Погледнете ги сите услуги и закажете термин",
@@ -105,8 +120,8 @@ const homepageContent = {
       "A space made for your look.",
     ),
     description: bilingual(
-      "Елегантен салон близу срцето на градот. Широк и топол простор, најдоброто место за вашиот изглед. Тука секоја посета е посветена на вас.",
-      "An elegant salon near the heart of the city. A spacious, warm setting and the right place for your look. Every visit here is dedicated to you.",
+      "Фризерски и мејкап салон во Радовиш со елегантен, топол простор создаден за вашиот изглед. Тука секоја посета е посветена на вас.",
+      "A hair and makeup salon in Radovish with an elegant, warm setting created for your look. Every visit here is dedicated to you.",
     ),
   },
   contact: {
@@ -119,11 +134,11 @@ const homepageContent = {
         value: bilingual("077-643-005", "077-643-005"),
       },
       {
-        href: "https://www.google.com/maps/search/?api=1&query=11+Ilija+Aleksov+Radovish",
+        href: "https://www.google.com/maps/search/?api=1&query=6+Ilija+Aleksov+Radovish",
         label: bilingual("Адреса", "Address"),
         value: bilingual(
-          "ул. Илија Алексов 11, Радовиш",
-          "11 Ilija Aleksov, Radovish",
+          "ул. Илија Алексов 6, Радовиш",
+          "6 Ilija Aleksov, Radovish",
         ),
       },
       {

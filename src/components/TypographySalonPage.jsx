@@ -203,9 +203,14 @@ export default function TypographySalonPage() {
               <span className="font-display text-[1.2rem] font-bold leading-none text-accent md:text-[2.2rem]">
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <h3 className="text-[clamp(2.7rem,12.5vw,5.8rem)] leading-[0.92] md:text-[clamp(2.1rem,5vw,5.8rem)] md:leading-[0.9]">
-                {group.label}
-              </h3>
+              <div>
+                <h3 className="text-[clamp(2.7rem,12.5vw,5.8rem)] leading-[0.92] md:text-[clamp(2.1rem,5vw,5.8rem)] md:leading-[0.9]">
+                  {group.label}
+                </h3>
+                <p className="mt-4 max-w-[34rem] text-[1.02rem] leading-[1.55] text-muted md:mt-5 md:text-[1.08rem]">
+                  {group.description}
+                </p>
+              </div>
             </Reveal>
           ))}
         </ul>
@@ -232,7 +237,7 @@ export default function TypographySalonPage() {
               revealId="studio-title"
               role="editorial"
               side="end"
-              strokeSide="start"
+              strokeSide="end"
             >
               {copy.studioIntro.title}
             </Reveal>

@@ -50,14 +50,38 @@ test('booking controls retain lifecycle hooks while customer notices stay in one
   assert.equal(homepageCopy.mk.services.groups.length, 3);
   assert.equal(homepageCopy.en.services.groups.length, 3);
   assert.deepEqual(homepageCopy.mk.services.groups, [
-    { id: 'haircuts-styling', label: 'Шишање и стилизирање' },
-    { id: 'colour-treatments', label: 'Боење и третмани' },
-    { id: 'makeup', label: 'Шминка' },
+    {
+      id: 'haircuts-styling',
+      label: 'Шишање и стилизирање',
+      description: 'Кратка и долга коса, исправување и виткање.',
+    },
+    {
+      id: 'colour-treatments',
+      label: 'Боење и третмани',
+      description: 'Боење, прамени, балајаж и кератински третман.',
+    },
+    {
+      id: 'makeup',
+      label: 'Шминка',
+      description: 'Шминка за изгледот што го замислувате.',
+    },
   ]);
   assert.deepEqual(homepageCopy.en.services.groups, [
-    { id: 'haircuts-styling', label: 'Haircuts & styling' },
-    { id: 'colour-treatments', label: 'Colour & treatments' },
-    { id: 'makeup', label: 'Makeup' },
+    {
+      id: 'haircuts-styling',
+      label: 'Haircuts & styling',
+      description: 'Short and long hair, straightening and curling.',
+    },
+    {
+      id: 'colour-treatments',
+      label: 'Colour & treatments',
+      description: 'Colouring, highlights, balayage and a keratin treatment.',
+    },
+    {
+      id: 'makeup',
+      label: 'Makeup',
+      description: 'Makeup for the look you have in mind.',
+    },
   ]);
   assert.doesNotMatch(home, /SERVICES|serviceNames|priceLabel|durationMinutes/);
   assert.equal(homepageCopy.mk.services.cta, 'Погледнете ги сите услуги и закажете термин');
