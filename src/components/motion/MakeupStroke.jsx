@@ -313,6 +313,10 @@ function buildRoutePoints(measuredPoints, width, height, isNarrow) {
   const first = routePoints[0];
   const last = routePoints[routePoints.length - 1];
   const startsAtBoundary = groups[0]?.boundary;
+  const terminalX =
+    isNarrow && last.direction === 1
+      ? clamp(Math.max(last.x, width - corridorInset), sideInset, width - sideInset)
+      : last.x;
 
   return [
     ...(startsAtBoundary
@@ -325,8 +329,10 @@ function buildRoutePoints(measuredPoints, width, height, isNarrow) {
         ]),
     ...routePoints,
     {
-      x: last.x,
-      y: clamp(last.y + (isNarrow ? 150 : 220), 18, height - 18),
+      // Let the final outer-end approach keep a gentle rightward tangent
+      // instead of snapping into a vertical tail at the existing endpoint.
+      x: terminalX,
+      y: clamp(last.y + (isNarrow ? 180 : 220), 18, height - 18),
     },
   ];
 }
