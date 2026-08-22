@@ -6,6 +6,11 @@ const headers = { 'Cache-Control': 'no-store', 'Content-Type': 'application/json
 function response(status, body, retryAfter) { return new Response(JSON.stringify(body), { status, headers: { ...headers, ...(Number.isInteger(retryAfter) && retryAfter >= 1 && retryAfter <= 300 ? { 'Retry-After': String(retryAfter) } : {}) } }); }
 function errorResponse(error) { const safe = asBookingError(error); return response(safe.status, { ok: false, error: { code: safe.code } }, safe.retryAfter); }
 function exactQuery(url) { const keys = [...url.searchParams.keys()]; if (keys.length !== 2 || keys.some((key) => key !== 'serviceId' && key !== 'date') || keys.filter((key) => key === 'serviceId').length !== 1 || keys.filter((key) => key === 'date').length !== 1) throw new BookingError('INVALID_REQUEST', 400); return { serviceId: url.searchParams.get('serviceId'), date: url.searchParams.get('date') }; }
+const BOOKING_INPUT_KEYS = new Set(['serviceId', 'start', 'name', 'phone', 'email']);
+function exactBookingInput(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype || Object.keys(value).some((key) => !BOOKING_INPUT_KEYS.has(key))) throw new BookingError('INVALID_REQUEST', 400);
+  return value;
+}
 
 export function createAvailabilityHandler(runtime, { getRequestContext = () => undefined } = {}) {
   return async function availability(request) { try { const result = await runtime.availability(exactQuery(new URL(request.url)), getRequestContext(request)); return response(200, { ok: true, availability: { serviceId: result.serviceId, date: result.date, starts: result.starts } }); } catch (error) { return errorResponse(error); } };
@@ -31,7 +36,7 @@ export function createBookingHandler(runtime, { maxBodyBytes = 4096, getRequestC
       const length = request.headers.get('content-length'); if (length && (!/^\d+$/.test(length) || Number(length) > maxBodyBytes)) throw new BookingError('REQUEST_TOO_LARGE', 413);
       const text = await readBoundedBody(request, maxBodyBytes);
       let input; try { input = JSON.parse(text); } catch { throw new BookingError('INVALID_REQUEST', 400); }
-      const key = request.headers.get('idempotency-key'); const result = await runtime.book(input, key, getRequestContext(request));
+      const key = request.headers.get('idempotency-key'); const result = await runtime.book(exactBookingInput(input), key, getRequestContext(request));
       if (!result || result.status !== 'confirmed' || typeof result.serviceId !== 'string' || typeof result.start !== 'string' || typeof result.end !== 'string' || !['requested', 'unknown'].includes(result.notification)) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
       return response(201, { ok: true, booking: { status: 'confirmed', serviceId: result.serviceId, start: result.start, end: result.end, notification: result.notification } });
     } catch (error) { return errorResponse(error); }

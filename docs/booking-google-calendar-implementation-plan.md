@@ -49,7 +49,7 @@ workflows.
   configuration.
 - Expose a read-only availability route that accepts a service identifier and
   date, applies studio rules in `Europe/Skopje`, queries Google Calendar
-  FreeBusy, and returns only valid start times.
+  Calendar events with trusted work-track markers, and returns only valid start times.
 - Expose a booking route that accepts the service identifier, requested start,
   customer name, phone, email, and an idempotency key.
 - Authenticate the server to a dedicated studio calendar through owner-granted
@@ -59,7 +59,7 @@ workflows.
   availability initially and do not maintain a second appointment database.
 - Use a small durable Redis/KV or database-backed mutex only to serialize online
   booking attempts and retain minimal idempotency state.
-- Do not add Google Calendar webhooks initially. Query FreeBusy when a date is
+- Do not add Google Calendar webhooks initially. Query Calendar events when a date is
   opened and recheck it during booking.
 
 ## Availability behavior
@@ -71,10 +71,13 @@ workflows.
   closures or booking rules.
 - Derive duration from the trusted service identifier; never trust a duration
   or price submitted by the browser.
-- Remove starts that overlap a busy interval or cause the service to finish
+- Remove starts that overlap an unknown or same-work-track busy interval or cause the service to finish
   after closing.
 - Treat Google events marked `Busy` as blockers. Events marked `Available` do
-  not block online booking.
+  not block online booking. The `makeup` service is the makeup track; every
+  other confirmed catalogue service is the hair track. Only private events with
+  valid deterministic-booking and work-track markers are classified; legacy,
+  manual, missing-marker, and invalid-marker blockers are unknown and block both tracks.
 - Require staff to use the dedicated studio calendar for every phone, text, and
   walk-in appointment.
 
@@ -87,13 +90,14 @@ For each booking request:
 2. Validate bot-protection and rate-limit signals.
 3. Acquire a short-lived studio-wide durable lock. An in-process lock is not
    sufficient on serverless hosting.
-4. Query Google FreeBusy again while holding the lock.
+4. Query typed Google Calendar events again while holding the lock.
 5. Return a conflict response if the interval is no longer available.
 6. Insert a private Google Calendar event using a deterministic event ID derived
    from the idempotency key.
 7. Perform a post-insert overlap check before notifying the customer.
-8. If another overlapping event appeared, delete the new event and return that
-   the appointment was just taken.
+8. If another overlapping same-track or unknown event appeared, delete the new
+   event and return that the appointment was just taken; ignore a known
+   opposite-track event.
 9. Otherwise add the customer as an attendee and request Google attendee
    notifications.
 10. Return confirmed appointment details to the UI and release the lock.
@@ -178,8 +182,8 @@ invitation, or quota policies.
 
 - Define the authoritative service catalog, durations, price labels, seasonal
   hours, slot interval, time zone, and server-owned validation.
-- Implement a pure availability engine that subtracts busy intervals from
-  working windows without calling Google.
+- Implement a pure availability engine that subtracts unknown and same-track
+  busy intervals from working windows without calling Google.
 - Cover all ten services, long-service closing boundaries, all-day blocks,
   overlapping busy intervals, DST behavior, invalid input, and lead/horizon
   rules with deterministic tests.
@@ -192,7 +196,8 @@ slots from trusted rules and supplied busy intervals.
 ### Phase 2: Google Calendar adapter and authorization boundary
 
 - Implement the server-only Google Calendar client boundary for OAuth refresh,
-  FreeBusy reads, deterministic event insertion, event verification, attendee
+  typed event-list reads, deterministic event insertion with private work-track
+  markers, event verification, attendee
   updates, and compensating deletion.
 - Add environment validation and setup documentation without creating a Google
   project, authorizing an account, or storing real credentials.
@@ -208,7 +213,7 @@ activated later by supplying approved server-side credentials.
 - Add durable-lock and rate-limit interfaces with an approved production
   adapter contract and a safe test implementation.
 - Implement availability and booking route handlers with schema validation,
-  no-store responses, idempotency, lock acquisition, final FreeBusy recheck,
+  no-store responses, idempotency, lock acquisition, final typed event-list recheck,
   post-insert conflict detection, compensation, and explicit HTTP outcomes.
 - Keep customer data and credentials out of logs and browser bundles.
 - Add unit/integration tests for simultaneous requests, stale slots, duplicate

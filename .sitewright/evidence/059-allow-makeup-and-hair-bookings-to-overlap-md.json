@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "task": "059-allow-makeup-and-hair-bookings-to-overlap.md",
+  "status": "DONE",
+  "evidence": "Work-track-aware booking passed 78 focused post-review tests and the final production build; adversarial review finding was corrected; full suite retains two documented unrelated stale contract failures.",
+  "changedFiles": [],
+  "approvedBy": "Owner",
+  "recordedAt": "2026-08-22T00:12:27.750Z"
+}

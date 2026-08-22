@@ -87,7 +87,7 @@ The confirmed booking catalog is:
 - Hair curling: 500–1500 MKD, 30 minutes.
 - Hair coloring: 1200–2000 MKD, 90 minutes.
 - Highlights: from 3500 MKD, 4 hours.
-- Keratin treatment: 1500–2000 MKD, 90 minutes.
+- Keratin Treatment for hydration: 1500–2000 MKD, 90 minutes.
 - Makeup: 1500 MKD, 1 hour.
 - Balayage: from 4500 MKD, 5 hours.
 

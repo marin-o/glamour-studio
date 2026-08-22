@@ -138,7 +138,7 @@ export default function TypographySalonPage() {
             data-hero-curtain-veil-clip
           >
             <div
-              className="absolute inset-0 bg-surface/52 backdrop-blur-[6px]"
+              className="absolute inset-0 bg-surface/72 backdrop-blur-[6px]"
               data-hero-curtain-veil
             />
           </div>

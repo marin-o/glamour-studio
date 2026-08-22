@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=574455ecc0c77d62 -->
+<!-- sitewright:fingerprint=a103d10fc7ef8b8c -->
 ## Sitewright state
 
-- Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
-- The repository has structured intent, coherent planning, and an executable task.
-- Active task: 058-implement-launch-ready-local-seo-for-glamourstudio-mk.md.
+- Sitewright Doctor reports `PLANNING_REQUIRED` using `nextjs-app-router` policy pack.
+- Reconcile planning artifacts and keep one executable task.
+- Active task: none.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -24,6 +24,12 @@
   IDs, prices, and durations, with Hairstyling third after both haircut
   options. Accepted bookings request a Google Calendar invitation; the public
   confirmation reports `requested` or the safe `unknown` fallback.
+- Task 059 completed work-track-aware booking in source: makeup and hair may
+  overlap because separate employees provide them, while same-track and unknown
+  legacy/manual Calendar events remain blocking. New private bookings carry a
+  verified work-track marker; public request and response schemas remain
+  track-free. The focused post-review suite and production build pass. The
+  change is not deployed and no live booking write was performed.
 - Task 057 completed migration to the owner-created Netlify site
   `fanciful-rolypoly-a33659.netlify.app`. Production booking availability was
   restored on 2026-08-10 by replacing the unavailable Upstash database,

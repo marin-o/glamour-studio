@@ -5,7 +5,7 @@ import {
   getAvailableStarts,
   normalizeBusyIntervals,
 } from '../../src/lib/booking/availability.mjs';
-import { getService, getServiceBookingDurationMinutes, getServiceOccupancyMinutes, SERVICES } from '../../src/lib/booking/services.mjs';
+import { getService, getServiceBookingDurationMinutes, getServiceOccupancyMinutes, getServiceWorkTrack, SERVICES } from '../../src/lib/booking/services.mjs';
 import { getWorkingWindow } from '../../src/lib/booking/studio-rules.mjs';
 
 const summerDate = '2026-07-15';
@@ -20,11 +20,13 @@ test('the catalog contains exactly the confirmed services', () => {
     { id: 'hair-curling', name: 'Hair curling', priceLabel: '500–1500 MKD', durationMinutes: 30 },
     { id: 'hair-coloring', name: 'Hair coloring', priceLabel: '1200–2000 MKD', durationMinutes: 90 },
     { id: 'highlights', name: 'Highlights', priceLabel: 'from 3500 MKD', durationMinutes: 240 },
-    { id: 'keratin-treatment', name: 'Keratin treatment', priceLabel: '1500–2000 MKD', durationMinutes: 90 },
+    { id: 'keratin-treatment', name: 'Keratin Treatment for hydration', priceLabel: '1500–2000 MKD', durationMinutes: 90 },
     { id: 'makeup', name: 'Makeup', priceLabel: '1500 MKD', durationMinutes: 60 },
     { id: 'balayage', name: 'Balayage', priceLabel: 'from 4500 MKD', durationMinutes: 300 },
   ]);
   assert.throws(() => getService('unconfirmed-service'), /confirmed service/);
+  assert.equal(getServiceWorkTrack('makeup'), 'makeup');
+  for (const service of SERVICES.filter(({ id }) => id !== 'makeup')) assert.equal(getServiceWorkTrack(service.id), 'hair');
 });
 
 test('seasonal working windows use the requested Skopje date and DST offset', () => {
@@ -112,12 +114,32 @@ test('full-day blocks and normalized duplicate, overlapping, and adjacent interv
     { start: '2026-01-15T10:30:00Z', end: '2026-01-15T11:30:00Z' },
     { start: '2026-01-15T11:30:00Z', end: '2026-01-15T12:00:00Z' },
     { start: '2026-01-15T10:00:00Z', end: '2026-01-15T11:00:00Z' },
-  ]), [{ start: '2026-01-15T10:00:00Z', end: '2026-01-15T12:00:00Z' }]);
+  ]), [{ start: '2026-01-15T10:00:00Z', end: '2026-01-15T12:00:00Z', track: 'unknown' }]);
   assert.deepEqual(getAvailableStarts({
     serviceId: 'makeup',
     date: winterDate,
     busyIntervals: [{ start: '2026-01-14T00:00:00Z', end: '2026-01-16T00:00:00Z' }],
   }), []);
+});
+
+test('availability blocks only the requested work track while unknown intervals block both', () => {
+  const interval = { start: '2026-01-15T10:00:00Z', end: '2026-01-15T11:15:00Z' };
+  assert.equal(getAvailableStarts({ serviceId: 'makeup', date: winterDate, busyIntervals: [{ ...interval, track: 'hair' }] }).includes(interval.start), true);
+  assert.equal(getAvailableStarts({ serviceId: 'makeup', date: winterDate, busyIntervals: [{ ...interval, track: 'makeup' }] }).includes(interval.start), false);
+  assert.equal(getAvailableStarts({ serviceId: 'short-hair-haircut', date: winterDate, busyIntervals: [{ ...interval, track: 'makeup' }] }).includes(interval.start), true);
+  assert.equal(getAvailableStarts({ serviceId: 'short-hair-haircut', date: winterDate, busyIntervals: [{ ...interval, track: 'hair' }] }).includes(interval.start), false);
+  assert.equal(getAvailableStarts({ serviceId: 'makeup', date: winterDate, busyIntervals: [interval] }).includes(interval.start), false);
+});
+
+test('normalization retains overlapping intervals from distinct work tracks', () => {
+  assert.deepEqual(normalizeBusyIntervals([
+    { start: '2026-01-15T10:00:00Z', end: '2026-01-15T11:00:00Z', track: 'makeup' },
+    { start: '2026-01-15T10:30:00Z', end: '2026-01-15T11:30:00Z', track: 'hair' },
+    { start: '2026-01-15T10:45:00Z', end: '2026-01-15T11:15:00Z', track: 'makeup' },
+  ]), [
+    { start: '2026-01-15T10:00:00Z', end: '2026-01-15T11:15:00Z', track: 'makeup' },
+    { start: '2026-01-15T10:30:00Z', end: '2026-01-15T11:30:00Z', track: 'hair' },
+  ]);
 });
 
 test('strict validation rejects malformed request and interval schemas', () => {

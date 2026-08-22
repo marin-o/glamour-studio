@@ -1,6 +1,6 @@
 # Implement launch-ready local SEO for glamourstudio.mk
 
-Status: IN PROGRESS
+Status: DONE
 Depends on: None
 Owner: AI-assisted implementation
 Approver: Unassigned
@@ -48,6 +48,15 @@ metadata, a sitemap, and truthful local-business structured data.
   because it touches production observability, secrets-adjacent provider
   failures, and deployment state. Diagnostics must never log credentials,
   request bodies, customer fields, or provider payloads.
+- Hero readability tuning: review posture `none`. Increase the existing warm
+  hero veil from 52% to approximately 72% opacity so the foreground lettering
+  reads more clearly, while preserving the current blur, media, and curtain
+  behavior. This is a localized styling adjustment with no exceptional-risk
+  trigger.
+- Keratin hydration naming correction: review posture `none`. Rename the
+  customer-facing keratin service to make clear that Glamour offers the
+  hydration treatment, not keratin straightening, while preserving its stable
+  service ID, price, duration, and booking behavior.
 
 ## Scope
 
@@ -107,6 +116,10 @@ metadata, a sitemap, and truthful local-business structured data.
 - Task, evidence, and handoff-only edits do not invalidate successful runtime checks.
 
 ## Completion notes
+
+- Transition: complete at 2026-08-21T23:45:11.866Z
+- Validation: Owner directed progression to the next independent outcome and requested committing all pending changes; SEO, launch-polish, hero-readability, and keratin-hydration changes have recorded validation evidence.
+- Approved by: Owner
 
 - Transition: start at 2026-08-10T13:31:49.649Z
 
@@ -204,3 +217,16 @@ metadata, a sitemap, and truthful local-business structured data.
   now makes broad continuous sweeps without the prior direct beeline or
   near-90-degree reversal. Focused ESLint, both media checks, `git diff --check`,
   and the final-source production build passed. Owner acceptance remains open.
+- Hero readability tuning (2026-08-18): increased the existing warm hero veil
+  from 52% to 72% opacity, preserving its 6px backdrop blur, foreground
+  structure, and scroll-driven curtain behavior. File-scoped `git diff
+  --check` passed. Conservative validation leaves rendered readability for
+  owner verification.
+- Keratin hydration naming correction (2026-08-22): renamed the confirmed
+  service to “Keratin Treatment for hydration” / “Кератински третман за
+  хидратација” across the homepage, localized booking display, canonical
+  catalogue, and product specification. The stable service ID, price, duration,
+  ordering, and booking behavior are unchanged. Catalogue and booking-flow
+  tests passed; the static-contract suite passed 28 of 29 tests and retains one
+  unrelated pre-existing SSR heading expectation failure. `git diff --check`
+  passed.

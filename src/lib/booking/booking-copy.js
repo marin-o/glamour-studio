@@ -125,7 +125,7 @@ export const serviceNames = {
   'hair-curling': bilingual('Виткање', 'Hair curling'),
   'hair-coloring': bilingual('Фарбање', 'Hair coloring'),
   highlights: bilingual('Шатирање', 'Highlights'),
-  'keratin-treatment': bilingual('Кератински третман', 'Keratin treatment'),
+  'keratin-treatment': bilingual('Кератински третман за хидратација', 'Keratin Treatment for hydration'),
   makeup: bilingual('Шминкање', 'Makeup'),
   balayage: bilingual('Балајаж', 'Balayage'),
   hairstyling: bilingual('Фризура', 'Hairstyling'),

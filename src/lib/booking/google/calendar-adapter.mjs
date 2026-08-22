@@ -15,7 +15,10 @@ const TOKEN_SKEW_MS = 30_000;
 const MAX_TOKEN_TTL_SECONDS = 86_400;
 const DEFAULT_TIMEOUT_MS = 8_000;
 const PRIVATE_MARKER_KEY = 'bookingIdempotencyDigest';
+const PRIVATE_WORK_TRACK_KEY = 'bookingWorkTrack';
 const DIGEST_VERSION = 'v1';
+const IDEMPOTENCY_MARKER = /^v1:[a-f0-9]{64}$/;
+const WORK_TRACKS = new Set(['makeup', 'hair']);
 
 function isPlainRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -53,7 +56,8 @@ function verifiedEvent(event, expected) {
   if (!isPlainRecord(event) || event.id !== expected.eventId || event.visibility !== 'private'
     || typeof event.status !== 'string' || event.status === 'cancelled'
     || event.summary !== expected.summary || event.description !== expected.description
-    || event.extendedProperties?.private?.[PRIVATE_MARKER_KEY] !== expected.marker) {
+    || event.extendedProperties?.private?.[PRIVATE_MARKER_KEY] !== expected.marker
+    || event.extendedProperties?.private?.[PRIVATE_WORK_TRACK_KEY] !== expected.workTrack) {
     throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event verification did not match the requested appointment.');
   }
   const start = parseInstant(event.start?.dateTime, 'Google event start', 'provider');
@@ -62,6 +66,13 @@ function verifiedEvent(event, expected) {
     throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event verification did not match the requested appointment.');
   }
   return Object.freeze({ id: event.id, start: start.toString(), end: end.toString(), status: event.status });
+}
+
+function workTrackForEvent(event) {
+  const properties = event.extendedProperties?.private;
+  return event.visibility === 'private' && IDEMPOTENCY_MARKER.test(properties?.[PRIVATE_MARKER_KEY]) && WORK_TRACKS.has(properties?.[PRIVATE_WORK_TRACK_KEY])
+    ? properties[PRIVATE_WORK_TRACK_KEY]
+    : 'unknown';
 }
 
 function normalizedAttendees(event) {
@@ -129,7 +140,7 @@ export function createGoogleCalendarAdapter(options = {}) {
   }
 
   async function verifyEvent(expected, operation) {
-    assertExactRecord(expected, 'Expected event', new Set(['eventId', 'start', 'end', 'summary', 'description', 'marker']), ['eventId', 'start', 'end', 'summary', 'description', 'marker']);
+    assertExactRecord(expected, 'Expected event', new Set(['eventId', 'start', 'end', 'summary', 'description', 'marker', 'workTrack']), ['eventId', 'start', 'end', 'summary', 'description', 'marker', 'workTrack']);
     assertEventId(expected.eventId);
     const response = await api(operation, `/calendars/${encodeURIComponent(config.calendarId)}/events/${encodeURIComponent(expected.eventId)}`);
     if (!response.ok) throw await googleErrorFromResponse(response);
@@ -169,7 +180,7 @@ export function createGoogleCalendarAdapter(options = {}) {
             end = timed ? parseInstant(event.end.dateTime, 'Google blocker end', 'provider') : Temporal.PlainDate.from(event.end.date).toZonedDateTime({ timeZone: STUDIO_TIME_ZONE }).toInstant();
           } catch { throw providerFailure(); }
           if (Temporal.Instant.compare(end, start) <= 0) throw providerFailure();
-          blockers.push(Object.freeze({ id: event.id, start: start.toString(), end: end.toString(), allDay: allDay }));
+          blockers.push(Object.freeze({ id: event.id, start: start.toString(), end: end.toString(), track: workTrackForEvent(event), allDay: allDay }));
         }
         pageToken = payload.nextPageToken;
         if (!pageToken) return Object.freeze(blockers);
@@ -178,32 +189,26 @@ export function createGoogleCalendarAdapter(options = {}) {
       }
       throw providerFailure('Google Calendar returned too many event pages.');
     }); },
-    async getBusyIntervals(input) { return runOperation(async (operation) => {
-      assertExactRecord(input, 'FreeBusy request', new Set(['timeMin', 'timeMax']), ['timeMin', 'timeMax']);
-      const timeMin = parseInstant(input.timeMin, 'FreeBusy timeMin'); const timeMax = parseInstant(input.timeMax, 'FreeBusy timeMax');
-      if (Temporal.Instant.compare(timeMax, timeMin) <= 0) throw new GoogleCalendarError('VALIDATION_FAILED', 'FreeBusy timeMax must be after timeMin.');
-      const response = await api(operation, '/freeBusy', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ timeMin: timeMin.toString(), timeMax: timeMax.toString(), items: [{ id: config.calendarId }] }) });
-      if (!response.ok) throw await googleErrorFromResponse(response);
-      const payload = await responseJson(operation, response);
-      const calendar = payload.calendars?.[config.calendarId];
-      if (!isPlainRecord(calendar) || calendar.errors !== undefined || !Array.isArray(calendar.busy)) throw providerFailure('Google Calendar returned invalid FreeBusy data.');
-      try { return Object.freeze(normalizeBusyIntervals(calendar.busy)); } catch { throw providerFailure('Google Calendar returned invalid FreeBusy data.'); }
-    }); },
+    async getBusyIntervals(input) {
+      const blockers = await this.listBlockingEvents(input);
+      try { return Object.freeze(normalizeBusyIntervals(blockers.map(({ start, end, track }) => ({ start, end, track })))); }
+      catch { throw providerFailure('Google Calendar returned invalid event-list data.'); }
+    },
     async verifyEvent(input) { return runOperation((operation) => verifyEvent(input, operation)); },
     async reconcilePrivateEvent(input) { return runOperation(async (operation) => {
-      assertExactRecord(input, 'Private event', new Set(['idempotencyKey', 'start', 'end', 'summary', 'description']), ['idempotencyKey', 'start', 'end', 'summary']);
+      assertExactRecord(input, 'Private event', new Set(['idempotencyKey', 'start', 'end', 'summary', 'description', 'workTrack']), ['idempotencyKey', 'start', 'end', 'summary', 'workTrack']);
       const start = parseInstant(input.start, 'Event start'); const end = parseInstant(input.end, 'Event end');
-      if (Temporal.Instant.compare(end, start) <= 0 || typeof input.summary !== 'string' || !input.summary.trim() || (input.description !== undefined && typeof input.description !== 'string')) throw new GoogleCalendarError('VALIDATION_FAILED', 'Private event details are invalid.');
-      const expected = { eventId: eventIdFromIdempotencyKey(input.idempotencyKey), start, end, summary: input.summary, description: input.description ?? '', marker: idempotencyMarker(input.idempotencyKey) };
+      if (Temporal.Instant.compare(end, start) <= 0 || typeof input.summary !== 'string' || !input.summary.trim() || (input.description !== undefined && typeof input.description !== 'string') || !WORK_TRACKS.has(input.workTrack)) throw new GoogleCalendarError('VALIDATION_FAILED', 'Private event details are invalid.');
+      const expected = { eventId: eventIdFromIdempotencyKey(input.idempotencyKey), start, end, summary: input.summary, description: input.description ?? '', marker: idempotencyMarker(input.idempotencyKey), workTrack: input.workTrack };
       return { event: await verifyEvent(expected, operation) };
     }); },
     async createPrivateEvent(input) { return runOperation(async (operation) => {
-      assertExactRecord(input, 'Private event', new Set(['idempotencyKey', 'start', 'end', 'summary', 'description']), ['idempotencyKey', 'start', 'end', 'summary']);
+      assertExactRecord(input, 'Private event', new Set(['idempotencyKey', 'start', 'end', 'summary', 'description', 'workTrack']), ['idempotencyKey', 'start', 'end', 'summary', 'workTrack']);
       const start = parseInstant(input.start, 'Event start'); const end = parseInstant(input.end, 'Event end');
-      if (Temporal.Instant.compare(end, start) <= 0 || typeof input.summary !== 'string' || !input.summary.trim() || (input.description !== undefined && typeof input.description !== 'string')) throw new GoogleCalendarError('VALIDATION_FAILED', 'Private event details are invalid.');
+      if (Temporal.Instant.compare(end, start) <= 0 || typeof input.summary !== 'string' || !input.summary.trim() || (input.description !== undefined && typeof input.description !== 'string') || !WORK_TRACKS.has(input.workTrack)) throw new GoogleCalendarError('VALIDATION_FAILED', 'Private event details are invalid.');
       const eventId = eventIdFromIdempotencyKey(input.idempotencyKey);
-      const expected = { eventId, start, end, summary: input.summary, description: input.description ?? '', marker: idempotencyMarker(input.idempotencyKey) };
-      const body = { id: eventId, summary: input.summary, description: expected.description, visibility: 'private', start: { dateTime: start.toString() }, end: { dateTime: end.toString() }, extendedProperties: { private: { [PRIVATE_MARKER_KEY]: expected.marker } } };
+      const expected = { eventId, start, end, summary: input.summary, description: input.description ?? '', marker: idempotencyMarker(input.idempotencyKey), workTrack: input.workTrack };
+      const body = { id: eventId, summary: input.summary, description: expected.description, visibility: 'private', start: { dateTime: start.toString() }, end: { dateTime: end.toString() }, extendedProperties: { private: { [PRIVATE_MARKER_KEY]: expected.marker, [PRIVATE_WORK_TRACK_KEY]: expected.workTrack } } };
       let response;
       try { response = await api(operation, `/calendars/${encodeURIComponent(config.calendarId)}/events?sendUpdates=none`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); }
       catch (error) { if (error.code === 'TRANSPORT_FAILED') return resolveMutation(expected, 'recovered', operation); throw error; }

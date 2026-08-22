@@ -36,9 +36,26 @@ test('HTTP boundary maps every public error, bounds Retry-After, and allowlists 
     const response = await handler(new Request('http://test/api/booking', { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8', 'idempotency-key': 'booking-key-status' }, body: '{}' }));
     assert.equal(response.status, status); assert.equal(response.headers.get('cache-control'), 'no-store'); assert.equal(response.headers.get('retry-after'), code === 'RATE_LIMITED' ? '20' : null); assert.deepEqual(await response.json(), { ok: false, error: { code } });
   }
-  const safe = createBookingHandler({ async book() { return { status: 'confirmed', serviceId: 'makeup', start: '2026-07-24T04:00:00Z', end: '2026-07-24T05:00:00Z', notification: 'requested', phone: '+389', email: 'a@b.c', calendarId: 'secret' }; } });
+  const safe = createBookingHandler({ async book() { return { status: 'confirmed', serviceId: 'makeup', start: '2026-07-24T04:00:00Z', end: '2026-07-24T05:00:00Z', notification: 'requested', phone: '+389', email: 'a@b.c', calendarId: 'secret', track: 'makeup', workTrack: 'makeup' }; } });
   const response = await safe(new Request('http://test/api/booking', { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': 'booking-key-safe' }, body: '{}' }));
   assert.deepEqual(await response.json(), { ok: true, booking: { status: 'confirmed', serviceId: 'makeup', start: '2026-07-24T04:00:00Z', end: '2026-07-24T05:00:00Z', notification: 'requested' } });
+});
+
+test('public HTTP contracts reject client track fields and omit internal tracks from availability', async () => {
+  const availability = createAvailabilityHandler({ async availability() { return { serviceId: 'makeup', date: '2026-07-24', starts: [], track: 'makeup', workTrack: 'makeup' }; } });
+  const availabilityResponse = await availability(new Request('http://test/api/booking/availability?serviceId=makeup&date=2026-07-24'));
+  assert.deepEqual(await availabilityResponse.json(), { ok: true, availability: { serviceId: 'makeup', date: '2026-07-24', starts: [] } });
+
+  for (const field of ['track', 'workTrack']) {
+    let calls = 0;
+    const booking = createBookingHandler({ async book() { calls += 1; return { status: 'confirmed', serviceId: 'makeup', start: '2026-07-24T04:00:00Z', end: '2026-07-24T05:00:00Z', notification: 'requested' }; } });
+    const response = await booking(new Request('http://test/api/booking', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'idempotency-key': `booking-key-public-${field}` },
+      body: JSON.stringify({ serviceId: 'makeup', start: '2026-07-24T04:00:00Z', name: 'Ana', phone: '+38970000000', email: 'ana@example.com', [field]: 'hair' }),
+    }));
+    assert.equal(response.status, 400); assert.deepEqual(await response.json(), { ok: false, error: { code: 'INVALID_REQUEST' } }); assert.equal(calls, 0);
+  }
 });
 
 test('exact JSON media types and streamed UTF-8/body limits are enforced before runtime calls', async () => {

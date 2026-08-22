@@ -58,7 +58,7 @@ test('booking controls retain lifecycle hooks while customer notices stay in one
     {
       id: 'colour-treatments',
       label: 'Боење и третмани',
-      description: 'Боење, прамени, балајаж и кератински третман.',
+      description: 'Боење, прамени, балајаж и кератински третман за хидратација.',
     },
     {
       id: 'makeup',
@@ -75,7 +75,7 @@ test('booking controls retain lifecycle hooks while customer notices stay in one
     {
       id: 'colour-treatments',
       label: 'Colour & treatments',
-      description: 'Colouring, highlights, balayage and a keratin treatment.',
+      description: 'Colouring, highlights, balayage and a keratin treatment for hydration.',
     },
     {
       id: 'makeup',

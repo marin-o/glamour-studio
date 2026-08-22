@@ -1,12 +1,13 @@
 import { Temporal } from '@js-temporal/polyfill';
 
-import { getService, getServiceOccupancyMinutes, POST_SERVICE_BUFFER_MINUTES } from './services.mjs';
+import { getService, getServiceOccupancyMinutes, getServiceWorkTrack, POST_SERVICE_BUFFER_MINUTES } from './services.mjs';
 import { getWorkingWindow, parseStudioDate, SLOT_INTERVAL_MINUTES, STUDIO_TIME_ZONE } from './studio-rules.mjs';
 
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/i;
 
 const REQUEST_KEYS = new Set(['serviceId', 'date', 'busyIntervals', 'constraints']);
-const INTERVAL_KEYS = new Set(['start', 'end']);
+const INTERVAL_KEYS = new Set(['start', 'end', 'track']);
+const WORK_TRACKS = new Set(['makeup', 'hair']);
 
 function isRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -55,7 +56,7 @@ export function normalizeBusyIntervals(busyIntervals) {
 
   const intervals = busyIntervals
     .map((interval, index) => {
-      assertExactRecord(interval, `busyIntervals[${index}]`, INTERVAL_KEYS, INTERVAL_KEYS);
+      assertExactRecord(interval, `busyIntervals[${index}]`, INTERVAL_KEYS, new Set(['start', 'end']));
       if (typeof interval.start !== 'string' || typeof interval.end !== 'string') {
         throw new TypeError(`busyIntervals[${index}].start and busyIntervals[${index}].end must be strings.`);
       }
@@ -65,13 +66,13 @@ export function normalizeBusyIntervals(busyIntervals) {
       if (compareInstants(end, start) <= 0) {
         throw new RangeError(`busyIntervals[${index}].end must be after its start.`);
       }
-      return { start, end };
+      return { start, end, track: WORK_TRACKS.has(interval.track) ? interval.track : 'unknown' };
     })
-    .sort((left, right) => compareInstants(left.start, right.start));
+    .sort((left, right) => compareInstants(left.start, right.start) || left.track.localeCompare(right.track));
 
   const normalized = [];
   for (const interval of intervals) {
-    const previous = normalized.at(-1);
+    const previous = normalized.findLast((candidate) => candidate.track === interval.track);
     if (previous && compareInstants(interval.start, previous.end) <= 0) {
       if (compareInstants(interval.end, previous.end) > 0) {
         previous.end = interval.end;
@@ -81,8 +82,8 @@ export function normalizeBusyIntervals(busyIntervals) {
     }
   }
 
-  return normalized.map(({ start, end }) =>
-    Object.freeze({ start: start.toString(), end: end.toString() }),
+  return normalized.map(({ start, end, track }) =>
+    Object.freeze({ start: start.toString(), end: end.toString(), track }),
   );
 }
 
@@ -121,7 +122,8 @@ export function getAvailableStarts(request) {
   const window = getWorkingWindow(date);
   const opening = parseInstant(window.opening, 'working window opening');
   const closing = parseInstant(window.closing, 'working window closing');
-  const normalizedBusy = normalizeBusyIntervals(busyIntervals).map(({ start, end }) => ({
+  const requestedTrack = getServiceWorkTrack(service.id);
+  const normalizedBusy = normalizeBusyIntervals(busyIntervals).filter(({ track }) => track === requestedTrack || track === 'unknown').map(({ start, end }) => ({
     start: parseInstant(start, 'normalized busy interval start'),
     end: parseInstant(end, 'normalized busy interval end'),
   }));

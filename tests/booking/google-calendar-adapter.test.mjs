@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { Temporal } from '@js-temporal/polyfill';
 
 import { createGoogleCalendarAdapter, eventIdFromIdempotencyKey } from '../../src/lib/booking/google/calendar-adapter.mjs';
 import { getGoogleCalendarConfig } from '../../src/lib/booking/google/config.mjs';
@@ -12,7 +13,7 @@ const env = Object.freeze({
   GOOGLE_OAUTH_CLIENT_SECRET: 'placeholder-client-secret',
   GOOGLE_OAUTH_REFRESH_TOKEN: 'placeholder-refresh-token',
 });
-const expected = { idempotencyKey: 'booking-key-12345678', start: '2026-07-15T08:00:00Z', end: '2026-07-15T09:00:00Z', summary: 'Makeup appointment' };
+const expected = { idempotencyKey: 'booking-key-12345678', start: '2026-07-15T08:00:00Z', end: '2026-07-15T09:00:00Z', summary: 'Makeup appointment', workTrack: 'makeup' };
 
 function json(body, status = 200) { return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }); }
 function empty(status = 204) { return new Response(null, { status }); }
@@ -26,7 +27,7 @@ function mockFetch(responses, calls = []) {
 }
 function token(value = 'access-1', expires = 3600) { return json({ access_token: value, expires_in: expires }); }
 function eventFor({ eventId = eventIdFromIdempotencyKey(expected.idempotencyKey), visibility = 'private', ...changes } = {}) {
-  return { id: eventId, visibility, start: { dateTime: expected.start }, end: { dateTime: expected.end }, summary: expected.summary, description: '', status: 'confirmed', extendedProperties: { private: { bookingIdempotencyDigest: `v1:${createHash('sha256').update(expected.idempotencyKey).digest('hex')}` } }, ...changes };
+  return { id: eventId, visibility, start: { dateTime: expected.start }, end: { dateTime: expected.end }, summary: expected.summary, description: '', status: 'confirmed', extendedProperties: { private: { bookingIdempotencyDigest: `v1:${createHash('sha256').update(expected.idempotencyKey).digest('hex')}`, bookingWorkTrack: expected.workTrack } }, ...changes };
 }
 
 test('configuration accepts only complete, sanitized server values', () => {
@@ -52,7 +53,7 @@ test('event IDs are stable, Google-compatible, and distinct', () => {
 test('reuses a token, refreshes after expiry, and deduplicates concurrent refreshes', async () => {
   const calls = [];
   let clock = 0;
-  const adapter = createGoogleCalendarAdapter({ env, now: () => clock, fetch: mockFetch([token('one', 31), json({ calendars: { [env.GOOGLE_CALENDAR_ID]: { busy: [] } } }), json({ calendars: { [env.GOOGLE_CALENDAR_ID]: { busy: [] } } }), token('two'), json({ calendars: { [env.GOOGLE_CALENDAR_ID]: { busy: [] } } })], calls) });
+  const adapter = createGoogleCalendarAdapter({ env, now: () => clock, fetch: mockFetch([token('one', 31), json({ items: [] }), json({ items: [] }), token('two'), json({ items: [] })], calls) });
   await Promise.all([adapter.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end }), adapter.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end })]);
   assert.equal(calls.filter((call) => call.url.includes('/token')).length, 1);
   clock = 2_000;
@@ -62,17 +63,17 @@ test('reuses a token, refreshes after expiry, and deduplicates concurrent refres
 
 test('recovers exactly once from a rejected access token and sanitizes refresh failure', async () => {
   const calls = [];
-  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token('first'), empty(401), token('second'), json({ calendars: { [env.GOOGLE_CALENDAR_ID]: { busy: [] } } })], calls) });
+  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token('first'), empty(401), token('second'), json({ items: [] })], calls) });
   await adapter.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end });
   assert.equal(calls.filter((call) => call.url.includes('/token')).length, 2);
   const rejected = createGoogleCalendarAdapter({ env, fetch: mockFetch([json({ error: 'do not leak' }, 400)]) });
   await assert.rejects(rejected.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end }), (error) => error.code === 'AUTHORIZATION_FAILED' && !error.message.includes('do not leak') && !error.message.includes(env.GOOGLE_OAUTH_REFRESH_TOKEN));
 });
 
-test('normalizes FreeBusy data and rejects malformed, rate-limited, and transport responses', async () => {
-  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ calendars: { [env.GOOGLE_CALENDAR_ID]: { busy: [{ start: '2026-07-15T10:00:00+02:00', end: '2026-07-15T11:00:00+02:00' }] } } })]) });
-  assert.deepEqual(await adapter.getBusyIntervals({ timeMin: expected.start, timeMax: '2026-07-15T12:00:00Z' }), [{ start: '2026-07-15T08:00:00Z', end: '2026-07-15T09:00:00Z' }]);
-  const malformed = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ calendars: {} })]) });
+test('lists typed event blockers for availability and rejects malformed, rate-limited, and transport responses', async () => {
+  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ items: [eventFor()] })]) });
+  assert.deepEqual(await adapter.getBusyIntervals({ timeMin: expected.start, timeMax: '2026-07-15T12:00:00Z' }), [{ start: '2026-07-15T08:00:00Z', end: '2026-07-15T09:00:00Z', track: 'makeup' }]);
+  const malformed = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ items: {} })]) });
   await assert.rejects(malformed.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end }), { code: 'GOOGLE_REQUEST_FAILED' });
   const rate = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(429)]) });
   await assert.rejects(rate.getBusyIntervals({ timeMin: expected.start, timeMax: expected.end }), (error) => error.code === 'RATE_LIMITED' && error.retryable);
@@ -89,6 +90,7 @@ test('creates a private no-attendee event and URL-encodes the calendar ID', asyn
   const body = JSON.parse(calls[1].init.body);
   assert.equal(body.visibility, 'private');
   assert.equal('attendees' in body, false);
+  assert.equal(body.extendedProperties.private.bookingWorkTrack, 'makeup');
   assert.match(calls[1].url, /sendUpdates=none/);
 });
 
@@ -170,6 +172,53 @@ test('lists only valid opaque timed or Skopje all-day blockers with bounded recu
   assert.match(calls[1].url, /timeZone=Europe%2FSkopje/); assert.match(calls[1].url, /singleEvents=true/); assert.match(calls[2].url, /pageToken=next/);
   const malformed = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ items: [{ id: 'mixed', status: 'confirmed', start: { date: '2026-07-15' }, end: { dateTime: expected.end } }] })]) });
   await assert.rejects(malformed.listBlockingEvents({ timeMin: expected.start, timeMax: expected.end }), { code: 'GOOGLE_REQUEST_FAILED' });
+});
+
+test('classifies only verified booking markers as known work tracks', async () => {
+  const missingVisibility = eventFor({ eventId: 'missing-visibility' });
+  delete missingVisibility.visibility;
+  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ items: [
+    eventFor(),
+    { id: 'missing-marker', status: 'confirmed', start: { dateTime: expected.start }, end: { dateTime: expected.end } },
+    { id: 'invalid-marker', status: 'confirmed', start: { dateTime: expected.start }, end: { dateTime: expected.end }, extendedProperties: { private: { bookingIdempotencyDigest: 'v1:not-a-digest', bookingWorkTrack: 'hair' } } },
+    { id: 'invalid-track', status: 'confirmed', start: { dateTime: expected.start }, end: { dateTime: expected.end }, extendedProperties: { private: { bookingIdempotencyDigest: `v1:${'a'.repeat(64)}`, bookingWorkTrack: 'nails' } } },
+    eventFor({ eventId: 'public-marker', visibility: 'public' }),
+    eventFor({ eventId: 'default-marker', visibility: 'default' }),
+    missingVisibility,
+  ] })]) });
+  const blockers = await adapter.listBlockingEvents({ timeMin: expected.start, timeMax: expected.end });
+  assert.deepEqual(blockers.map(({ id, track }) => ({ id, track })), [
+    { id: eventIdFromIdempotencyKey(expected.idempotencyKey), track: 'makeup' },
+    { id: 'missing-marker', track: 'unknown' },
+    { id: 'invalid-marker', track: 'unknown' },
+    { id: 'invalid-track', track: 'unknown' },
+    { id: 'public-marker', track: 'unknown' },
+    { id: 'default-marker', track: 'unknown' },
+    { id: 'missing-visibility', track: 'unknown' },
+  ]);
+});
+
+test('reconciliation and direct verification reject missing or wrong work-track markers', async () => {
+  const marker = `v1:${createHash('sha256').update(expected.idempotencyKey).digest('hex')}`;
+  const variants = [
+    { private: { bookingIdempotencyDigest: marker } },
+    { private: { bookingIdempotencyDigest: marker, bookingWorkTrack: 'hair' } },
+  ];
+  for (const extendedProperties of variants) {
+    const reconciled = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ extendedProperties }))]) });
+    await assert.rejects(reconciled.reconcilePrivateEvent(expected), { code: 'VERIFICATION_FAILED' });
+
+    const verified = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ extendedProperties }))]) });
+    await assert.rejects(verified.verifyEvent({
+      eventId: eventIdFromIdempotencyKey(expected.idempotencyKey),
+      start: Temporal.Instant.from(expected.start),
+      end: Temporal.Instant.from(expected.end),
+      summary: expected.summary,
+      description: '',
+      marker,
+      workTrack: expected.workTrack,
+    }), { code: 'VERIFICATION_FAILED' });
+  }
 });
 
 test('blocker listing encodes calendar IDs, sends its complete bounded query, and fails closed on token loops and page exhaustion', async () => {

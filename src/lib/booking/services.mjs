@@ -8,7 +8,7 @@ const catalog = [
   ['hair-curling', 'Hair curling', '500–1500 MKD', 30],
   ['hair-coloring', 'Hair coloring', '1200–2000 MKD', 90],
   ['highlights', 'Highlights', 'from 3500 MKD', 240, 60],
-  ['keratin-treatment', 'Keratin treatment', '1500–2000 MKD', 90],
+  ['keratin-treatment', 'Keratin Treatment for hydration', '1500–2000 MKD', 90],
   ['makeup', 'Makeup', '1500 MKD', 60],
   ['balayage', 'Balayage', 'from 4500 MKD', 300, 60],
 ];
@@ -21,6 +21,7 @@ export const SERVICES = Object.freeze(
 
 const servicesById = new Map(SERVICES.map((service) => [service.id, service]));
 const bookingDurationById = new Map(catalog.map(([id, _name, _priceLabel, durationMinutes, bookingDurationMinutes = durationMinutes]) => [id, bookingDurationMinutes]));
+const workTrackByServiceId = new Map(SERVICES.map((service) => [service.id, service.id === 'makeup' ? 'makeup' : 'hair']));
 
 export function getService(serviceId) {
   if (typeof serviceId !== 'string' || !servicesById.has(serviceId)) {
@@ -33,6 +34,11 @@ export function getService(serviceId) {
 export function getServiceBookingDurationMinutes(serviceId) {
   getService(serviceId);
   return bookingDurationById.get(serviceId);
+}
+
+export function getServiceWorkTrack(serviceId) {
+  getService(serviceId);
+  return workTrackByServiceId.get(serviceId);
 }
 
 export function getServiceOccupancyMinutes(serviceId) {

@@ -95,8 +95,8 @@ const homepageContent = {
         id: "colour-treatments",
         label: bilingual("Боење и третмани", "Colour & treatments"),
         description: bilingual(
-          "Боење, прамени, балајаж и кератински третман.",
-          "Colouring, highlights, balayage and a keratin treatment.",
+          "Боење, прамени, балајаж и кератински третман за хидратација.",
+          "Colouring, highlights, balayage and a keratin treatment for hydration.",
         ),
       },
       {

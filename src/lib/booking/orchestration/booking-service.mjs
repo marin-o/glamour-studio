@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash, randomUUID } from 'node:crypto';
 import { Temporal } from '@js-temporal/polyfill';
 import { getAvailableStarts } from '../availability.mjs';
-import { getService, getServiceOccupancyMinutes, POST_SERVICE_BUFFER_MINUTES } from '../services.mjs';
+import { getService, getServiceOccupancyMinutes, getServiceWorkTrack, POST_SERVICE_BUFFER_MINUTES } from '../services.mjs';
 import { getWorkingWindow, STUDIO_TIME_ZONE } from '../studio-rules.mjs';
 import { BookingError, asBookingError } from './errors.mjs';
 import { assertCoordinationPorts, assertLease, assertState } from './ports.mjs';
@@ -12,6 +12,7 @@ const digest = (value) => createHash('sha256').update(value, 'utf8').digest('hex
 const CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
 const instant = (value) => { try { return Temporal.Instant.from(value); } catch { throw new BookingError('INVALID_REQUEST', 400); } };
 const overlaps = (a, b, c, d) => Temporal.Instant.compare(a, d) < 0 && Temporal.Instant.compare(b, c) > 0;
+const blocksWorkTrack = (entry, workTrack) => entry.track !== 'makeup' && entry.track !== 'hair' || entry.track === workTrack;
 
 function validText(value, min, max) { return typeof value === 'string' && value === value.trim() && value.length >= min && value.length <= max && !CONTROL.test(value); }
 function validatePolicy(policy) {
@@ -78,7 +79,8 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
       lease = assertLease(await ports.lock.acquire({ scope: 'studio-booking', owner: randomUUID(), timeoutMs: policy.lockTimeoutMs, leaseMs: policy.lockLeaseMs }));
     } catch { throw new BookingError('BOOKING_UNAVAILABLE', 503); }
     const keyDigest = digest(idempotencyKey); const fingerprint = digest(JSON.stringify({ serviceId: service.id, start: start.toString(), contactDigest }));
-    const expected = { idempotencyKey, start: start.toString(), end: end.toString(), summary: `Glamour Studio: ${service.name}`, description: `Customer: ${input.name}` };
+    const workTrack = getServiceWorkTrack(service.id);
+    const expected = { idempotencyKey, start: start.toString(), end: end.toString(), summary: `Glamour Studio: ${service.name}`, description: `Customer: ${input.name}`, workTrack };
     const replayExpected = { serviceId: service.id, start: expected.start, end: expected.end };
     try {
       await ports.lock.assertOwnership({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken });
@@ -125,7 +127,7 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
       await protectOperation(lease);
       const blockers = await calendar.listBlockingEvents({ timeMin: start.toString(), timeMax: end.toString() });
       if (!Array.isArray(blockers) || blockers.some((entry) => !entry || typeof entry.id !== 'string' || typeof entry.start !== 'string' || typeof entry.end !== 'string')) throw new BookingError('CALENDAR_UNAVAILABLE', 503);
-      if (blockers.some((entry) => entry.id !== record.eventId && overlaps(start, end, providerInstant(entry.start), providerInstant(entry.end)))) {
+      if (blockers.some((entry) => entry.id !== record.eventId && blocksWorkTrack(entry, workTrack) && overlaps(start, end, providerInstant(entry.start), providerInstant(entry.end)))) {
         try { await protectOperation(lease); const compensation = await calendar.deleteEventForCompensation(record.eventId); if (!compensation || compensation.deleted !== true) throw new Error(); record = await transition(keyDigest, record, 'conflict', { code: 'SLOT_UNAVAILABLE' }); }
         catch { try { await transition(keyDigest, record, 'manual_review', { eventId: record.eventId, code: 'COMPENSATION_UNKNOWN' }); } catch {} throw new BookingError('BOOKING_UNKNOWN', 503); }
         throw new BookingError('SLOT_UNAVAILABLE', 409);

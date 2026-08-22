@@ -9,6 +9,9 @@ only server-calculated instants. The route is `Cache-Control: no-store`.
 It returns a confirmed booking with server-derived service/times and a
 notification state: `requested` or `unknown`. Phone, email,
 Calendar IDs, provider details, and event descriptions are never returned.
+Work-track classification is derived server-side from the trusted `serviceId`
+(`makeup` is makeup; every other confirmed catalogue service is hair). It is
+not a public request or response field.
 
 Public failures are stable envelopes `{ ok: false, error: { code } }`: invalid
 requests use `400`, taken slots/idempotency mismatches use `409`, bodies over
@@ -20,12 +23,12 @@ The same idempotency key and request fingerprint replays the identical public
 semantic and HTTP status; a different fingerprint is rejected. The durable
 store atomically creates a fingerprint-bound, versioned availability-unchecked
 `pending` record before any Calendar mutation. Each pending retry repeats
-FreeBusy; only a clear result atomically advances to `creation_intent`
+Calendar event-list availability; only a clear result atomically advances to `creation_intent`
 immediately before the deterministic Calendar mutation, then permits only
 `event_created`,
 `confirmed_notification_pending`, `confirmed`, `conflict`, or `manual_review`
 transitions with a configured TTL. A recovered `creation_intent` first
-reconciles the deterministic Calendar ID. If it is absent, it repeats FreeBusy
+reconciles the deterministic Calendar ID. If it is absent, it repeats the typed event-list check
 while holding the lease before inserting; if the event is present it continues
 without a duplicate. Provider or reconciliation uncertainty remains a safe
 unavailable/unknown outcome rather than an insert claim.
@@ -33,10 +36,11 @@ Terminal conflict and manual-review states replay as `409` and `503`
 respectively; a notification-pending record replays the confirmed appointment
 with `notification: "unknown"` and never sends a second invitation.
 
-A booking locks, rechecks FreeBusy for a newly created pending record, inserts
+A booking locks, rechecks typed Calendar events for a newly created pending record, inserts
 privately without notification, lists recurring-expanded overlapping Calendar
-events in `Europe/Skopje`, and compensates if a simultaneous opaque timed or
-all-day staff event is found. Compensation uncertainty and any failed state
+events in `Europe/Skopje`, and compensates if a simultaneous same-track or
+unknown timed or all-day event is found. Known opposite-track events do not
+conflict. Compensation uncertainty and any failed state
 write after an appointment mutation are `503` unknown/manual-review outcomes,
 never a clean conflict or rollback claim. A final state-write failure after an
 invitation attempt safely returns the confirmed appointment with
@@ -65,7 +69,7 @@ transaction. The
 idempotency adapter must atomically create and compare-version transition
 fingerprint-bound records. In-memory coordination is unsafe on serverless
 hosts. Google
-FreeBusy, insertion, and staff edits are not transactional, so the post-insert
+Calendar event listing, insertion, and staff edits are not transactional, so the post-insert
 check narrows but cannot eliminate the residual race. Owner decisions still
 needed: production provider choices, bot protection, Google setup,
 retention/privacy, hosting, and activation policy.
