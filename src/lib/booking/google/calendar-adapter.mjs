@@ -83,6 +83,17 @@ function normalizedAttendees(event) {
   });
 }
 
+function managedSnapshot(event, expected) {
+  if (!isPlainRecord(event) || event.id !== expected.eventId || event.visibility !== 'private' || event.status === 'cancelled'
+    || typeof event.etag !== 'string' || !event.etag || event.extendedProperties?.private?.[PRIVATE_MARKER_KEY] !== expected.marker
+    || event.extendedProperties?.private?.[PRIVATE_WORK_TRACK_KEY] !== expected.workTrack) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event verification did not match the managed appointment.');
+  const start = parseInstant(event.start?.dateTime, 'Google event start', 'provider'); const end = parseInstant(event.end?.dateTime, 'Google event end', 'provider');
+  if (Temporal.Instant.compare(start, Temporal.Instant.from(expected.start)) !== 0 || Temporal.Instant.compare(end, Temporal.Instant.from(expected.end)) !== 0) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event verification did not match the managed appointment.');
+  const attendees = normalizedAttendees(event).filter((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(item.email));
+  if (attendees.length !== 1 || (expected.attendee && attendees[0].email.toLocaleLowerCase('en-US') !== expected.attendee.toLocaleLowerCase('en-US'))) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar attendee verification did not match the managed appointment.');
+  return Object.freeze({ email: attendees[0].email, etag: event.etag });
+}
+
 export function createGoogleCalendarAdapter(options = {}) {
   assertExactRecord(options, 'Google Calendar adapter options', new Set(['env', 'fetch', 'now', 'timeoutMs']), []);
   const { env = process.env, fetch: injectedFetch = globalThis.fetch, now = () => Date.now(), timeoutMs = DEFAULT_TIMEOUT_MS } = options;
@@ -248,6 +259,38 @@ export function createGoogleCalendarAdapter(options = {}) {
       } catch (error) { throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm attendee notification.', { retryable: true, operation: 'invitation' }); }
       if (!verified.some((attendee) => attendee.email.toLocaleLowerCase('en-US') === identity)) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar attendee verification did not match the requested invitation.', { operation: 'invitation' });
       return Object.freeze({ eventId: input.eventId, notificationPolicy: 'sendUpdates=all' });
+    }); },
+    async getVerifiedAttendee(input) { return runOperation(async (operation) => {
+      assertExactRecord(input, 'Managed event read', new Set(['eventId', 'start', 'end', 'workTrack', 'marker']), ['eventId', 'start', 'end', 'workTrack', 'marker']);
+      assertEventId(input.eventId); parseInstant(input.start, 'Event start'); parseInstant(input.end, 'Event end');
+      if (!WORK_TRACKS.has(input.workTrack) || typeof input.marker !== 'string' || !IDEMPOTENCY_MARKER.test(input.marker)) throw new GoogleCalendarError('VALIDATION_FAILED', 'Managed event read is invalid.');
+      const response = await api(operation, `/calendars/${encodeURIComponent(config.calendarId)}/events/${encodeURIComponent(input.eventId)}`);
+      if (!response.ok) throw await googleErrorFromResponse(response, 'management-attendee');
+      const event = await responseJson(operation, response);
+      return managedSnapshot(event, input);
+    }); },
+    async reschedulePrivateEvent(input) { return runOperation(async (operation) => {
+      assertExactRecord(input, 'Managed event update', new Set(['eventId', 'serviceId', 'workTrack', 'marker', 'previousStart', 'previousEnd', 'attendee', 'etag', 'start', 'end']), ['eventId', 'serviceId', 'workTrack', 'marker', 'previousStart', 'previousEnd', 'attendee', 'etag', 'start', 'end']);
+      assertEventId(input.eventId); const start = parseInstant(input.start, 'Event start'); const end = parseInstant(input.end, 'Event end');
+      parseInstant(input.previousStart, 'Previous event start'); parseInstant(input.previousEnd, 'Previous event end');
+      if (Temporal.Instant.compare(end, start) <= 0 || !WORK_TRACKS.has(input.workTrack) || typeof input.marker !== 'string' || !IDEMPOTENCY_MARKER.test(input.marker) || typeof input.attendee !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.attendee) || typeof input.etag !== 'string' || !input.etag) throw new GoogleCalendarError('VALIDATION_FAILED', 'Managed event update is invalid.');
+      const path = `/calendars/${encodeURIComponent(config.calendarId)}/events/${encodeURIComponent(input.eventId)}`;
+      const verify = async () => {
+        const response = await api(operation, path); if (!response.ok) throw await googleErrorFromResponse(response, 'management-reschedule');
+        const event = await responseJson(operation, response);
+        managedSnapshot(event, { ...input, start: start.toString(), end: end.toString() });
+        return Object.freeze({ eventId: input.eventId, start: start.toString(), end: end.toString() });
+      };
+      try { const response = await api(operation, `${path}?sendUpdates=all`, { method: 'PATCH', headers: { 'content-type': 'application/json', 'if-match': input.etag }, body: JSON.stringify({ start: { dateTime: start.toString() }, end: { dateTime: end.toString() } }) }); if (response.status === 412) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event changed before update.'); if (!response.ok) throw await googleErrorFromResponse(response, 'management-reschedule'); return await verify(); }
+      catch (error) { if (error instanceof GoogleCalendarError && !['TRANSPORT_FAILED', 'GOOGLE_UNAVAILABLE'].includes(error.code)) throw error; try { return await verify(); } catch { throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment update.', { retryable: true, operation: 'management-reschedule' }); } }
+    }); },
+    async cancelPrivateEvent(input) { return runOperation(async (operation) => {
+      assertExactRecord(input, 'Managed event cancellation', new Set(['eventId', 'start', 'end', 'workTrack', 'marker', 'attendee', 'etag']), ['eventId', 'start', 'end', 'workTrack', 'marker', 'attendee', 'etag']);
+      assertEventId(input.eventId); parseInstant(input.start, 'Event start'); parseInstant(input.end, 'Event end');
+      if (!WORK_TRACKS.has(input.workTrack) || typeof input.marker !== 'string' || !IDEMPOTENCY_MARKER.test(input.marker) || typeof input.attendee !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.attendee) || typeof input.etag !== 'string' || !input.etag) throw new GoogleCalendarError('VALIDATION_FAILED', 'Managed event cancellation is invalid.');
+      const eventPath = `/calendars/${encodeURIComponent(config.calendarId)}/events/${encodeURIComponent(input.eventId)}`; const path = `${eventPath}?sendUpdates=all`;
+      try { const response = await api(operation, path, { method: 'DELETE', headers: { 'if-match': input.etag } }); if (response.status === 412) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event changed before cancellation.'); if (response.ok) { const verify = await api(operation, eventPath); if (verify.status === 404) return Object.freeze({ cancelled: true, notificationPolicy: 'sendUpdates=all' }); throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment cancellation.', { retryable: true, operation: 'management-cancel' }); } throw await googleErrorFromResponse(response, 'management-cancel'); }
+      catch (error) { if (error instanceof GoogleCalendarError && !['TRANSPORT_FAILED', 'GOOGLE_UNAVAILABLE'].includes(error.code)) throw error; try { const response = await api(operation, eventPath); if (response.status === 404) return Object.freeze({ cancelled: true, notificationPolicy: 'sendUpdates=all' }); } catch {} throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment cancellation.', { retryable: true, operation: 'management-cancel' }); }
     }); },
     async deleteEventForCompensation(eventId) { return runOperation(async (operation) => {
       assertEventId(eventId);

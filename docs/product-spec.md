@@ -44,9 +44,14 @@ selection, and minimal contact details followed by confirmation. Customers do
 not create accounts or select an employee. Phone, text, and walk-in bookings
 entered by staff into the dedicated studio calendar as `Busy` must remove those
 times from online availability. Staff manage moves and cancellations from that
-same calendar. The owner confirmed on 2026-07-24 that customer email is
-mandatory so each accepted online booking can request a Google Calendar
-invitation.
+same calendar. Customers may manage an accepted online booking without an
+account through a secure link in a branded bilingual confirmation email:
+rescheduling and cancellation are presented as allowed only more than twelve
+hours before the appointment. Internally, the server applies a non-advertised
+fifteen-minute operational grace and accepts both through exactly 11:45
+remaining; customer-facing wording remains twelve hours. The owner
+confirmed on 2026-07-24 that customer email is mandatory so each accepted
+online booking can request a Google Calendar invitation.
 
 ## Experience Direction
 
@@ -91,8 +96,8 @@ The confirmed booking catalog is:
 - Makeup: 1500 MKD, 1 hour.
 - Balayage: from 4500 MKD, 5 hours.
 
-The studio is open every day. April through September hours are 06:00–18:00;
-October through March hours are 10:00–18:00.
+The studio is open every day. April through August hours are 06:00–18:00;
+September through March hours are 10:00–18:00.
 
 Placeholder content must be visibly replaceable and must not read as final
 business information. Final preferred media should come from the real salon when
@@ -124,8 +129,8 @@ toggleable option later, but localization is not part of discovery.
 - Additional contact channels and staff details.
 - Later English editorial translation.
 - Final photo and video assets, preferably filmed in the real studio.
-- The final cancellation policy, booking lead time and horizon, the production
-  Google account/calendar, durable-lock provider, bot protection, and hosting.
+- The final booking lead time and horizon, bot protection, and any future
+  changes to the approved more-than-twelve-hour customer-management cutoff.
 - Exact typography and font choices.
 - Whether analytics or cookies are needed.
 - Legal or privacy copy required if booking/contact forms collect personal data.

@@ -2,6 +2,7 @@ import 'server-only';
 
 import { Redis } from '@upstash/redis';
 import { createHash } from 'node:crypto';
+import { Temporal } from '@js-temporal/polyfill';
 
 import { assertState } from '../orchestration/ports.mjs';
 
@@ -14,6 +15,8 @@ const LUA = Object.freeze({
   release: `-- booking:lease-release\nlocal current = redis.call('GET', KEYS[1])\nif not current or current ~= ARGV[1] .. '|' .. ARGV[2] then return 0 end\nreturn redis.call('DEL', KEYS[1])`,
   create: `-- booking:idempotency-create\nlocal existing = redis.call('GET', KEYS[1])\nif existing then return existing end\nredis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2], 'NX')\nreturn redis.call('GET', KEYS[1])`,
   transition: `-- booking:idempotency-transition\nlocal current = redis.call('GET', KEYS[1])\nif not current then return {0, 'missing'} end\nlocal record = cjson.decode(current)\nif record.fingerprint ~= ARGV[1] or record.version ~= tonumber(ARGV[2]) or record.state ~= ARGV[3] then return {0, 'conflict'} end\nredis.call('SET', KEYS[1], ARGV[4], 'EX', ARGV[5])\nreturn {1, ARGV[4]}`,
+  managementCreate: `-- booking:management-create\nlocal existing = redis.call('GET', KEYS[1])\nif existing then return existing end\nredis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2], 'NX')\nreturn redis.call('GET', KEYS[1])`,
+  managementTransition: `-- booking:management-transition\nlocal current = redis.call('GET', KEYS[1])\nif not current then return {0, 'missing'} end\nlocal record = cjson.decode(current)\nif record.version ~= tonumber(ARGV[1]) or record.state ~= ARGV[2] then return {0, 'conflict'} end\nredis.call('SET', KEYS[1], ARGV[3], 'EX', ARGV[4])\nreturn {1, ARGV[3]}`,
   rate: `-- booking:rate-limit\nlocal count = redis.call('INCR', KEYS[1])\nif count == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end\nlocal ttl = redis.call('PTTL', KEYS[1])\nreturn {count, ttl}`,
 });
 
@@ -24,6 +27,20 @@ function key(kind, value) { return `booking:v1:${kind}:${digest(value)}`; }
 function redisError() { return new Error('Production booking coordination failed.'); }
 function asRecord(value) { try { return assertState(JSON.parse(value)); } catch { throw redisError(); } }
 function responseFlag(value) { return Array.isArray(value) && Number(value[0]) === 1; }
+function asManagementRecord(value) {
+  try {
+    const record = JSON.parse(value); const allowed = new Set(['eventId', 'serviceId', 'start', 'end', 'workTrack', 'marker', 'state', 'operation', 'targetStart', 'targetEnd', 'version']);
+    if (!record || Object.getPrototypeOf(record) !== Object.prototype || Object.keys(record).some((key) => !allowed.has(key)) || !Number.isInteger(record.version) || record.version < 1 || !['active', 'mutation_intent', 'terminal'].includes(record.state) || typeof record.eventId !== 'string' || !record.eventId || record.eventId.length > 1024 || typeof record.serviceId !== 'string' || !record.serviceId || !['makeup', 'hair'].includes(record.workTrack) || (record.marker !== undefined && (typeof record.marker !== 'string' || !/^v1:[a-f0-9]{64}$/.test(record.marker)))) throw new Error();
+    const start = Temporal.Instant.from(record.start); const end = Temporal.Instant.from(record.end); if (Temporal.Instant.compare(end, start) <= 0) throw new Error();
+    const keys = Object.keys(record).filter((key) => key !== 'version').sort(); const exact = (expected) => keys.length === expected.length && keys.every((key, index) => key === expected[index]); const base = ['end', 'eventId', 'serviceId', 'start', 'state', 'workTrack']; const marker = record.marker === undefined ? [] : ['marker'];
+    if (record.state === 'active' || record.state === 'terminal') { if (!exact([...base, ...marker].sort())) throw new Error(); }
+    if (record.state === 'mutation_intent') {
+      if (!['cancel', 'reschedule'].includes(record.operation)) throw new Error(); const extras = record.operation === 'cancel' ? ['operation'] : ['operation', 'targetEnd', 'targetStart']; if (!exact([...base, ...marker, ...extras].sort())) throw new Error();
+      if (record.operation === 'reschedule') { const targetStart = Temporal.Instant.from(record.targetStart); const targetEnd = Temporal.Instant.from(record.targetEnd); if (Temporal.Instant.compare(targetEnd, targetStart) <= 0) throw new Error(); }
+    }
+    return record;
+  } catch { throw redisError(); }
+}
 
 export function createProductionRedisClient({ url, token } = {}) {
   if (typeof url !== 'string' || typeof token !== 'string') throw new TypeError('Production Redis configuration is invalid.');
@@ -90,12 +107,12 @@ export function createProductionCoordinationPorts({ redis, ratePolicy, now = () 
         const record = assertState({ fingerprint, state, version: 1 });
         return plainClone(asRecord(await evaluate(LUA.create, [key('idempotency', keyDigest)], [JSON.stringify(record), ttlSeconds])));
       },
-      async transition({ keyDigest, fingerprint, expectedVersion, expectedState, state, ttlSeconds, eventId, code, outcome }) {
+      async transition({ keyDigest, fingerprint, expectedVersion, expectedState, state, ttlSeconds, eventId, code, outcome, management }) {
         if (!DIGEST.test(keyDigest) || !DIGEST.test(fingerprint)) throw new TypeError('Idempotency digest is invalid.');
         integer(expectedVersion, 'Expected idempotency version', 1, Number.MAX_SAFE_INTEGER); integer(ttlSeconds, 'Idempotency TTL', 60, 2_592_000);
         let next = { fingerprint, state, version: expectedVersion + 1 };
         if (state === 'event_created') next.eventId = eventId;
-        if (state === 'confirmed_notification_pending' || state === 'confirmed') { next.eventId = eventId; next.outcome = outcome; }
+        if (state === 'confirmed_notification_pending' || state === 'confirmed') { next.eventId = eventId; next.outcome = outcome; if (management !== undefined) next.management = management; }
         if (state === 'conflict') { if (eventId !== undefined) next.eventId = eventId; next.code = code; }
         if (state === 'manual_review') { next.eventId = eventId; next.code = code; }
         next = assertState(next);
@@ -103,6 +120,11 @@ export function createProductionCoordinationPorts({ redis, ratePolicy, now = () 
         if (!responseFlag(result) || typeof result[1] !== 'string') throw redisError();
         return plainClone(asRecord(result[1]));
       },
+    }),
+    management: Object.freeze({
+      async get({ secretDigest }) { if (!DIGEST.test(secretDigest)) throw new TypeError('Management digest is invalid.'); let value; try { value = await redis.get(key('management', secretDigest)); } catch { throw redisError(); } return value === null ? null : plainClone(asManagementRecord(value)); },
+      async create({ secretDigest, record, ttlSeconds }) { if (!DIGEST.test(secretDigest)) throw new TypeError('Management digest is invalid.'); integer(ttlSeconds, 'Management TTL', 1, 63_158_400); const next = asManagementRecord(JSON.stringify({ ...record, version: 1 })); return plainClone(asManagementRecord(await evaluate(LUA.managementCreate, [key('management', secretDigest)], [JSON.stringify(next), ttlSeconds]))); },
+      async transition({ secretDigest, expectedVersion, expectedState, state, ttlSeconds, ...patch }) { if (!DIGEST.test(secretDigest) || !['active', 'mutation_intent', 'terminal'].includes(expectedState) || !['active', 'mutation_intent', 'terminal'].includes(state)) throw new TypeError('Management transition is invalid.'); integer(expectedVersion, 'Management version', 1, Number.MAX_SAFE_INTEGER); integer(ttlSeconds, 'Management TTL', 1, 63_158_400); const current = await this.get({ secretDigest }); if (!current || current.version !== expectedVersion || current.state !== expectedState) throw redisError(); const { operation: _operation, targetStart: _targetStart, targetEnd: _targetEnd, version: _version, ...base } = current; const next = asManagementRecord(JSON.stringify({ ...base, state, ...patch, version: expectedVersion + 1 })); const result = await evaluate(LUA.managementTransition, [key('management', secretDigest)], [expectedVersion, expectedState, JSON.stringify(next), ttlSeconds]); if (!responseFlag(result) || typeof result[1] !== 'string') throw redisError(); return plainClone(asManagementRecord(result[1])); },
     }),
     rateLimit: Object.freeze({
       async check({ action, subjectDigest, contactDigest, serviceId, date }) {

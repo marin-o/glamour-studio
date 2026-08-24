@@ -21,7 +21,7 @@ function parseStudioDate(value) {
 
 export function getWorkingWindow(dateValue) {
   const date = parseStudioDate(dateValue);
-  const openingHour = date.month >= 4 && date.month <= 9 ? 6 : 10;
+  const openingHour = date.month >= 4 && date.month <= 8 ? 6 : 10;
   const opening = Temporal.ZonedDateTime.from({
     timeZone: STUDIO_TIME_ZONE,
     year: date.year,

@@ -35,6 +35,7 @@ export function getProductionBookingConfig(env = process.env, nodeEnv = process.
   const leaseSafetyMs = integer(env, 'BOOKING_LEASE_SAFETY_MS', 100, 30_000);
   if (lockLeaseMs <= providerOperationBudgetMs + leaseSafetyMs) throw new TypeError('Production booking configuration is invalid.');
   try { getGoogleCalendarConfig(env); } catch { throw new TypeError('Production booking configuration is invalid.'); }
+  required(env, 'RESEND_API_KEY', SECRET);
   return Object.freeze({
     platform,
     redisUrl: required(env, 'UPSTASH_REDIS_REST_URL', URL_VALUE),
@@ -58,6 +59,10 @@ export function getProductionBookingConfig(env = process.env, nodeEnv = process.
         limit: integer(env, 'BOOKING_RATE_LIMIT_BOOKING_LIMIT', 1, 10_000),
         windowMs: integer(env, 'BOOKING_RATE_LIMIT_BOOKING_WINDOW_SECONDS', 1, 3_600) * 1000,
       }),
+      management_read: Object.freeze({ limit: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_READ_LIMIT', 1, 10_000), windowMs: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_READ_WINDOW_SECONDS', 1, 3_600) * 1000 }),
+      management_availability: Object.freeze({ limit: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_AVAILABILITY_LIMIT', 1, 10_000), windowMs: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_AVAILABILITY_WINDOW_SECONDS', 1, 3_600) * 1000 }),
+      management_reschedule: Object.freeze({ limit: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_RESCHEDULE_LIMIT', 1, 10_000), windowMs: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_RESCHEDULE_WINDOW_SECONDS', 1, 3_600) * 1000 }),
+      management_cancel: Object.freeze({ limit: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_CANCEL_LIMIT', 1, 10_000), windowMs: integer(env, 'BOOKING_RATE_LIMIT_MANAGEMENT_CANCEL_WINDOW_SECONDS', 1, 3_600) * 1000 }),
     }),
   });
 }

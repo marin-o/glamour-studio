@@ -119,6 +119,19 @@ test('compensating deletion is explicit, idempotent for missing events, and uses
   assert.match(calls[1].url, /sendUpdates=none/);
 });
 
+test('management updates require an exact snapshot, use If-Match, and fail closed on a stale precondition', async () => {
+  const calls = []; const eventId = eventIdFromIdempotencyKey(expected.idempotencyKey); const marker = `v1:${createHash('sha256').update(expected.idempotencyKey).digest('hex')}`;
+  const changedStart = '2026-07-15T10:00:00Z'; const changedEnd = '2026-07-15T11:00:00Z';
+  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(412)], calls) });
+  await assert.rejects(adapter.reschedulePrivateEvent({ eventId, serviceId: 'makeup', workTrack: 'makeup', marker, previousStart: expected.start, previousEnd: expected.end, attendee: 'client@example.com', etag: '"old"', start: changedStart, end: changedEnd }), { code: 'VERIFICATION_FAILED' });
+  assert.equal(calls[1].init.headers['if-match'], '"old"');
+
+  const exact = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ etag: '"current"', attendees: [{ email: 'client@example.com' }] }))]) });
+  assert.deepEqual(await exact.getVerifiedAttendee({ eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker }), { email: 'client@example.com', etag: '"current"' });
+  const ambiguous = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ etag: '"current"', attendees: [{ email: 'client@example.com' }, { email: 'other@example.com' }] }))]) });
+  await assert.rejects(ambiguous.getVerifiedAttendee({ eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker }), { code: 'VERIFICATION_FAILED' });
+});
+
 test('passes an abort signal for bounded request timeout', async () => {
   let signal;
   const adapter = createGoogleCalendarAdapter({

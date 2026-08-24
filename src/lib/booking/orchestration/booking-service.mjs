@@ -40,7 +40,7 @@ function validRate(rate) {
 }
 function providerInstant(value) { try { return instant(value); } catch { throw new BookingError('CALENDAR_UNAVAILABLE', 503); } }
 
-export function createBookingService({ calendar, ports, policy, now = () => Temporal.Now.instant() }) {
+export function createBookingService({ calendar, ports, policy, management, now = () => Temporal.Now.instant() }) {
   if (!calendar || typeof calendar.getBusyIntervals !== 'function' || typeof calendar.reconcilePrivateEvent !== 'function' || typeof calendar.createPrivateEvent !== 'function' || typeof calendar.listBlockingEvents !== 'function' || typeof calendar.deleteEventForCompensation !== 'function' || typeof calendar.addOrUpdateAttendee !== 'function') throw new TypeError('Calendar provider is required.');
   assertCoordinationPorts(ports); validatePolicy(policy);
   const transition = async (keyDigest, record, state, patch = {}) => {
@@ -57,6 +57,21 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
     const renewed = assertLease(await ports.lock.renew({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken, leaseMs: policy.lockLeaseMs, minimumRemainingMs: policy.providerOperationBudgetMs + policy.leaseSafetyMs }));
     if (renewed.owner !== lease.owner || renewed.fencingToken !== lease.fencingToken) throw new BookingError('BOOKING_UNAVAILABLE', 503);
     await ports.lock.assertOwnership({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken, minimumRemainingMs: policy.providerOperationBudgetMs + policy.leaseSafetyMs });
+  };
+  const issueManagement = async (keyDigest, record, service, start, end, input, marker) => {
+    if (!management || typeof management.issueAcceptedBooking !== 'function') return;
+    const prior = record.management;
+    if (prior?.status === 'delivered' || prior?.attempts >= 2) return;
+    try {
+      // A replay may use the presented email only after Google confirms that it
+      // is still the sole attendee on this exact managed event.
+      const attendee = await calendar.getVerifiedAttendee?.({ eventId: record.eventId, start: start.toString(), end: end.toString(), workTrack: getServiceWorkTrack(service.id), marker: `v1:${marker}` });
+      const recipient = typeof attendee === 'string' ? attendee : attendee?.email;
+      if (!recipient || recipient.toLocaleLowerCase('en-US') !== input.email.toLocaleLowerCase('en-US')) return;
+      const issued = await management.issueAcceptedBooking({ eventId: record.eventId, serviceId: service.id, start: start.toString(), end: end.toString(), email: recipient, marker, revokeDigest: prior?.digest });
+      const nextManagement = { ...(issued.issued ? { digest: issued.digest } : {}), status: issued.delivered ? 'delivered' : 'pending', attempts: (prior?.attempts ?? 0) + 1 };
+      if (record.state === 'confirmed') await transition(keyDigest, record, 'confirmed', { outcome: record.outcome, management: nextManagement });
+    } catch { /* Calendar booking stays authoritative and replayable. */ }
   };
   async function availability({ serviceId, date }, requestContext) {
     let service; let window;
@@ -85,8 +100,8 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
     try {
       await ports.lock.assertOwnership({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken });
       let record = await ports.idempotency.get({ keyDigest });
-      if (record) { record = assertState(record); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) return prior; }
-      else { record = assertState(await ports.idempotency.create({ keyDigest, fingerprint, state: 'pending', ttlSeconds: policy.idempotencyTtlSeconds })); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) return prior; }
+      if (record) { record = assertState(record); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) { await issueManagement(keyDigest, record, service, start, end, input, keyDigest); return prior; } }
+      else { record = assertState(await ports.idempotency.create({ keyDigest, fingerprint, state: 'pending', ttlSeconds: policy.idempotencyTtlSeconds })); if (record.fingerprint !== fingerprint) throw new BookingError('IDEMPOTENCY_MISMATCH', 409); const prior = replay(record, replayExpected); if (prior) { await issueManagement(keyDigest, record, service, start, end, input, keyDigest); return prior; } }
       let creationIntentIsRecovered = record.state === 'creation_intent';
       if (record.state === 'pending') {
         await protectOperation(lease); const busy = await calendar.getBusyIntervals({ timeMin: start.subtract({ minutes: POST_SERVICE_BUFFER_MINUTES }).toString(), timeMax: end.toString() });
@@ -136,8 +151,8 @@ export function createBookingService({ calendar, ports, policy, now = () => Temp
       if (record.state === 'event_created') { try { record = await transition(keyDigest, record, 'confirmed_notification_pending', { outcome: base }); } catch { throw new BookingError('BOOKING_UNKNOWN', 503); } }
       // The persisted pending-notification state is itself the replayable safe outcome; never resend it.
       if (record.state === 'confirmed_notification_pending') {
-        try { await protectOperation(lease); await calendar.addOrUpdateAttendee({ eventId: record.eventId, email: input.email, displayName: input.name }); const confirmed = publicOutcome(service, start, end, 'requested'); try { return (await transition(keyDigest, record, 'confirmed', { outcome: confirmed })).outcome; } catch { return base; } }
-        catch { try { return (await transition(keyDigest, record, 'confirmed', { outcome: base })).outcome; } catch { return base; } }
+        try { await protectOperation(lease); await calendar.addOrUpdateAttendee({ eventId: record.eventId, email: input.email, displayName: input.name }); const confirmed = publicOutcome(service, start, end, 'requested'); try { const finalized = await transition(keyDigest, record, 'confirmed', { outcome: confirmed }); await issueManagement(keyDigest, finalized, service, start, end, input, keyDigest); return finalized.outcome; } catch { return base; } }
+        catch { try { const finalized = await transition(keyDigest, record, 'confirmed', { outcome: base }); await issueManagement(keyDigest, finalized, service, start, end, input, keyDigest); return finalized.outcome; } catch { return base; } }
       }
       return replay(record, replayExpected);
     } catch (error) { throw error instanceof BookingError ? error : asBookingError(error); }

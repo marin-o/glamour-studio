@@ -42,3 +42,18 @@ export function createBookingHandler(runtime, { maxBodyBytes = 4096, getRequestC
     } catch (error) { return errorResponse(error); }
   };
 }
+
+function managementSecret(request) {
+  const value = request.headers.get('authorization'); const match = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(value ?? '');
+  if (!match) throw new BookingError('MANAGEMENT_UNAVAILABLE', 404); return match[1];
+}
+function exactManagementDate(url) { const keys = [...url.searchParams.keys()]; if (keys.length !== 1 || keys[0] !== 'date' || !/^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('date') ?? '')) throw new BookingError('INVALID_REQUEST', 400); return url.searchParams.get('date'); }
+export function createBookingManagementHandlers(runtime, { getRequestContext = () => undefined, maxBodyBytes = 512 } = {}) {
+  const context = (request) => getRequestContext(request);
+  const safeBooking = (booking) => { if (!booking || typeof booking !== 'object' || !['confirmed', 'cancelled'].includes(booking.status) || typeof booking.serviceId !== 'string' || typeof booking.start !== 'string' || typeof booking.end !== 'string' || typeof booking.canReschedule !== 'boolean') throw new BookingError('BOOKING_UNKNOWN', 503); return { serviceId: booking.serviceId, start: booking.start, end: booking.end, status: booking.status, canReschedule: booking.canReschedule }; };
+  const read = async (request) => { try { if (new URL(request.url).search) throw new BookingError('INVALID_REQUEST', 400); const booking = safeBooking(await runtime.managementRead(managementSecret(request), context(request))); return response(200, { ok: true, booking }); } catch (error) { return errorResponse(error); } };
+  const availability = async (request) => { try { const secret = managementSecret(request); const result = await runtime.managementAvailability(secret, exactManagementDate(new URL(request.url)), context(request)); return response(200, { ok: true, availability: { serviceId: result.serviceId, date: result.date, starts: result.starts } }); } catch (error) { return errorResponse(error); } };
+  const reschedule = async (request) => { try { if (new URL(request.url).search) throw new BookingError('INVALID_REQUEST', 400); const secret = managementSecret(request); if (!isJsonMediaType(request.headers.get('content-type'))) throw new BookingError('UNSUPPORTED_MEDIA_TYPE', 415); const text = await readBoundedBody(request, maxBodyBytes); let body; try { body = JSON.parse(text); } catch { throw new BookingError('INVALID_REQUEST', 400); } if (!body || Object.getPrototypeOf(body) !== Object.prototype || Object.keys(body).length !== 1 || typeof body.start !== 'string') throw new BookingError('INVALID_REQUEST', 400); const booking = safeBooking(await runtime.managementReschedule(secret, { start: body.start }, context(request))); return response(200, { ok: true, booking }); } catch (error) { return errorResponse(error); } };
+  const cancel = async (request) => { try { if (new URL(request.url).search) throw new BookingError('INVALID_REQUEST', 400); const secret = managementSecret(request); const length = request.headers.get('content-length'); if (length && length !== '0') throw new BookingError('INVALID_REQUEST', 400); if (request.body) { const body = await readBoundedBody(request, 1); if (body) throw new BookingError('INVALID_REQUEST', 400); } const booking = safeBooking(await runtime.managementCancel(secret, context(request))); return response(200, { ok: true, booking }); } catch (error) { return errorResponse(error); } };
+  return Object.freeze({ read, availability, reschedule, cancel });
+}

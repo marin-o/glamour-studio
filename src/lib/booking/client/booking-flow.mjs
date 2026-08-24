@@ -19,3 +19,38 @@ export function skopjeToday(now = new Date()) {
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
+
+export const MANAGEMENT_SECRET_PATTERN = /^[A-Za-z0-9_-]{43}$/u;
+export const MANAGEMENT_ADVERTISED_CUTOFF_HOURS = 12;
+export const MANAGEMENT_OPERATIONAL_GRACE_MINUTES = 15;
+
+export function readManagementSecret(hash) {
+  return typeof hash === 'string' && hash.startsWith('#') && MANAGEMENT_SECRET_PATTERN.test(hash.slice(1)) ? hash.slice(1) : '';
+}
+
+export function managementDates(today = skopjeToday()) {
+  const [year, month, day] = today.split('-').map(Number);
+  if (![year, month, day].every(Number.isInteger)) return [];
+  return Array.from({ length: 7 }, (_, index) => {
+    const value = new Date(Date.UTC(year, month - 1, day + index, 12)).toISOString().slice(0, 10);
+    return { value, index, isToday: index === 0 };
+  });
+}
+
+export function managementSlotGroups(starts, language) {
+  const groups = { morning: [], afternoon: [] };
+  for (const start of Array.isArray(starts) ? starts : []) {
+    const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Skopje', hour: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(start)).find((part) => part.type === 'hour')?.value ?? 0);
+    groups[hour < 12 ? 'morning' : 'afternoon'].push(start);
+  }
+  return groups;
+}
+
+export function managementCanCancel(booking, now = new Date()) {
+  const effectiveCutoffMinutes = MANAGEMENT_ADVERTISED_CUTOFF_HOURS * 60 - MANAGEMENT_OPERATIONAL_GRACE_MINUTES;
+  return Boolean(booking?.status === 'confirmed' && typeof booking.start === 'string' && Date.parse(booking.start) - now.valueOf() >= effectiveCutoffMinutes * 60 * 1000);
+}
+
+export function managementCanReschedule(booking) {
+  return Boolean(booking?.status === 'confirmed' && booking.canReschedule === true);
+}

@@ -5,6 +5,7 @@ const MAX_RESPONSE_BYTES = 16 * 1024;
 const JSON_MEDIA = /^application\/json(?:\s*;\s*[!#$%&'*+.^_`|~0-9A-Za-z-]+=(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+|"[^"\\]*"))*\s*$/iu;
 const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.000)?Z$/u;
 const DATE = /^\d{4}-\d{2}-\d{2}$/u;
+const MANAGEMENT_SECRET = /^[A-Za-z0-9_-]{43}$/u;
 const errorSchemas = Object.freeze({
   400: new Set(['INVALID_REQUEST', 'INVALID_IDEMPOTENCY_KEY']),
   409: new Set(['SLOT_UNAVAILABLE', 'IDEMPOTENCY_MISMATCH']),
@@ -25,6 +26,47 @@ const expectedEnd = (start, serviceId) => {
   const end = new Date(Date.parse(start) + getServiceOccupancyMinutes(serviceId) * 60_000).toISOString();
   return start.endsWith('.000Z') ? end : end.replace('.000Z', 'Z');
 };
+
+const safeManagementErrorSchemas = Object.freeze({
+  400: new Set(['INVALID_REQUEST']),
+  404: new Set(['MANAGEMENT_UNAVAILABLE']),
+  409: new Set(['SLOT_UNAVAILABLE', 'RESCHEDULE_CUTOFF', 'CANCELLATION_CUTOFF', 'BOOKING_UNKNOWN']),
+  429: new Set(['RATE_LIMITED']),
+  503: new Set(['BOOKING_UNAVAILABLE', 'CALENDAR_UNAVAILABLE', 'BOOKING_UNKNOWN']),
+});
+
+const resolveCapability = (value) => {
+  const capability = typeof value === 'function' ? value() : value;
+  return typeof capability === 'string' && MANAGEMENT_SECRET.test(capability) ? capability : '';
+};
+
+function managementError(response, body) {
+  const permitted = safeManagementErrorSchemas[response.status];
+  if (!permitted || !exactKeys(body, ['ok', 'error']) || body.ok !== false || !exactKeys(body.error, ['code']) || !permitted.has(body.error.code)) {
+    return unavailable('provider');
+  }
+  if (body.error.code === 'MANAGEMENT_UNAVAILABLE' || response.status === 404) return unavailable('safe');
+  if (body.error.code === 'SLOT_UNAVAILABLE') return unavailable('conflict');
+  if (body.error.code === 'RESCHEDULE_CUTOFF') return unavailable('cutoff');
+  if (body.error.code === 'CANCELLATION_CUTOFF') return unavailable('cancellationCutoff');
+  if (body.error.code === 'BOOKING_UNKNOWN') return unavailable('unknown');
+  if (body.error.code === 'RATE_LIMITED') return unavailable('rateLimited');
+  if (body.error.code === 'INVALID_REQUEST') return unavailable('invalid');
+  return unavailable('provider');
+}
+
+function safeManagementBooking(body) {
+  const booking = body?.booking;
+  if (!exactKeys(body, ['ok', 'booking']) || body.ok !== true || !booking || !exactKeys(booking, ['serviceId', 'start', 'end', 'status', 'canReschedule'])) return null;
+  if (!serviceById.has(booking.serviceId) || !['confirmed', 'cancelled'].includes(booking.status) || typeof booking.canReschedule !== 'boolean' || !canonicalInstant(booking.start) || !canonicalInstant(booking.end) || booking.end <= booking.start || booking.end !== expectedEnd(booking.start, booking.serviceId)) return null;
+  return { ok: true, booking: { serviceId: booking.serviceId, start: booking.start, end: booking.end, status: booking.status, canReschedule: booking.canReschedule } };
+}
+
+function safeManagementAvailability(body, date) {
+  const availability = body?.availability;
+  if (!exactKeys(body, ['ok', 'availability']) || body.ok !== true || !availability || !exactKeys(availability, ['serviceId', 'date', 'starts']) || !serviceById.has(availability.serviceId) || availability.date !== date || !Array.isArray(availability.starts) || !availability.starts.every(canonicalInstant)) return null;
+  return { ok: true, availability: { serviceId: availability.serviceId, date: availability.date, starts: availability.starts } };
+}
 
 function unavailable(kind = 'unavailable') { return { ok: false, kind }; }
 function contentIsJson(response) { return JSON_MEDIA.test(response.headers.get('content-type') ?? ''); }
@@ -70,9 +112,36 @@ function withDeadline(fetcher, input, init, signal, timeoutMs) {
   return { request: fetcher(input, { ...init, signal: controller.signal }), timedOut: () => timedOut, finish: () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); } };
 }
 
-export function createBookingApi({ fetch: injectedFetch, crypto = globalThis.crypto, timeoutMs = 10_000 } = {}) {
+export function createBookingApi({ fetch: injectedFetch, crypto = globalThis.crypto, timeoutMs = 10_000, managementSecret, capability } = {}) {
   if (typeof injectedFetch !== 'function') throw new TypeError('An injected fetch implementation is required.');
   if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 30_000) throw new TypeError('timeoutMs must be bounded.');
+  const getCapability = () => resolveCapability(capability ?? managementSecret);
+  const managementRequest = async ({ method = 'GET', path, body, signal, parse }) => {
+    const secret = getCapability();
+    if (!secret) return unavailable('safe');
+    const headers = { Accept: 'application/json', Authorization: `Bearer ${secret}` };
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const deadline = withDeadline(injectedFetch, path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, signal, timeoutMs);
+    let response;
+    try {
+      response = await deadline.request;
+    } catch (error) {
+      const timedOut = deadline.timedOut();
+      deadline.finish();
+      return timedOut ? unavailable('timeout') : error?.name === 'AbortError' ? unavailable('aborted') : unavailable('network');
+    }
+    const responseBody = await boundedJson(response);
+    const timedOut = deadline.timedOut();
+    const externallyAborted = Boolean(signal?.aborted);
+    deadline.finish();
+    if (timedOut) return unavailable('timeout');
+    if (externallyAborted) return unavailable('aborted');
+    const result = parse(responseBody);
+    return result ?? managementError(response, responseBody);
+  };
+
   return {
     createKey: () => secureKey(crypto),
     async availability({ serviceId, date, signal }) {
@@ -87,6 +156,21 @@ export function createBookingApi({ fetch: injectedFetch, crypto = globalThis.cry
       const deadline = withDeadline(injectedFetch, '/api/booking', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(payload) }, signal, timeoutMs);
       let response; try { response = await deadline.request; } catch { const timedOut = deadline.timedOut(); deadline.finish(); return timedOut ? unavailable('timeout') : unavailable('network'); }
       const body = await boundedJson(response); const timedOut = deadline.timedOut(); const externallyAborted = Boolean(signal?.aborted); deadline.finish(); return timedOut ? unavailable('timeout') : externallyAborted ? unavailable('aborted') : successBooking(body, serviceId, start) ?? publicError(response, body);
+    },
+    async managementRead({ signal } = {}) {
+      return managementRequest({ signal, path: '/api/booking/manage', parse: safeManagementBooking });
+    },
+    async managementAvailability({ date, signal } = {}) {
+      const secret = getCapability();
+      if (!secret || !strictDate(date)) return unavailable(secret ? 'invalid' : 'safe');
+      return managementRequest({ signal, path: `/api/booking/manage/availability?${new URLSearchParams({ date })}`, parse: (body) => safeManagementAvailability(body, date) });
+    },
+    async managementReschedule({ start, signal } = {}) {
+      if (!canonicalInstant(start)) return unavailable('invalid');
+      return managementRequest({ method: 'PATCH', path: '/api/booking/manage', body: { start }, signal, parse: safeManagementBooking });
+    },
+    async managementCancel({ signal } = {}) {
+      return managementRequest({ method: 'DELETE', path: '/api/booking/manage', signal, parse: safeManagementBooking });
     },
   };
 }

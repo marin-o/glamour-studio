@@ -23,6 +23,8 @@ common work so agents can inspect the smallest relevant file set.
 - `src/lib/booking/`: server-owned, provider-neutral ordered service catalog, studio rules, mandatory customer-email validation, and pure availability calculation from supplied busy intervals.
 - `src/lib/booking/google/`: server-only Google Calendar/OAuth adapter with strict secret configuration, injected-fetch REST boundary, deterministic event IDs, and sanitized operational errors.
 - `src/lib/booking/orchestration/`: server-only dependency-injected booking coordination, safe public failure mapping, and test-only fakes.
+- `src/lib/booking/orchestration/management-service.mjs`: capability-authenticated customer booking reads, availability, lease-fenced Calendar mutations, cutoff enforcement, and terminal revocation.
+- `src/lib/booking/notifications/resend.mjs`: branded Macedonian-first/English-second booking notification template and bounded Resend adapter.
 - `src/lib/booking/production/`: Vercel-only fail-closed composition, HMAC request context, validated policy/configuration, and atomic Upstash Redis coordination ports.
 - `src/lib/booking/local/coordination.mjs`: explicitly localhost-only single-process lock, idempotency, and rate-limit ports shared across development hot reloads.
 - `src/lib/booking/http/handlers.mjs`: no-store, exact-schema, injectable public booking HTTP boundary.
@@ -32,7 +34,10 @@ common work so agents can inspect the smallest relevant file set.
 - `tests/booking/booking-client.test.mjs` and `tests/booking/booking-flow.test.mjs`: injected client and pure customer-flow coverage.
 - `src/lib/booking/runtime.mjs`: production fail-closed runtime gate with an explicit development-only Google Calendar/local-coordination composition.
 - `src/app/api/booking/`: thin no-store availability and booking route handlers.
+- `src/app/api/booking/manage/route.js` and `src/app/api/booking/manage/availability/route.js`: no-store, bearer-capability customer booking-management APIs.
+- `src/app/booking/manage/page.jsx` and `src/components/booking/BookingManagementExperience.jsx`: fragment-capability customer management route and accessible booking-management UI.
 - `tests/booking/google-calendar-adapter.test.mjs`: injected-fetch deterministic coverage for the Google adapter; never contacts Google.
+- `tests/booking/booking-management-*.test.mjs`, `tests/booking/local-coordination.test.mjs`, and `tests/booking/production-coordination.test.mjs`: mock-only capability, CAS/TTL/privacy, HTTP, client, and Calendar-management coverage.
 - `docs/booking-api.md`: public endpoint contract, idempotency behavior, failure states, and production prerequisites.
 - `src/components/motion/MakeupStroke.jsx`: measured GSAP/ScrollTrigger brushstroke and shared reveal timing provider.
 - `src/components/motion/HeroCurtainReveal.jsx`: progressive-enhancement GSAP curtain between the hero and services, with live stroke-interruption bounds.

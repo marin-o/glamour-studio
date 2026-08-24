@@ -44,7 +44,9 @@ test('seasonal working windows use the requested Skopje date and DST offset', ()
   assert.equal(getWorkingWindow('2026-10-25').opening, '2026-10-25T09:00:00Z');
   assert.equal(getWorkingWindow('2026-03-31').opening, '2026-03-31T08:00:00Z');
   assert.equal(getWorkingWindow('2026-04-01').opening, '2026-04-01T04:00:00Z');
-  assert.equal(getWorkingWindow('2026-09-30').opening, '2026-09-30T04:00:00Z');
+  assert.equal(getWorkingWindow('2026-08-31').opening, '2026-08-31T04:00:00Z');
+  assert.equal(getWorkingWindow('2026-09-01').opening, '2026-09-01T08:00:00Z');
+  assert.equal(getWorkingWindow('2026-09-30').opening, '2026-09-30T08:00:00Z');
   assert.equal(getWorkingWindow('2026-10-01').opening, '2026-10-01T08:00:00Z');
 });
 

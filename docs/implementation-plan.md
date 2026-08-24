@@ -23,6 +23,8 @@ The owner approved a custom Next.js and Google Calendar booking direction on
 3. Reliable booking orchestration and public API.
 4. Macedonian-first customer booking experience.
 5. Abuse protection, operations, and launch readiness.
+6. Secure customer booking-management links, branded bilingual transactional
+   email with calendar-add attachment/link, rescheduling, and cancellation.
 
 Each phase is one Sitewright task. Under the single-active policy, create the
 next phase task only after the current phase has passed implementation, review,

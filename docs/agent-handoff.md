@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=a103d10fc7ef8b8c -->
+<!-- sitewright:fingerprint=5fe94e1b015ddb1f -->
 ## Sitewright state
 
-- Sitewright Doctor reports `PLANNING_REQUIRED` using `nextjs-app-router` policy pack.
-- Reconcile planning artifacts and keep one executable task.
-- Active task: none.
+- Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
+- The repository has structured intent, coherent planning, and an executable task.
+- Active task: 060-enable-secure-customer-booking-management.md.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -30,6 +30,23 @@
   verified work-track marker; public request and response schemas remain
   track-free. The focused post-review suite and production build pass. The
   change is not deployed and no live booking write was performed.
+- Task 060 is implemented and adversarially reviewed in source: accepted
+  bookings issue digest-backed accountless management links through Resend;
+  customers can reschedule or cancel only more than twelve hours before the
+  appointment while Google Calendar remains authoritative. The app/server keep
+  a non-advertised fifteen-minute grace and accept either mutation while at
+  least 11:45 remains, including the exact boundary; customer copy continues to
+  state twelve hours. Confirmation and
+  rescheduling mail now include bilingual Google Calendar actions and a generic
+  `.ics` attachment that contains no capability or customer contact data.
+  Focused tests, targeted lint, and the production build pass. The earlier
+  pre-attachment bilingual confirmation template reached the owner-authorized
+  inbox; attachment-bearing live email and end-to-end verification, rendered
+  owner acceptance, and deployment remain pending.
+- Booking availability uses the owner-confirmed seasonal schedule in
+  `Europe/Skopje`: 10:00–18:00 from September through March and 06:00–18:00
+  from April through August. The August/September boundary is covered by the
+  focused availability tests.
 - Task 057 completed migration to the owner-created Netlify site
   `fanciful-rolypoly-a33659.netlify.app`. Production booking availability was
   restored on 2026-08-10 by replacing the unavailable Upstash database,
@@ -85,6 +102,8 @@
 - Task 056/057 code is pushed and the owner accepted the migration on
   2026-07-27. Live read-only availability was reverified on 2026-08-10 after
   Redis replacement. A write/invitation smoke test remains owner-controlled.
+- Review and approve task 060's rendered `/booking/manage` experience and the
+  delivered bilingual customer email before task completion or deployment.
 
 ## Durable gotchas
 

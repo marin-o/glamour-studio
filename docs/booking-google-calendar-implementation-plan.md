@@ -65,8 +65,8 @@ workflows.
 ## Availability behavior
 
 - Generate start times on 30-minute boundaries.
-- April through September: allow appointments within 06:00-18:00.
-- October through March: allow appointments within 10:00-18:00.
+- April through August: allow appointments within 06:00-18:00.
+- September through March: allow appointments within 10:00-18:00.
 - Operate every day, subject to busy Calendar events and future approved
   closures or booking rules.
 - Derive duration from the trusted service identifier; never trust a duration
@@ -123,8 +123,23 @@ synchronized staff view rather than the sole source of truth.
 - Google does not guarantee that every invitation appears automatically on the
   customer's calendar; recipient settings and spam controls still apply.
 - A guest declining an invitation is not equivalent to cancelling the booking.
-  Staff must manage the actual event in the studio calendar unless a later
-  signed cancellation flow is approved.
+  Staff must manage the actual event in the studio calendar unless the customer
+  uses the owner-approved secure management link.
+- Resend sends a separate branded message from
+  `Glamour Studio <bookings@glamourstudio.mk>` with replies directed to the
+  internal studio Gmail account. Each message contains a complete Macedonian
+  section followed by its equivalent English section.
+- The management link is an accountless capability: only a digest is stored,
+  public responses do not reveal it, and it expires with the booking. It allows
+  rescheduling and cancellation under the advertised twelve-hour policy. The
+  server keeps a non-advertised fifteen-minute operational grace, accepting
+  both mutations while at least 11:45 remains (including exactly 11:45), with
+  the same check before and after the mutation lock.
+- Confirmation and rescheduling mail include a clickable bilingual Google
+  Calendar action plus a `glamour-studio-appointment.ics` attachment. Its
+  stable opaque UID is a hash of the Google event ID and it contains only
+  trusted service/times and public studio details; cancellation mail includes
+  neither a calendar action nor an attachment.
 
 ## Staff workflow
 
@@ -251,6 +266,23 @@ the real booking API.
 
 Observable outcome: the implementation is ready for separately approved
 production configuration and end-to-end owner verification.
+
+### Phase 6: Secure customer booking management
+
+- Add durable hashed management capabilities and exact-schema authenticated
+  reads, availability, rescheduling, and cancellation boundaries.
+- Keep Google Calendar authoritative, serialize mutations with the production
+  lease/fencing model, preserve work-track behavior, and fail closed on stale
+  or ambiguous state.
+- Add a customer management route aligned with the existing booking experience,
+  including cutoff, expired, conflict, cancellation-confirmation, and phone
+  fallback states.
+- Send idempotent bilingual booking-confirmed, rescheduled, and cancelled mail
+  through Resend without making notification delivery part of the authoritative
+  Calendar result.
+
+Observable outcome: an accepted online booking can be securely managed from its
+emailed accountless link without a customer account or staff application.
 
 Do not activate production credentials, provision services, deploy, or launch
 without explicit owner approval.

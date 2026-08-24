@@ -20,6 +20,14 @@ survive restarts, or provide durable recovery.
   email/calendar invitation, not proof of delivery or acceptance.
 - Staff move and cancel appointments in the same Google Calendar. The next
   availability request sees the current Calendar state.
+- Production management additionally uses server-only Resend branded mail,
+  Macedonian first and equivalent English second; it is separate from Google
+  attendee notices and does not change Calendar authority. Confirmation and
+  rescheduling mail attach `glamour-studio-appointment.ics` and link to Google
+  Calendar using trusted service/times and public studio details; cancellation
+  mail does neither. Customer copy states a twelve-hour management policy;
+  operationally, either mutation remains accepted through the non-advertised
+  fifteen-minute grace (at least 11:45 remains, including exactly 11:45).
 
 ## One-time Google setup
 
@@ -142,9 +150,10 @@ monitoring, secret management, trusted request identity/rate limiting, recovery
 procedures, and production OAuth review. Until then, any non-development
 runtime returns `BOOKING_NOT_CONFIGURED`.
 
-## Owner-gated Vercel production runbook
+## Owner-gated Netlify production runbook
 
-The code now has a separate Vercel composition, but this repository has not
+The code now has a separate Netlify production composition (with Vercel retained
+as a supported alternate), but this repository has not
 provisioned Upstash, linked a Vercel project, created production Google OAuth
 credentials, set secrets, or deployed anything. Those actions remain owner
 controlled.
@@ -152,23 +161,26 @@ controlled.
 Before setting `BOOKING_PRODUCTION_ENABLED=1`, the owner must:
 
 1. Create one owner-controlled Upstash Redis database and provide its REST URL
-   and token as Vercel server secrets using the common
+   and token as Netlify server secrets using the common
    `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` names.
 2. Create a production Google OAuth grant for the dedicated booking calendar,
    move the consent configuration out of Testing as appropriate, and add the
-   existing `GOOGLE_*` values as Vercel server secrets. Never reuse the local
+   existing `GOOGLE_*` values as Netlify server secrets. Never reuse the local
    desktop-evaluation token without an owner security review.
 3. Generate and store a separate random `BOOKING_REQUEST_HMAC_SECRET`; do not
-   reuse a Google or Redis secret. Vercel supplies `VERCEL=1`; do not manually
-   emulate it in a public environment.
+   reuse a Google or Redis secret. Set the exact production marker
+   `BOOKING_DEPLOYMENT_PLATFORM=netlify`; Vercel's `VERCEL=1` remains the only
+   supported alternate marker. Do not emulate either marker publicly.
 4. Deliberately choose and set every `BOOKING_*` policy/rate-limit value listed
    in `.env.example`. The examples are not studio policy approval. The lock
    lease must exceed the provider-operation budget plus safety margin. That
    budget is one whole Google adapter method, including token refresh, retry,
    pagination, verification, and response-body parsing.
-5. Keep production disabled while verifying the preview environment. When all
+5. Add the server-only `RESEND_API_KEY` and every management rate-limit policy
+   from `.env.example`.
+6. Keep production disabled while verifying the preview environment. When all
    secrets and policy decisions are present, the owner may set the exact value
-   `BOOKING_PRODUCTION_ENABLED=1` for the intended Vercel environment.
+   `BOOKING_PRODUCTION_ENABLED=1` for the intended Netlify environment.
 
 Both API routes use the Node.js runtime and derive a privacy-minimized rate
 subject from Vercel's `x-vercel-forwarded-for`, HMAC-hashed before Redis sees

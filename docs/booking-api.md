@@ -74,10 +74,12 @@ check narrows but cannot eliminate the residual race. Owner decisions still
 needed: production provider choices, bot protection, Google setup,
 retention/privacy, hosting, and activation policy.
 
-## Vercel production composition
+## Netlify production composition
 
-Production is enabled only when `NODE_ENV=production`, Vercel supplies
-`VERCEL=1`, and an owner deliberately supplies `BOOKING_PRODUCTION_ENABLED=1`.
+Production is enabled only when `NODE_ENV=production`, an owner deliberately supplies
+`BOOKING_PRODUCTION_ENABLED=1`, and exactly one supported platform marker is present.
+The current production marker is `BOOKING_DEPLOYMENT_PLATFORM=netlify`; Vercel remains
+a supported alternate via `VERCEL=1`.
 That gate additionally validates the existing Google credentials, the common
 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` pair, a server-only
 `BOOKING_REQUEST_HMAC_SECRET`, and every named policy and rate-limit value in
@@ -96,8 +98,22 @@ use exactly one aggregate `action + subjectDigest` bucket, so changing date,
 service, or contact cannot fan out keys or bypass a subject ceiling. The App
 Router routes explicitly use the Node.js runtime and remain dynamic/no-store.
 
-On Vercel, request coordination derives its subject from
+On Netlify, request coordination derives its subject from trusted platform context;
+the Vercel alternate derives it from
 `x-vercel-forwarded-for`, hashes it with the required HMAC secret, and passes
 only the digest into the ports. Production does not trust arbitrary
 `x-forwarded-for` input. Tests may inject a context through the HTTP handler;
 local development keeps its fixed local test identity.
+
+## Customer management API
+
+The confirmation email links to `https://glamourstudio.mk/booking/manage#<43-character-secret>`. The fragment is never sent by the browser automatically. The client must send it only as `Authorization: Bearer <secret>`; it is forbidden in URLs, queries, bodies, analytics, and logs.
+
+All routes are Node-only, dynamic and `Cache-Control: no-store`. Invalid, expired, unknown, and terminal capability values use the identical `404 { ok: false, error: { code: "MANAGEMENT_UNAVAILABLE" } }` envelope.
+
+- `GET /api/booking/manage` has no query/body and returns exactly `{ ok: true, booking: { serviceId, start, end, status, canReschedule } }`.
+- `GET /api/booking/manage/availability?date=YYYY-MM-DD` has exactly that query and returns `{ ok: true, availability: { serviceId, date, starts } }`.
+- `PATCH /api/booking/manage` requires exact JSON `{ "start": "<ISO instant>" }` and returns the safe booking DTO. The advertised customer policy is twelve hours, while the server's non-advertised operational grace accepts the mutation while at least 11 hours 45 minutes remain, including exactly 11:45. Less than 11:45 is rejected.
+- `DELETE /api/booking/manage` has no body/query and returns the safe booking DTO. Cancellation uses the same 11:45 effective cutoff; repeat cancellation remains terminal and safe.
+
+Management state is SHA-256-digest indexed with TTL ending at the authoritative appointment end. It contains only version/state, Calendar event identity, trusted service/work-track, and appointment instants—never customer contact data. Mutations serialize through the studio lease/fencing lock, recheck the same 11:45 effective cutoff after obtaining that lock, and persist CAS mutation intent before Google Calendar PATCH/DELETE. Provider uncertainty is `503 BOOKING_UNKNOWN`, never a guessed success or replacement event. Google attendee notices use `sendUpdates=all`; branded Resend mail is independently attempted and cannot reverse Calendar success. Confirmation and reschedule mail include a base64 `glamour-studio-appointment.ics` Resend attachment and a Google Calendar URL derived only from trusted service/times and public studio details; cancellation mail includes neither.
