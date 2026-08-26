@@ -28,6 +28,7 @@ test('explicit local development mode composes the booking service with a local 
     async listBlockingEvents() { return []; },
     async deleteEventForCompensation() { return { deleted: true }; },
     async addOrUpdateAttendee() {},
+    async reconcileCancelledPrivateEvent() { return { cancelled: true }; },
   };
   const runtime = createBookingRuntime({
     env: { BOOKING_LOCAL_TEST_MODE: '1' },
@@ -58,7 +59,7 @@ test('production activation validates every policy/provider value and hashes onl
   const env = productionEnv();
   const context = getProductionRequestContext(new Request('https://example.test', { headers: { 'x-vercel-forwarded-for': '203.0.113.8, 10.0.0.1', 'x-forwarded-for': 'raw-untrusted' } }), { env, nodeEnv: 'production' });
   assert.match(context.subjectDigest, /^[a-f0-9]{64}$/); assert.doesNotMatch(JSON.stringify(context), /203\.0\.113\.8|raw-untrusted/);
-  const calendar = { async getBusyIntervals() { return []; }, async reconcilePrivateEvent() { throw Object.assign(new Error('not used'), { code: 'NOT_FOUND' }); }, async createPrivateEvent() { throw new Error('not used'); }, async listBlockingEvents() { return []; }, async deleteEventForCompensation() { return { deleted: true }; }, async addOrUpdateAttendee() {} };
+  const calendar = { async getBusyIntervals() { return []; }, async reconcilePrivateEvent() { throw Object.assign(new Error('not used'), { code: 'NOT_FOUND' }); }, async createPrivateEvent() { throw new Error('not used'); }, async listBlockingEvents() { return []; }, async deleteEventForCompensation() { return { deleted: true }; }, async addOrUpdateAttendee() {}, async reconcileCancelledPrivateEvent() { return { cancelled: true }; } };
   const redis = { async eval(script) { if (script.includes('rate-limit')) return [1, 60_000]; throw new Error('not used'); } };
   const runtime = createBookingRuntime({ env, nodeEnv: 'production', calendar, redis, now: () => Temporal.Instant.from('2026-07-23T00:00:00Z') });
   assert.equal((await runtime.availability({ serviceId: 'makeup', date: '2026-07-24' }, context)).serviceId, 'makeup');

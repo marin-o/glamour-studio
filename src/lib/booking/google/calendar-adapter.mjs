@@ -94,6 +94,28 @@ function managedSnapshot(event, expected) {
   return Object.freeze({ email: attendees[0].email, etag: event.etag });
 }
 
+function cancelledManagedSnapshot(event, expected) {
+  const mismatch = () => { throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event verification did not match the managed appointment.'); };
+  if (!isPlainRecord(event) || event.id !== expected.eventId || typeof event.status !== 'string') mismatch();
+  const retainedPrivate = event.extendedProperties?.private;
+  if (event.visibility !== undefined && event.visibility !== 'private'
+    || event.extendedProperties !== undefined && (!isPlainRecord(event.extendedProperties) || retainedPrivate !== undefined && !isPlainRecord(retainedPrivate))
+    || retainedPrivate?.[PRIVATE_MARKER_KEY] !== undefined && retainedPrivate[PRIVATE_MARKER_KEY] !== expected.marker
+    || retainedPrivate?.[PRIVATE_WORK_TRACK_KEY] !== undefined && retainedPrivate[PRIVATE_WORK_TRACK_KEY] !== expected.workTrack) mismatch();
+  const retainedTimeMatches = (value, target, label) => {
+    if (value === undefined) return true;
+    const actual = parseInstant(value?.dateTime, label, 'provider');
+    return Temporal.Instant.compare(actual, Temporal.Instant.from(target)) === 0;
+  };
+  if (!retainedTimeMatches(event.start, expected.start, 'Google event start') || !retainedTimeMatches(event.end, expected.end, 'Google event end')) mismatch();
+  // Google may return a sparse deletion tombstone. A non-cancelled event is
+  // only safe evidence when it retains the complete managed identity.
+  if (event.status === 'cancelled') return Object.freeze({ cancelled: true });
+  if (event.visibility !== 'private' || retainedPrivate?.[PRIVATE_MARKER_KEY] !== expected.marker
+    || retainedPrivate?.[PRIVATE_WORK_TRACK_KEY] !== expected.workTrack || event.start === undefined || event.end === undefined) mismatch();
+  return Object.freeze({ cancelled: false });
+}
+
 export function createGoogleCalendarAdapter(options = {}) {
   assertExactRecord(options, 'Google Calendar adapter options', new Set(['env', 'fetch', 'now', 'timeoutMs']), []);
   const { env = process.env, fetch: injectedFetch = globalThis.fetch, now = () => Date.now(), timeoutMs = DEFAULT_TIMEOUT_MS } = options;
@@ -164,6 +186,13 @@ export function createGoogleCalendarAdapter(options = {}) {
       if (error instanceof GoogleCalendarError && error.code === 'VERIFICATION_FAILED') throw error;
       throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment creation.', { retryable: true, operation: 'event-create' });
     }
+  }
+
+  async function reconcileCancellation(expected, operation) {
+    const response = await api(operation, `/calendars/${encodeURIComponent(config.calendarId)}/events/${encodeURIComponent(expected.eventId)}`);
+    if (response.status === 404) return Object.freeze({ cancelled: true });
+    if (!response.ok) throw await googleErrorFromResponse(response, 'management-cancel-reconcile');
+    return cancelledManagedSnapshot(await responseJson(operation, response), expected);
   }
 
   return Object.freeze({
@@ -269,6 +298,12 @@ export function createGoogleCalendarAdapter(options = {}) {
       const event = await responseJson(operation, response);
       return managedSnapshot(event, input);
     }); },
+    async reconcileCancelledPrivateEvent(input) { return runOperation(async (operation) => {
+      assertExactRecord(input, 'Managed cancellation reconciliation', new Set(['eventId', 'start', 'end', 'workTrack', 'marker']), ['eventId', 'start', 'end', 'workTrack', 'marker']);
+      assertEventId(input.eventId); parseInstant(input.start, 'Event start'); parseInstant(input.end, 'Event end');
+      if (!WORK_TRACKS.has(input.workTrack) || typeof input.marker !== 'string' || !IDEMPOTENCY_MARKER.test(input.marker)) throw new GoogleCalendarError('VALIDATION_FAILED', 'Managed cancellation reconciliation is invalid.');
+      return reconcileCancellation(input, operation);
+    }); },
     async reschedulePrivateEvent(input) { return runOperation(async (operation) => {
       assertExactRecord(input, 'Managed event update', new Set(['eventId', 'serviceId', 'workTrack', 'marker', 'previousStart', 'previousEnd', 'attendee', 'etag', 'start', 'end']), ['eventId', 'serviceId', 'workTrack', 'marker', 'previousStart', 'previousEnd', 'attendee', 'etag', 'start', 'end']);
       assertEventId(input.eventId); const start = parseInstant(input.start, 'Event start'); const end = parseInstant(input.end, 'Event end');
@@ -289,8 +324,13 @@ export function createGoogleCalendarAdapter(options = {}) {
       assertEventId(input.eventId); parseInstant(input.start, 'Event start'); parseInstant(input.end, 'Event end');
       if (!WORK_TRACKS.has(input.workTrack) || typeof input.marker !== 'string' || !IDEMPOTENCY_MARKER.test(input.marker) || typeof input.attendee !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(input.attendee) || typeof input.etag !== 'string' || !input.etag) throw new GoogleCalendarError('VALIDATION_FAILED', 'Managed event cancellation is invalid.');
       const eventPath = `/calendars/${encodeURIComponent(config.calendarId)}/events/${encodeURIComponent(input.eventId)}`; const path = `${eventPath}?sendUpdates=all`;
-      try { const response = await api(operation, path, { method: 'DELETE', headers: { 'if-match': input.etag } }); if (response.status === 412) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event changed before cancellation.'); if (response.ok) { const verify = await api(operation, eventPath); if (verify.status === 404) return Object.freeze({ cancelled: true, notificationPolicy: 'sendUpdates=all' }); throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment cancellation.', { retryable: true, operation: 'management-cancel' }); } throw await googleErrorFromResponse(response, 'management-cancel'); }
-      catch (error) { if (error instanceof GoogleCalendarError && !['TRANSPORT_FAILED', 'GOOGLE_UNAVAILABLE'].includes(error.code)) throw error; try { const response = await api(operation, eventPath); if (response.status === 404) return Object.freeze({ cancelled: true, notificationPolicy: 'sendUpdates=all' }); } catch {} throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment cancellation.', { retryable: true, operation: 'management-cancel' }); }
+      const confirmedCancellation = async () => {
+        const reconciliation = await reconcileCancellation(input, operation);
+        if (reconciliation.cancelled) return Object.freeze({ cancelled: true, notificationPolicy: 'sendUpdates=all' });
+        throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment cancellation.', { retryable: true, operation: 'management-cancel' });
+      };
+      try { const response = await api(operation, path, { method: 'DELETE', headers: { 'if-match': input.etag } }); if (response.status === 412) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar event changed before cancellation.'); if (response.ok) return await confirmedCancellation(); throw await googleErrorFromResponse(response, 'management-cancel'); }
+      catch (error) { if (error instanceof GoogleCalendarError && !['TRANSPORT_FAILED', 'GOOGLE_UNAVAILABLE'].includes(error.code)) throw error; try { return await confirmedCancellation(); } catch {} throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm appointment cancellation.', { retryable: true, operation: 'management-cancel' }); }
     }); },
     async deleteEventForCompensation(eventId) { return runOperation(async (operation) => {
       assertEventId(eventId);

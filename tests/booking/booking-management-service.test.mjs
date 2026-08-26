@@ -25,6 +25,7 @@ test('management service persists normalized active and terminal records after a
     async getVerifiedAttendee(input) { calls.push(['attendee', input]); return { email: 'client@example.com', etag: '"v1"' }; },
     async reschedulePrivateEvent(input) { calls.push(['reschedule', input]); return { eventId: input.eventId, start: input.start, end: input.end }; },
     async cancelPrivateEvent(input) { calls.push(['cancel', input]); return { cancelled: true }; },
+    async reconcileCancelledPrivateEvent(input) { calls.push(['reconcile-cancel', input]); return { cancelled: true }; },
   };
   const notifications = []; const notifier = { async send(input) { notifications.push(input); return { delivered: true }; } };
   const service = createBookingManagementService({ calendar, ports, policy, notifier, now: () => Temporal.Instant.fromEpochMilliseconds(clock) });
@@ -50,7 +51,7 @@ test('management cutoff accepts the operational grace and is enforced again afte
   let clock = Date.parse('2027-01-03T08:00:00Z');
   const ports = createLocalCoordinationPorts({ state: createLocalCoordinationState(), now: () => clock });
   const cancelCalls = []; const rescheduleCalls = [];
-  const calendar = { async listBlockingEvents() { return []; }, async getVerifiedAttendee() { return { email: 'client@example.com', etag: '"v1"' }; }, async reschedulePrivateEvent(input) { rescheduleCalls.push(input); }, async cancelPrivateEvent(input) { cancelCalls.push(input); } };
+  const calendar = { async listBlockingEvents() { return []; }, async getVerifiedAttendee() { return { email: 'client@example.com', etag: '"v1"' }; }, async reschedulePrivateEvent(input) { rescheduleCalls.push(input); }, async cancelPrivateEvent(input) { cancelCalls.push(input); }, async reconcileCancelledPrivateEvent() { return { cancelled: true }; } };
   const service = createBookingManagementService({ calendar, ports, policy, now: () => Temporal.Instant.fromEpochMilliseconds(clock) }); const context = { subjectDigest: 'c'.repeat(64) };
   const createRecord = async (value, suffix) => {
     const currentSecret = String.fromCharCode(97 + suffix).repeat(43); const currentDigest = createHash('sha256').update(currentSecret, 'utf8').digest('hex');
@@ -81,6 +82,7 @@ test('rescheduling uses the same grace boundary before and after the lease', asy
     async getVerifiedAttendee() { return { email: 'client@example.com', etag: '"v1"' }; },
     async reschedulePrivateEvent(input) { rescheduleCalls.push(input); },
     async cancelPrivateEvent() {},
+    async reconcileCancelledPrivateEvent() { return { cancelled: true }; },
   };
   const service = createBookingManagementService({ calendar, ports, policy, now: () => Temporal.Instant.fromEpochMilliseconds(clock) });
   const context = { subjectDigest: 'e'.repeat(64) };
@@ -104,4 +106,65 @@ test('rescheduling uses the same grace boundary before and after the lease', asy
   clock = Date.parse('2027-01-03T08:00:00Z');
   await assert.rejects(crossingService.reschedule(crossingSecret, { start: movedStart }, context), { code: 'RESCHEDULE_CUTOFF' });
   assert.equal(rescheduleCalls.length, 3);
+});
+
+test('a cancellation persistence interruption is reconciled without exposing details or repeating the Calendar cancellation', async () => {
+  let clock = Date.parse(nowValue); const ports = createLocalCoordinationPorts({ state: createLocalCoordinationState(), now: () => clock });
+  await ports.management.create({ secretDigest: digest, ttlSeconds: 600_000, record: { eventId: 'event12345', serviceId: 'makeup', start, end, workTrack: 'makeup', marker, state: 'active' } });
+  let failTerminalTransition = true; const transition = ports.management.transition;
+  const interruptedPorts = { ...ports, management: { ...ports.management, async transition(input) { if (failTerminalTransition && input.expectedState === 'mutation_intent' && input.state === 'terminal') { failTerminalTransition = false; throw new Error('persistence interrupted'); } return transition(input); } } };
+  const calls = []; const calendar = {
+    async listBlockingEvents() { return []; },
+    async getVerifiedAttendee() { return { email: 'client@example.com', etag: '"v1"' }; },
+    async reschedulePrivateEvent() {},
+    async cancelPrivateEvent(input) { calls.push(['cancel', input]); return { cancelled: true }; },
+    async reconcileCancelledPrivateEvent(input) { calls.push(['reconcile', input]); return { cancelled: true }; },
+  };
+  const notifications = []; const notifier = { async send(input) { notifications.push(input); return { delivered: true }; } };
+  const service = createBookingManagementService({ calendar, ports: interruptedPorts, policy, notifier, now: () => Temporal.Instant.fromEpochMilliseconds(clock) }); const context = { subjectDigest: 'c'.repeat(64) };
+  await assert.rejects(service.cancel(secret, context), { code: 'BOOKING_UNKNOWN' });
+  assert.equal((await ports.management.get({ secretDigest: digest })).state, 'mutation_intent');
+  await assert.rejects(service.read(secret, context), { code: 'MANAGEMENT_UNAVAILABLE' });
+  assert.equal((await ports.management.get({ secretDigest: digest })).state, 'terminal');
+  await assert.rejects(service.cancel(secret, context), { code: 'MANAGEMENT_UNAVAILABLE' });
+  assert.deepEqual(calls.map(([name]) => name), ['cancel', 'reconcile']);
+  // Recovery has only digest-bound event state, not a trusted attendee, so it
+  // deliberately terminalizes without inventing or recovering a mail target.
+  assert.deepEqual(notifications, []);
+});
+
+test('cancellation reconciliation never terminalizes after its lease is lost', async () => {
+  let clock = Date.parse(nowValue); const ports = createLocalCoordinationPorts({ state: createLocalCoordinationState(), now: () => clock });
+  await ports.management.create({ secretDigest: digest, ttlSeconds: 600_000, record: { eventId: 'event12345', serviceId: 'makeup', start, end, workTrack: 'makeup', marker, state: 'mutation_intent', operation: 'cancel' } });
+  let terminalTransitions = 0; const transition = ports.management.transition;
+  const lostLeasePorts = { ...ports, management: { ...ports.management, async transition(input) { if (input.expectedState === 'mutation_intent' && input.state === 'terminal') terminalTransitions += 1; return transition(input); } } };
+  const calendar = {
+    async listBlockingEvents() { return []; },
+    async getVerifiedAttendee() { throw new Error('not used'); },
+    async reschedulePrivateEvent() { throw new Error('not used'); },
+    async cancelPrivateEvent() { throw new Error('must not repeat cancellation'); },
+    async reconcileCancelledPrivateEvent() { clock += policy.lockLeaseMs; return { cancelled: true }; },
+  };
+  const service = createBookingManagementService({ calendar, ports: lostLeasePorts, policy, now: () => Temporal.Instant.fromEpochMilliseconds(clock) });
+  await assert.rejects(service.read(secret, { subjectDigest: 'c'.repeat(64) }), { code: 'BOOKING_UNKNOWN' });
+  assert.equal(terminalTransitions, 0);
+  assert.equal((await ports.management.get({ secretDigest: digest })).state, 'mutation_intent');
+});
+
+test('an active or uncertain cancellation reconciliation stays fail-closed', async () => {
+  let clock = Date.parse(nowValue); const ports = createLocalCoordinationPorts({ state: createLocalCoordinationState(), now: () => clock });
+  await ports.management.create({ secretDigest: digest, ttlSeconds: 600_000, record: { eventId: 'event12345', serviceId: 'makeup', start, end, workTrack: 'makeup', marker, state: 'mutation_intent', operation: 'cancel' } });
+  let reconciliationAttempts = 0; const calls = []; const calendar = {
+    async listBlockingEvents() { return []; },
+    async getVerifiedAttendee() { throw new Error('not used'); },
+    async reschedulePrivateEvent() { throw new Error('not used'); },
+    async cancelPrivateEvent() { calls.push('cancel'); throw new Error('must not repeat cancellation'); },
+    async reconcileCancelledPrivateEvent() { calls.push('reconcile'); reconciliationAttempts += 1; if (reconciliationAttempts === 1) return { cancelled: false }; throw new Error('provider state uncertain'); },
+  };
+  const service = createBookingManagementService({ calendar, ports, policy, now: () => Temporal.Instant.fromEpochMilliseconds(clock) }); const context = { subjectDigest: 'c'.repeat(64) };
+  await assert.rejects(service.read(secret, context), { code: 'BOOKING_UNKNOWN' });
+  await assert.rejects(service.read(secret, context), { code: 'BOOKING_UNKNOWN' });
+  assert.equal((await ports.management.get({ secretDigest: digest })).state, 'mutation_intent');
+  await assert.rejects(service.cancel(secret, context), { code: 'BOOKING_UNKNOWN' });
+  assert.deepEqual(calls, ['reconcile', 'reconcile']);
 });

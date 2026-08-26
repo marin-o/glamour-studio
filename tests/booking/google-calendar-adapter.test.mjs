@@ -132,6 +132,45 @@ test('management updates require an exact snapshot, use If-Match, and fail close
   await assert.rejects(ambiguous.getVerifiedAttendee({ eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker }), { code: 'VERIFICATION_FAILED' });
 });
 
+test('cancellation reconciliation accepts sparse cancelled tombstones but verifies retained managed fields', async () => {
+  const eventId = eventIdFromIdempotencyKey(expected.idempotencyKey); const marker = `v1:${createHash('sha256').update(expected.idempotencyKey).digest('hex')}`;
+  const input = { eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker };
+  const missing = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(404)]) });
+  assert.deepEqual(await missing.reconcileCancelledPrivateEvent(input), { cancelled: true });
+  const sparse = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ id: eventId, status: 'cancelled' })]) });
+  assert.deepEqual(await sparse.reconcileCancelledPrivateEvent(input), { cancelled: true });
+  const cancelled = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ status: 'cancelled' }))]) });
+  assert.deepEqual(await cancelled.reconcileCancelledPrivateEvent(input), { cancelled: true });
+  const active = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor())]) });
+  assert.deepEqual(await active.reconcileCancelledPrivateEvent(input), { cancelled: false });
+  for (const tombstone of [eventFor({ visibility: 'default', status: 'cancelled' }), eventFor({ status: 'cancelled', extendedProperties: { private: { bookingIdempotencyDigest: marker, bookingWorkTrack: 'hair' } } }), eventFor({ status: 'cancelled', start: { dateTime: '2026-07-15T10:00:00Z' } })]) {
+    const mismatch = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(tombstone)]) });
+    await assert.rejects(mismatch.reconcileCancelledPrivateEvent(input), { code: 'VERIFICATION_FAILED' });
+  }
+});
+
+test('managed cancellation makes one DELETE and proves missing, cancelled, active, and mismatched follow-ups safely', async () => {
+  const eventId = eventIdFromIdempotencyKey(expected.idempotencyKey); const marker = `v1:${createHash('sha256').update(expected.idempotencyKey).digest('hex')}`;
+  const input = { eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker, attendee: 'client@example.com', etag: '"current"' };
+  const cancelledCalls = []; const cancelled = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), json({ id: eventId, status: 'cancelled' })], cancelledCalls) });
+  assert.deepEqual(await cancelled.cancelPrivateEvent(input), { cancelled: true, notificationPolicy: 'sendUpdates=all' });
+  assert.equal(cancelledCalls.filter((call) => call.init.method === 'DELETE').length, 1);
+  assert.equal(cancelledCalls[1].init.method, 'DELETE');
+  assert.match(cancelledCalls[1].url, /sendUpdates=all/);
+
+  const missingCalls = []; const missing = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), empty(404)], missingCalls) });
+  assert.deepEqual(await missing.cancelPrivateEvent(input), { cancelled: true, notificationPolicy: 'sendUpdates=all' });
+  assert.equal(missingCalls.filter((call) => call.init.method === 'DELETE').length, 1);
+
+  const activeCalls = []; const active = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), json(eventFor())], activeCalls) });
+  await assert.rejects(active.cancelPrivateEvent(input), { code: 'AMBIGUOUS_MUTATION' });
+  assert.equal(activeCalls.filter((call) => call.init.method === 'DELETE').length, 1);
+
+  const mismatchCalls = []; const mismatch = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), json(eventFor({ visibility: 'default', status: 'cancelled' }))], mismatchCalls) });
+  await assert.rejects(mismatch.cancelPrivateEvent(input), { code: 'VERIFICATION_FAILED' });
+  assert.equal(mismatchCalls.filter((call) => call.init.method === 'DELETE').length, 1);
+});
+
 test('passes an abort signal for bounded request timeout', async () => {
   let signal;
   const adapter = createGoogleCalendarAdapter({

@@ -186,13 +186,14 @@ export default function BookingManagementExperience() {
       return;
     }
     if (!result.ok) {
+      setBooking(null);
       setErrorKind(result.kind);
       setView("error");
       return;
     }
     setBooking(result.booking);
     setErrorKind("");
-    setView(result.booking.status === "cancelled" ? "cancelled" : "ready");
+    setView(result.booking.status === "cancelled" ? "cancelled" : result.booking.canReschedule ? "ready" : "cutoff");
   }, []);
 
   useEffect(() => {
@@ -212,6 +213,8 @@ export default function BookingManagementExperience() {
       apiRef.current = createBookingApi({ fetch: (...args) => fetch(...args), capability: () => capabilityRef.current });
       const controller = new AbortController();
       readControllerRef.current = controller;
+      setBooking(null);
+      setErrorKind("");
       setView("loading");
       readBooking(controller.signal);
     };
@@ -245,21 +248,36 @@ export default function BookingManagementExperience() {
     setAvailabilityState("loading");
     const result = await apiRef.current?.managementAvailability({ date, signal: controller.signal });
     if (controller.signal.aborted) return;
-    if (!result || result.kind === "safe" || result.kind === "invalid") {
-      setAvailabilityState("invalid");
+    if (!result || result.kind === "safe") {
+      setBooking(null);
+      setStarts([]);
+      setAvailabilityState("idle");
+      setErrorKind("");
+      setView("safe");
+      return;
+    }
+    if (result.kind === "invalid") {
+      setBooking(null);
+      setStarts([]);
+      setAvailabilityState("idle");
+      setErrorKind(result.kind);
+      setView("error");
       return;
     }
     if (result.kind === "cutoff") {
+      setBooking((current) => current ? { ...current, canReschedule: false } : current);
       setAvailabilityState("idle");
       setView("cutoff");
       return;
     }
     if (!result.ok) {
+      setBooking(null);
       setErrorKind(result.kind);
       setView("error");
       return;
     }
     if (result.availability?.serviceId !== booking?.serviceId || result.availability?.date !== date) {
+      setBooking(null);
       setErrorKind("provider");
       setView("error");
       return;
@@ -295,17 +313,20 @@ export default function BookingManagementExperience() {
       setNotice("conflict");
       loadAvailability(selectedDate);
     } else if (result?.kind === "cutoff") {
+      setBooking((current) => current ? { ...current, canReschedule: false } : current);
       setView("cutoff");
     } else if (safeStates.has(result?.kind)) {
+      setBooking(null);
       setView("safe");
     } else {
+      setBooking(null);
       setErrorKind(result?.kind ?? "provider");
       setView("error");
     }
   };
 
   const beginCancel = () => {
-    if (!managementCanCancel(booking)) {
+    if (!managementCanReschedule(booking) || !managementCanCancel(booking)) {
       setView("cancellationCutoff");
       return;
     }
@@ -323,9 +344,14 @@ export default function BookingManagementExperience() {
       return;
     }
     setMutationState("idle");
-    if (result?.kind === "cancellationCutoff") setView("cancellationCutoff");
-    else if (safeStates.has(result?.kind)) setView("safe");
-    else {
+    if (result?.kind === "cancellationCutoff") {
+      setBooking((current) => current ? { ...current, canReschedule: false } : current);
+      setView("cancellationCutoff");
+    } else if (safeStates.has(result?.kind)) {
+      setBooking(null);
+      setView("safe");
+    } else {
+      setBooking(null);
       setErrorKind(result?.kind ?? "provider");
       setView("error");
     }
@@ -335,8 +361,14 @@ export default function BookingManagementExperience() {
     readControllerRef.current?.abort();
     const controller = new AbortController();
     readControllerRef.current = controller;
+    setBooking(null);
+    setErrorKind("");
     setView("loading");
     readBooking(controller.signal);
+  };
+
+  const returnToReady = () => {
+    setView(managementCanReschedule(booking) ? "ready" : "cutoff");
   };
 
   const errorText = errorKind === "rateLimited" ? copy.rateLimited : errorKind === "unknown" ? copy.unknown : copy.provider;
@@ -365,17 +397,17 @@ export default function BookingManagementExperience() {
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-accent">{view === "ready" ? copy.confirmed : view === "cancelled" ? copy.cancelled : copy.rescheduledTitle}</p>
                 <h2 ref={headingRef} tabIndex={-1} className="mt-3 text-3xl font-bold tracking-[-0.025em]">{view === "ready" ? copy.summaryTitle : view === "cancelled" ? copy.cancelledTitle : copy.rescheduledTitle}</h2>
                 <p className="mt-4 text-lg leading-relaxed text-muted">{view === "cancelled" ? copy.cancelledBody : view === "rescheduled" ? copy.rescheduledBody : skopjeLabel(booking.start, language)}</p>
-                {view === "ready" && (
+                {view === "ready" && managementCanReschedule(booking) && (
                   <div className="mt-7 flex flex-wrap gap-3"><PrimaryButton onClick={beginReschedule} type="button">{copy.reschedule}</PrimaryButton><SecondaryButton onClick={beginCancel} type="button">{copy.cancel}</SecondaryButton></div>
                 )}
                 {view !== "ready" && <PhoneFallback copy={bookingCopy[language]} />}
               </section>
             )}
             {view === "cutoff" && (
-              <section className="pt-3"><h2 ref={headingRef} tabIndex={-1} className="text-3xl font-bold tracking-[-0.025em]">{copy.cutoffTitle}</h2><p className="mt-4 text-lg leading-relaxed text-muted">{copy.cutoffBody}</p><PhoneFallback copy={bookingCopy[language]} /><div className="mt-6"><SecondaryButton onClick={() => setView("ready")} type="button">{copy.back}</SecondaryButton></div></section>
+              <section className="pt-3"><h2 ref={headingRef} tabIndex={-1} className="text-3xl font-bold tracking-[-0.025em]">{copy.cutoffTitle}</h2><p className="mt-4 text-lg leading-relaxed text-muted">{copy.cutoffBody}</p><PhoneFallback copy={bookingCopy[language]} /><div className="mt-6"><SecondaryButton onClick={returnToReady} type="button">{copy.back}</SecondaryButton></div></section>
             )}
             {view === "cancellationCutoff" && (
-              <section className="pt-3"><h2 ref={headingRef} tabIndex={-1} className="text-3xl font-bold tracking-[-0.025em]">{copy.cancellationCutoffTitle}</h2><p className="mt-4 text-lg leading-relaxed text-muted">{copy.cancellationCutoffBody}</p><PhoneFallback copy={bookingCopy[language]} /><div className="mt-6"><SecondaryButton onClick={() => setView("ready")} type="button">{copy.back}</SecondaryButton></div></section>
+              <section className="pt-3"><h2 ref={headingRef} tabIndex={-1} className="text-3xl font-bold tracking-[-0.025em]">{copy.cancellationCutoffTitle}</h2><p className="mt-4 text-lg leading-relaxed text-muted">{copy.cancellationCutoffBody}</p><PhoneFallback copy={bookingCopy[language]} /><div className="mt-6"><SecondaryButton onClick={returnToReady} type="button">{copy.back}</SecondaryButton></div></section>
             )}
             {view === "cancelConfirm" && booking && (
               <section className="pt-3"><fieldset><legend ref={headingRef} tabIndex={-1} className="text-3xl font-bold tracking-[-0.025em]">{copy.cancelTitle}</legend><p className="mt-4 text-lg leading-relaxed text-muted">{copy.cancelBody}</p><p className="mt-5 rounded-[1.5rem] border border-line bg-surface p-4 font-bold">{skopjeLabel(booking.start, language)}</p><p aria-live="polite" className="min-h-6 pt-4 text-sm font-semibold text-accent-deep">{notice ? copy[notice] ?? "" : ""}</p><div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row"><SecondaryButton disabled={isWorking} onClick={() => setView("ready")} type="button">{copy.keepBooking}</SecondaryButton><PrimaryButton disabled={isWorking} onClick={submitCancel} type="button">{isWorking ? copy.cancelling : copy.confirmCancel}</PrimaryButton></div></fieldset></section>

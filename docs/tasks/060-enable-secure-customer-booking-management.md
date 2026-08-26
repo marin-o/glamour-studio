@@ -69,6 +69,19 @@ The seasonal-opening-hours delta uses review posture `none`: it is a localized,
 owner-specified policy constant with deterministic month-boundary tests and no
 new data, authorization, provider, or architecture surface.
 
+The owner-authorized Netlify production recovery uses review posture
+`adversarial`: it changes production secrets and runtime configuration and
+requires a new production deployment. Recovery is limited to the nine missing
+variables documented by this task, followed by read-only live availability
+verification and one bounded adversarial review.
+
+The interrupted-cancellation correction retains review posture `adversarial`:
+it repairs an authorization-bearing record that can diverge from an already
+cancelled Calendar event. A `mutation_intent` must never be presented as an
+active booking or expose another mutation affordance; safe reconciliation must
+finalize a Calendar-confirmed cancellation without repeating the provider
+mutation, and uncertain provider state must remain fail-closed.
+
 ## Implementation decisions
 
 - Use `https://glamourstudio.mk/booking/manage#<secret>` and send the fragment
@@ -237,6 +250,39 @@ new data, authorization, provider, or architecture surface.
   and `git diff --check` passed. The full booking suite remains 140/142 with the
   same two unrelated stale static failures. Review posture was `none` and no
   live provider call was made.
+- Owner-authorized production recovery (2026-08-26): Netlify production was
+  missing `RESEND_API_KEY` and the eight documented management rate-limit
+  variables, so commit `049c767` deployed successfully but public availability
+  failed closed with HTTP 503 `BOOKING_NOT_CONFIGURED`. Added exactly those nine
+  production-context variables through the authenticated Netlify API without
+  exposing secret values, then published deploy `6a8f56e543ff84ce9142919e`
+  from unchanged commit `049c767`. Read-only availability returned HTTP 200 and
+  `ok: true` on the canonical, default Netlify, and immutable deploy domains.
+  One bounded `sol_high` adversarial review found no actionable issues and
+  confirmed the intended keys, values, contexts, scopes, secret handling,
+  deployed commit, and live recovery. No live booking or Calendar mutation was
+  performed; production email delivery remains to be exercised by the planned
+  owner-authorized E2E test.
+- Interrupted-cancellation correction (2026-08-26): a customer-observed live
+  cancellation could leave the capability in `mutation_intent`, after which a
+  retry incorrectly exposed the appointment details and another cancellation
+  affordance. Management reads now reconcile cancellation intents under the
+  studio lease with one read-only exact-event Calendar check, reassert lease
+  ownership before terminal CAS, accept a matching missing or cancelled Google
+  tombstone, and never repeat Calendar DELETE. Active, mismatched, uncertain,
+  or lost-lease states remain sanitized and fail closed. The UI independently
+  clears stale details and suppresses mutation controls whenever the capability
+  or `canReschedule` state is unavailable. Recovery cannot resend the branded
+  cancellation email because the privacy-preserving digest record contains no
+  trusted customer address; ordinary uninterrupted cancellation still attempts
+  its idempotent email after terminal persistence. One bounded `sol_high`
+  adversarial review found cancelled-GET, sparse-tombstone, post-provider lease,
+  recovered-notification, and stale-availability UI issues; one correction pass
+  addressed the actionable correctness issues while preserving the deliberate
+  no-contact-data persistence boundary. Final focused tests passed 41/41,
+  targeted ESLint, `pnpm build`, and `git diff --check` passed. No live booking,
+  management-link, Calendar mutation, commit, push, or deployment was performed;
+  the fix is not live yet.
 - Owner verification pending: rendered browser behavior, including visual fit,
   focus movement, keyboard operation, and the customer-visible email rendering.
   Completion approval remains with the owner.

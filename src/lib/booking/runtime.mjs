@@ -46,7 +46,7 @@ export function createBookingRuntime({
 } = {}) {
   if (env?.[LOCAL_MODE_FLAG] === '1' && nodeEnv === 'development') {
     const selectedCalendar = calendar ?? createGoogleCalendarAdapter({ env }); const selectedPorts = ports ?? createLocalCoordinationPorts({ state: getLocalCoordinationState() });
-    const management = ['reschedulePrivateEvent', 'cancelPrivateEvent', 'getVerifiedAttendee'].every((method) => typeof selectedCalendar[method] === 'function') ? createBookingManagementService({ calendar: selectedCalendar, ports: selectedPorts, policy: LOCAL_POLICY, notifier: env?.RESEND_API_KEY ? createResendNotifier({ env }) : undefined, ...(now ? { now } : {}) }) : null;
+    const management = ['reschedulePrivateEvent', 'cancelPrivateEvent', 'reconcileCancelledPrivateEvent', 'getVerifiedAttendee'].every((method) => typeof selectedCalendar[method] === 'function') ? createBookingManagementService({ calendar: selectedCalendar, ports: selectedPorts, policy: LOCAL_POLICY, notifier: env?.RESEND_API_KEY ? createResendNotifier({ env }) : undefined, ...(now ? { now } : {}) }) : null;
     const service = createBookingService({
       calendar: selectedCalendar,
       ports: selectedPorts, management,
@@ -65,7 +65,7 @@ export function createBookingRuntime({
   try {
     const config = getProductionBookingConfig(env, nodeEnv);
     const selectedCalendar = calendar ?? createGoogleCalendarAdapter({ env, timeoutMs: config.policy.providerOperationBudgetMs }); const selectedPorts = ports ?? createProductionCoordinationPorts({ redis: redis ?? createProductionRedisClient({ url: config.redisUrl, token: config.redisToken }), ratePolicy: config.ratePolicy });
-    const management = ['reschedulePrivateEvent', 'cancelPrivateEvent', 'getVerifiedAttendee'].every((method) => typeof selectedCalendar[method] === 'function') ? createBookingManagementService({ calendar: selectedCalendar, ports: selectedPorts, policy: config.policy, notifier: createResendNotifier({ env }), ...(now ? { now } : {}) }) : null;
+    const management = ['reschedulePrivateEvent', 'cancelPrivateEvent', 'reconcileCancelledPrivateEvent', 'getVerifiedAttendee'].every((method) => typeof selectedCalendar[method] === 'function') ? createBookingManagementService({ calendar: selectedCalendar, ports: selectedPorts, policy: config.policy, notifier: createResendNotifier({ env }), ...(now ? { now } : {}) }) : null;
     const service = createBookingService({
       calendar: selectedCalendar,
       ports: selectedPorts, management,

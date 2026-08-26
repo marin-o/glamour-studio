@@ -26,9 +26,10 @@ function ttl(end, now) { const seconds = Math.ceil((parseInstant(end).epochMilli
 
 export function createBookingManagementService({ calendar, ports, policy, notifier, now = () => Temporal.Now.instant() } = {}) {
   assertPorts(ports);
-  if (!calendar || typeof calendar.listBlockingEvents !== 'function' || typeof calendar.reschedulePrivateEvent !== 'function' || typeof calendar.cancelPrivateEvent !== 'function' || typeof calendar.getVerifiedAttendee !== 'function') throw new TypeError('Management calendar is required.');
+  if (!calendar || typeof calendar.listBlockingEvents !== 'function' || typeof calendar.reschedulePrivateEvent !== 'function' || typeof calendar.cancelPrivateEvent !== 'function' || typeof calendar.reconcileCancelledPrivateEvent !== 'function' || typeof calendar.getVerifiedAttendee !== 'function') throw new TypeError('Management calendar is required.');
   const protect = async (lease) => {
     const renewed = assertLease(await ports.lock.renew({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken, leaseMs: policy.lockLeaseMs, minimumRemainingMs: policy.providerOperationBudgetMs + policy.leaseSafetyMs }));
+    if (renewed.owner !== lease.owner || renewed.fencingToken !== lease.fencingToken) throw new BookingError('BOOKING_UNAVAILABLE', 503);
     await ports.lock.assertOwnership({ scope: 'studio-booking', owner: renewed.owner, fencingToken: renewed.fencingToken, minimumRemainingMs: policy.providerOperationBudgetMs + policy.leaseSafetyMs });
   };
   const unknown = () => { throw new BookingError('BOOKING_UNKNOWN', 503); };
@@ -44,6 +45,32 @@ export function createBookingManagementService({ calendar, ports, policy, notifi
   const transition = async (digest, record, state, patch = {}) => {
     const authoritativeEnd = patch.end ?? record.end;
     try { return await ports.management.transition({ secretDigest: digest, expectedVersion: record.version, expectedState: record.state, state, ttlSeconds: ttl(authoritativeEnd, now), ...patch }); } catch { unknown(); }
+  };
+  const unavailable = () => { throw new BookingError('MANAGEMENT_UNAVAILABLE', 404); };
+  const reconcileCancelledIntent = async (secret, record) => {
+    if (record.state !== 'mutation_intent' || record.operation !== 'cancel') unknown();
+    const digest = secretDigest(secret);
+    let lease;
+    try {
+      lease = assertLease(await ports.lock.acquire({ scope: 'studio-booking', owner: randomUUID(), timeoutMs: policy.lockTimeoutMs, leaseMs: policy.lockLeaseMs }));
+      await protect(lease);
+      const current = await authenticated(secret);
+      if (current.state === 'terminal') unavailable();
+      if (current.state !== 'mutation_intent' || current.operation !== 'cancel') unknown();
+      const reconciliation = await calendar.reconcileCancelledPrivateEvent({ eventId: current.eventId, start: current.start, end: current.end, workTrack: current.workTrack, marker: current.marker });
+      if (!reconciliation || reconciliation.cancelled !== true) unknown();
+      // The management CAS has no fencing token. Reassert immediately after
+      // the provider read so a lost lease cannot terminalize the record.
+      await protect(lease);
+      await transition(digest, current, 'terminal');
+      // The digest-only management record intentionally has no customer
+      // contact. A cancelled tombstone cannot safely recover one, so recovery
+      // preserves privacy instead of guessing or sending a status email.
+      unavailable();
+    } catch (error) {
+      if (error instanceof BookingError) throw error;
+      unknown();
+    } finally { try { await lease?.release({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken }); } catch {} }
   };
   async function issueAcceptedBooking({ eventId, serviceId, start, end, email, marker, revokeDigest }) {
     if (revokeDigest) {
@@ -66,12 +93,21 @@ export function createBookingManagementService({ calendar, ports, policy, notifi
     const rate = await ports.rateLimit.check({ action: 'management_read', subjectDigest: context.subjectDigest });
     const record = await authenticated(secret);
     if (!rate.allowed) throw new BookingError('RATE_LIMITED', 429, { retryAfter: rate.retryAfter });
+    if (record.state === 'mutation_intent') {
+      if (record.operation === 'cancel') await reconcileCancelledIntent(secret, record);
+      unknown();
+    }
+    if (record.state !== 'active') unknown();
     return publicRecord(record, now);
   }
   async function availability(secret, date, context) {
     const rate = await ports.rateLimit.check({ action: 'management_availability', subjectDigest: context.subjectDigest });
     const record = await authenticated(secret);
     if (!rate.allowed) throw new BookingError('RATE_LIMITED', 429, { retryAfter: rate.retryAfter });
+    if (record.state === 'mutation_intent') {
+      if (record.operation === 'cancel') await reconcileCancelledIntent(secret, record);
+      unknown();
+    }
     if (record.state !== 'active' || !publicRecord(record, now).canReschedule) throw new BookingError('RESCHEDULE_CUTOFF', 409);
     let window; try { window = getWorkingWindow(date); } catch { throw new BookingError('INVALID_REQUEST', 400); }
     const busy = await calendar.listBlockingEvents({ timeMin: window.opening, timeMax: window.closing });
