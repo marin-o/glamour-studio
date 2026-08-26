@@ -9,6 +9,14 @@ const eventId = 'event12345';
 const manageUrl = `https://glamourstudio.mk/booking/manage#${secret}`;
 const base = { serviceId: 'makeup', start: '2026-08-25T08:00:00Z', end: '2026-08-25T09:15:00Z', eventId };
 
+function extractHtmlActionAnchors(html) {
+  return [...html.matchAll(/<a href="([^"]+)"[^>]*>([^<]*)<\/a>/gu)].map(([, href, text]) => ({ href, text }));
+}
+
+function extractHtmlFallbackPanels(html) {
+  return [...html.matchAll(/<p style="margin:0 0 6px;font-weight:600">([^<]*)<\/p><a href="([^"]+)"[^>]*>([^<]*)<\/a>/gu)].map(([, label, href, text]) => ({ label, href, text }));
+}
+
 test('Resend template is Macedonian-first, bilingual, and offers a safe calendar action only for active appointments', () => {
   const confirmation = buildBookingEmail({ kind: 'confirmed', ...base, sequence: 0, manageUrl });
   const rescheduled = buildBookingEmail({ kind: 'rescheduled', ...base, sequence: 3 });
@@ -20,6 +28,46 @@ test('Resend template is Macedonian-first, bilingual, and offers a safe calendar
   }
   assert.match(confirmation.text, new RegExp(manageUrl)); assert.doesNotMatch(rescheduled.text, /booking\/manage/); assert.equal(cancelled.attachment, undefined); assert.doesNotMatch(cancelled.text, /Google Calendar|\.ics|manage/i);
   assert.throws(() => buildBookingEmail({ kind: 'confirmed', serviceId: 'makeup', start: base.start, manageUrl }));
+});
+
+test('HTML action fallbacks are localized, quiet, safely wrapped, and preserve raw text URLs', () => {
+  const confirmation = buildBookingEmail({ kind: 'confirmed', ...base, sequence: 0, manageUrl });
+  const calendarUrl = confirmation.text.match(/https:\/\/calendar\.google\.com\/calendar\/render\S+/u)?.[0];
+  assert.ok(calendarUrl);
+  const escapedCalendarUrl = calendarUrl.replaceAll('&', '&amp;');
+  assert.deepEqual(extractHtmlFallbackPanels(confirmation.html), [
+    { label: 'Копчето за управување не работи? Копирајте го линкот:', href: manageUrl, text: manageUrl },
+    { label: 'Копчето за календар не работи? Копирајте го линкот:', href: escapedCalendarUrl, text: escapedCalendarUrl },
+    { label: 'Management button not working? Copy this link:', href: manageUrl, text: manageUrl },
+    { label: 'Calendar button not working? Copy this link:', href: escapedCalendarUrl, text: escapedCalendarUrl },
+  ]);
+  assert.deepEqual(extractHtmlActionAnchors(confirmation.html), [
+    { href: manageUrl, text: 'Управувајте со терминот' },
+    { href: manageUrl, text: manageUrl },
+    { href: escapedCalendarUrl, text: 'Додадете во Google Calendar' },
+    { href: escapedCalendarUrl, text: escapedCalendarUrl },
+    { href: manageUrl, text: 'Manage appointment' },
+    { href: manageUrl, text: manageUrl },
+    { href: escapedCalendarUrl, text: 'Add to Google Calendar' },
+    { href: escapedCalendarUrl, text: escapedCalendarUrl },
+  ]);
+  assert.equal((confirmation.html.match(new RegExp(`href="${manageUrl.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}"`, 'gu')) ?? []).length, 4);
+  assert.equal((confirmation.html.match(new RegExp(`>${manageUrl.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}<\\/a>`, 'gu')) ?? []).length, 2);
+  assert.equal((confirmation.html.match(new RegExp(`href="${escapedCalendarUrl.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}"`, 'gu')) ?? []).length, 4);
+  assert.equal((confirmation.html.match(new RegExp(`>${escapedCalendarUrl.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}<\\/a>`, 'gu')) ?? []).length, 2);
+  assert.match(confirmation.html, /background:#F6E7DE;[^"]*color:#6F5650/u);
+  assert.match(confirmation.html, /overflow-wrap:anywhere;word-break:break-all/u);
+  assert.equal(confirmation.html.includes(`href="${escapedCalendarUrl}"`), true);
+  assert.equal(confirmation.html.includes(`>${escapedCalendarUrl}</a>`), true);
+  assert.equal(confirmation.html.includes(calendarUrl), false);
+  assert.equal(confirmation.text.includes(`Manage appointment: ${manageUrl}`), true);
+  assert.equal(confirmation.text.includes(`Add to Google Calendar: ${calendarUrl}`), true);
+
+  const rescheduled = buildBookingEmail({ kind: 'rescheduled', ...base, sequence: 3 });
+  assert.doesNotMatch(rescheduled.html, /Management button not working|Копчето за управување/u);
+  assert.match(rescheduled.html, /Calendar button not working\? Copy this link:/u);
+  const cancelled = buildBookingEmail({ kind: 'cancelled', serviceId: 'makeup', start: base.start });
+  assert.doesNotMatch(cancelled.html, /button not working|Копчето за/u);
 });
 
 test('calendar attachment is CRLF iCalendar, deterministic, opaque, and free from secret or contact data', () => {

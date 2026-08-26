@@ -158,46 +158,41 @@ test('confirmation remains authoritative over deep-link service state and succes
   assert.match(booking, /serviceNames\[flow\.confirmation\.serviceId\]/);
 });
 
-test('success guidance covers Google Calendar unknown-sender confirmation in both languages', async () => {
+test('success guidance describes saved appointments and best-effort branded confirmation email in both languages', async () => {
   const booking = await read('src/components/booking/BookingExperience.jsx');
   const guidance = {
-    mk: bookingCopy.mk.invitationGuidance,
-    en: bookingCopy.en.invitationGuidance,
+    mk: bookingCopy.mk.confirmationGuidance,
+    en: bookingCopy.en.confirmationGuidance,
   };
 
-  assert.match(booking, /<p className="mt-4 text-sm leading-relaxed text-muted">\{t\.invitationGuidance\}<\/p>/);
+  assert.match(booking, /<p className="mt-4 text-sm leading-relaxed text-muted">\{t\.confirmationGuidance\}<\/p>/);
   assert.equal(typeof guidance.mk, 'string');
   assert.equal(typeof guidance.en, 'string');
   for (const requirement of [
     /Google Calendar/,
-    /Glamour Studio/,
-    /Проверете ја е-поштата/,
-    /Првата покана/,
-    /непознат испраќач/,
-    /Го познавам испраќачот/,
-    /одговорете со [„"]Да[“"]/,
-    /за да го додадете терминот/,
-    /може[^.]*автоматски/,
-    /не е загарантирано/,
+    /брендиран(?:а|ата)? потврда/iu,
+    /Apple Calendar/,
+    /Outlook/,
+    /\.ics/,
+    /најдобар обид/,
+    /ако пораката не пристигне/,
   ]) {
     assert.match(guidance.mk, requirement);
   }
   for (const requirement of [
     /Google Calendar/,
-    /Glamour Studio/,
-    /Check your email/,
-    /The first invitation/,
-    /unknown sender/,
-    /I know the sender/,
-    /reply [“"]Yes[”"]/,
-    /to add the appointment/,
-    /may[^.]*automatically/,
-    /not guaranteed/,
+    /appointment is saved|branded confirmation/iu,
+    /Apple Calendar/,
+    /Outlook/,
+    /\.ics/,
+    /best effort/,
+    /if the message does not arrive/,
   ]) {
     assert.match(guidance.en, requirement);
   }
-  assert.match(booking, /t\.invitation\[flow\.confirmation\.notification\]/);
+  assert.match(booking, /t\.confirmation\[flow\.confirmation\.notification\]/);
   assert.doesNotMatch(booking, /invitationGuidance[^\n]*aria-live/);
+  assert.doesNotMatch(`${guidance.mk}\n${guidance.en}`, /покан|invitation|unknown sender|I know the sender|reply [“"]Yes[”]/iu);
 });
 
 test('confirmation actions are localized, reset the client flow, and preserve home navigation', async () => {

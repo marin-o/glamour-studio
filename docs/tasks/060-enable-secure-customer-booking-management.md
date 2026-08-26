@@ -34,6 +34,9 @@ Calendar remains the staff-facing source of truth.
   for adding the appointment to Google Calendar, Apple Calendar, Outlook, or
   another calendar client. Do not put the management capability in the calendar
   file.
+- Present email actions as clear buttons while retaining each raw-URL fallback
+  in a visually quiet, readable “button not working?” panel instead of as an
+  equally prominent paragraph.
 
 ## Delta implementation note
 
@@ -48,8 +51,10 @@ Calendar remains the staff-facing source of truth.
   event identity and notification payloads never put contact data, capability,
   raw Calendar ID, or idempotency key in the calendar data. Cancellation has no
   calendar action or attachment.
-- Continue requesting Google attendee notifications; branded Resend mail is a
-  separate customer communication.
+- Keep the customer as an attendee on the private Google event, but suppress
+  Google's initial invitation email with `sendUpdates=none`; the branded
+  bilingual Resend message is the sole booking-confirmation email. Existing
+  rescheduling and cancellation update notifications remain unchanged.
 - After the feature is complete, reviewed, and validated, send the exact
   customer-facing confirmation template to `jakimoskimarino@gmail.com` as the
   owner-authorized live email test. Do not create or mutate a live Calendar
@@ -64,6 +69,16 @@ mutations, and lock-sensitive rescheduling/cancellation behavior.
 The grace-period delta retains `adversarial` review because it changes the
 authorization boundary for persistent Calendar mutations, even though the code
 change is localized and fully boundary-testable.
+
+The initial-invitation suppression delta retains `adversarial` review because
+it changes an external provider's customer-facing notification side effect and
+the handling of customer attendee data. Scope is limited to initial attendee
+attachment; later rescheduling and cancellation updates remain unchanged.
+
+The email-link presentation delta retains `adversarial` review because its HTML
+renders the secret management capability and external calendar URL. The change
+must remain presentational: preserve escaping, text-only fallbacks, URL values,
+and capability boundaries.
 
 The seasonal-opening-hours delta uses review posture `none`: it is a localized,
 owner-specified policy constant with deterministic month-boundary tests and no
@@ -283,6 +298,30 @@ mutation, and uncertain provider state must remain fail-closed.
   targeted ESLint, `pnpm build`, and `git diff --check` passed. No live booking,
   management-link, Calendar mutation, commit, push, or deployment was performed;
   the fix is not live yet.
+- Initial-invitation suppression correction (2026-08-27): initial attendee
+  attachment now uses Google Calendar `sendUpdates=none`, so the customer stays
+  attached to the private event without receiving a duplicate Google invitation
+  email. Rescheduling and cancellation retain `sendUpdates=all`; the branded
+  bilingual Resend message remains the customer booking email. Macedonian and
+  English confirmation copy now describes the saved appointment and best-effort
+  branded email/calendar actions without promising delivery or instructing the
+  customer to accept a Google invitation. One bounded `sol_high` adversarial
+  review found the stale invitation copy and a missing reschedule-policy test;
+  one correction pass addressed both while preserving the public response
+  schema. Final focused tests passed 65/65, targeted ESLint, `pnpm build`, and
+  `git diff --check` passed. No live booking, email, Calendar mutation, commit,
+  push, or deployment was performed; the correction is local and uncommitted.
+- Email-link presentation refinement (2026-08-27): HTML notification actions
+  retain their prominent buttons while each raw management or calendar URL now
+  sits in a muted warm fallback panel with a localized “button not working?”
+  label and defensive long-link wrapping. Plain-text URLs, escaping, provider
+  payloads, calendar attachments, and capability boundaries are unchanged. One
+  bounded `sol_high` adversarial review found no implementation defect and one
+  low test-structure gap; the single correction pass now binds every MK-first/
+  EN-second label to its intended URL and asserts exact capability occurrences.
+  The focused notifier suite passed 4/4, targeted ESLint, `pnpm build`, and
+  `git diff --check` passed. Cross-client rendered review remains owner-gated;
+  no live email, commit, push, or deployment was performed.
 - Owner verification pending: rendered browser behavior, including visual fit,
   focus movement, keyboard operation, and the customer-visible email rendering.
   Completion approval remains with the owner.

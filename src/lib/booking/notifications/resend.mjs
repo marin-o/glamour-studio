@@ -49,18 +49,21 @@ function content(kind, service, date, mk) {
     ? ['Додадете во Google Calendar', 'Користете го копчето подолу или приложената .ics-датотека за Google Calendar, Apple Calendar, Outlook или друг календар.']
     : ['Add to Google Calendar', 'Use the button below or the attached .ics file with Google Calendar, Apple Calendar, Outlook, or another calendar.'];
   if (kind === 'confirmed') return mk
-    ? ['Вашиот термин е потврден', `Термин за: ${name}\nВреме: ${date}`, 'Можете да презакажете или откажете онлајн само повеќе од дванаесет часа пред почетокот. За промени во последните дванаесет часа, јавете се во салонот.', 'Управувајте со терминот', ...calendar]
-    : ['Your appointment is confirmed', `Appointment: ${name}\nTime: ${date}`, 'You may reschedule or cancel online only more than twelve hours before the appointment. For changes within the final twelve hours, call the salon.', 'Manage appointment', ...calendar];
+    ? ['Вашиот термин е потврден', `Термин за: ${name}\nВреме: ${date}`, 'Можете да презакажете или откажете онлајн само повеќе од дванаесет часа пред почетокот. За промени во последните дванаесет часа, јавете се во салонот.', 'Управувајте со терминот', ...calendar, 'Копчето за управување не работи? Копирајте го линкот:', 'Копчето за календар не работи? Копирајте го линкот:']
+    : ['Your appointment is confirmed', `Appointment: ${name}\nTime: ${date}`, 'You may reschedule or cancel online only more than twelve hours before the appointment. For changes within the final twelve hours, call the salon.', 'Manage appointment', ...calendar, 'Management button not working? Copy this link:', 'Calendar button not working? Copy this link:'];
   if (kind === 'rescheduled') return mk
-    ? ['Вашиот термин е презакажан', `Термин за: ${name}\nНово време: ${date}`, 'За помош, одговорете на оваа порака или јавете се во салонот.', undefined, ...calendar]
-    : ['Your appointment has been rescheduled', `Appointment: ${name}\nNew time: ${date}`, 'For help, reply to this email or call the salon.', undefined, ...calendar];
+    ? ['Вашиот термин е презакажан', `Термин за: ${name}\nНово време: ${date}`, 'За помош, одговорете на оваа порака или јавете се во салонот.', undefined, ...calendar, undefined, 'Копчето за календар не работи? Копирајте го линкот:']
+    : ['Your appointment has been rescheduled', `Appointment: ${name}\nNew time: ${date}`, 'For help, reply to this email or call the salon.', undefined, ...calendar, undefined, 'Calendar button not working? Copy this link:'];
   return mk
     ? ['Вашиот термин е откажан', `Откажан термин за: ${name}`, 'Ако мислите дека ова е грешка, одговорете на оваа порака или јавете се во салонот.']
     : ['Your appointment has been cancelled', `Cancelled appointment: ${name}`, 'If you think this is a mistake, reply to this email or call the salon.'];
 }
+function htmlFallback(label, url) {
+  return `<div style="margin:8px 0 0;padding:12px 14px;background:#F6E7DE;border:1px solid #D8BDB2;border-radius:8px;color:#6F5650;font-size:13px;line-height:1.5"><p style="margin:0 0 6px;font-weight:600">${escapeHtml(label)}</p><a href="${escapeHtml(url)}" style="display:block;color:#6F5650;text-decoration:underline;overflow-wrap:anywhere;word-break:break-all">${escapeHtml(url)}</a></div>`;
+}
 function htmlPart(part, { manageUrl, googleCalendarUrl } = {}) {
-  const manage = manageUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(manageUrl)}" style="display:inline-block;background:#2f211b;color:#fff;padding:12px 18px;text-decoration:none;border-radius:4px">${escapeHtml(part[3])}</a></p><p style="word-break:break-all">${escapeHtml(manageUrl)}</p>` : '';
-  const calendar = googleCalendarUrl ? `<p style="margin:24px 0"><a href="${escapeHtml(googleCalendarUrl)}" style="display:inline-block;background:#2f211b;color:#fff;padding:12px 18px;text-decoration:none;border-radius:4px">${escapeHtml(part[4])}</a></p><p>${escapeHtml(part[5])}</p><p style="word-break:break-all">${escapeHtml(googleCalendarUrl)}</p>` : '';
+  const manage = manageUrl ? `<div style="margin:24px 0 28px"><p style="margin:0 0 8px"><a href="${escapeHtml(manageUrl)}" style="display:inline-block;background:#8A5F4A;color:#FFF8F5;padding:12px 18px;text-decoration:none;border-radius:4px">${escapeHtml(part[3])}</a></p>${htmlFallback(part[6], manageUrl)}</div>` : '';
+  const calendar = googleCalendarUrl ? `<div style="margin:24px 0 28px"><p style="margin:0 0 8px"><a href="${escapeHtml(googleCalendarUrl)}" style="display:inline-block;background:#8A5F4A;color:#FFF8F5;padding:12px 18px;text-decoration:none;border-radius:4px">${escapeHtml(part[4])}</a></p><p style="margin:0 0 8px">${escapeHtml(part[5])}</p>${htmlFallback(part[7], googleCalendarUrl)}</div>` : '';
   return `<section style="font-family:Arial,sans-serif;color:#2f211b;line-height:1.55"><h1 style="font-size:22px">${escapeHtml(part[0])}</h1><p style="white-space:pre-line">${escapeHtml(part[1])}</p><p>${escapeHtml(part[2])}</p>${manage}${calendar}</section>`;
 }
 function stringify(part, { manageUrl, googleCalendarUrl } = {}) {

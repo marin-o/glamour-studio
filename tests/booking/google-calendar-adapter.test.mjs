@@ -105,11 +105,20 @@ test('resolves duplicate and ambiguous inserts through deterministic verificatio
   await assert.rejects(mismatch.createPrivateEvent(expected), { code: 'VERIFICATION_FAILED' });
 });
 
-test('updates an attendee only with sendUpdates=all and preserves invitation failure', async () => {
+test('adds or updates an attendee without an initial Google invitation and preserves attendee verification', async () => {
+  const calls = [];
+  const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ attendees: [{ email: 'staff@example.com' }] }), json({}), json({ attendees: [{ email: 'staff@example.com' }, { email: 'client@example.com', displayName: 'Client' }] })], calls) });
+  const eventId = eventIdFromIdempotencyKey(expected.idempotencyKey);
+  assert.deepEqual(await adapter.addOrUpdateAttendee({ eventId, email: 'client@example.com', displayName: 'Client' }), { eventId, notificationPolicy: 'sendUpdates=none' });
+  assert.match(calls[2].url, /sendUpdates=none/);
+  assert.deepEqual(JSON.parse(calls[2].init.body).attendees, [{ email: 'staff@example.com' }, { email: 'client@example.com', displayName: 'Client' }]);
+});
+
+test('preserves sanitized attendee notification failure', async () => {
   const calls = [];
   const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json({ attendees: [{ email: 'staff@example.com' }] }), json({ error: 'no invite' }, 500)], calls) });
   await assert.rejects(adapter.addOrUpdateAttendee({ eventId: eventIdFromIdempotencyKey(expected.idempotencyKey), email: 'client@example.com', displayName: 'Client' }), (error) => error.code === 'GOOGLE_UNAVAILABLE' && error.operation === 'invitation' && !error.message.includes('client@example.com'));
-  assert.match(calls.at(-1).url, /sendUpdates=all/);
+  assert.match(calls.at(-1).url, /sendUpdates=none/);
 });
 
 test('compensating deletion is explicit, idempotent for missing events, and uses no notification', async () => {
@@ -125,6 +134,12 @@ test('management updates require an exact snapshot, use If-Match, and fail close
   const adapter = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(412)], calls) });
   await assert.rejects(adapter.reschedulePrivateEvent({ eventId, serviceId: 'makeup', workTrack: 'makeup', marker, previousStart: expected.start, previousEnd: expected.end, attendee: 'client@example.com', etag: '"old"', start: changedStart, end: changedEnd }), { code: 'VERIFICATION_FAILED' });
   assert.equal(calls[1].init.headers['if-match'], '"old"');
+
+  const movedCalls = [];
+  const moved = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), json(eventFor({ etag: '"new"', start: { dateTime: changedStart }, end: { dateTime: changedEnd }, attendees: [{ email: 'client@example.com' }] }))], movedCalls) });
+  assert.deepEqual(await moved.reschedulePrivateEvent({ eventId, serviceId: 'makeup', workTrack: 'makeup', marker, previousStart: expected.start, previousEnd: expected.end, attendee: 'client@example.com', etag: '"old"', start: changedStart, end: changedEnd }), { eventId, start: changedStart, end: changedEnd });
+  assert.equal(movedCalls[1].init.method, 'PATCH');
+  assert.match(movedCalls[1].url, /sendUpdates=all/);
 
   const exact = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ etag: '"current"', attendees: [{ email: 'client@example.com' }] }))]) });
   assert.deepEqual(await exact.getVerifiedAttendee({ eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker }), { email: 'client@example.com', etag: '"current"' });

@@ -753,8 +753,8 @@ export default function BookingExperience({ initialServiceId = "", initialSkopje
                 <h2 ref={successStepRef} tabIndex="-1" className="mt-6 text-3xl font-bold tracking-[-0.025em] outline-none">{t.success}</h2>
                 <p className="mt-4 text-2xl font-bold">{serviceNames[flow.confirmation.serviceId][language]}</p>
                 <p className="mt-3 text-lg text-muted">{skopjeLabel(flow.confirmation.start, language)}</p>
-                <p className="mt-7 rounded-[1.5rem] border border-line bg-surface p-5 text-sm leading-relaxed">{t.invitation[flow.confirmation.notification]}</p>
-                <p className="mt-4 text-sm leading-relaxed text-muted">{t.invitationGuidance}</p>
+                <p className="mt-7 rounded-[1.5rem] border border-line bg-surface p-5 text-sm leading-relaxed">{t.confirmation[flow.confirmation.notification]}</p>
+                <p className="mt-4 text-sm leading-relaxed text-muted">{t.confirmationGuidance}</p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <PrimaryButton onClick={startNewBooking} type="button">{t.newBooking}</PrimaryButton>
                   <TransitionLink className="inline-flex min-h-12 items-center rounded-full border border-line-strong bg-surface px-6 font-extrabold text-accent-deep transition-colors hover:border-accent-deep hover:bg-peach focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent" href="/">{t.backHome}</TransitionLink>

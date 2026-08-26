@@ -276,7 +276,7 @@ export function createGoogleCalendarAdapter(options = {}) {
       const merged = attendees.filter((attendee) => attendee.email.toLocaleLowerCase('en-US') !== identity);
       merged.push({ email: input.email, ...(input.displayName ? { displayName: input.displayName } : {}) });
       let response;
-      try { response = await api(operation, `${path}?sendUpdates=all`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ attendees: merged }) }); }
+      try { response = await api(operation, `${path}?sendUpdates=none`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ attendees: merged }) }); }
       catch (error) { if (error.code === 'TRANSPORT_FAILED') throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm attendee notification.', { retryable: true, operation: 'invitation' }); throw error; }
       if (!response.ok) throw await googleErrorFromResponse(response, 'invitation');
       // A 2xx PATCH body is not reliable evidence; fetch the stored event.
@@ -287,7 +287,7 @@ export function createGoogleCalendarAdapter(options = {}) {
         verified = normalizedAttendees(await responseJson(operation, verifyResponse));
       } catch (error) { throw new GoogleCalendarError('AMBIGUOUS_MUTATION', 'Google Calendar could not confirm attendee notification.', { retryable: true, operation: 'invitation' }); }
       if (!verified.some((attendee) => attendee.email.toLocaleLowerCase('en-US') === identity)) throw new GoogleCalendarError('VERIFICATION_FAILED', 'Google Calendar attendee verification did not match the requested invitation.', { operation: 'invitation' });
-      return Object.freeze({ eventId: input.eventId, notificationPolicy: 'sendUpdates=all' });
+      return Object.freeze({ eventId: input.eventId, notificationPolicy: 'sendUpdates=none' });
     }); },
     async getVerifiedAttendee(input) { return runOperation(async (operation) => {
       assertExactRecord(input, 'Managed event read', new Set(['eventId', 'start', 'end', 'workTrack', 'marker']), ['eventId', 'start', 'end', 'workTrack', 'marker']);
