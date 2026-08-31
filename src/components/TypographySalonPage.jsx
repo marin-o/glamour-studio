@@ -354,6 +354,17 @@ export default function TypographySalonPage() {
           ))}
           <li className="border-t border-t-surface/25 py-[18px] text-[1.08rem] leading-[1.55] text-surface"><TransitionLink className="font-extrabold underline" href="/booking">{copy.contact.booking}</TransitionLink></li>
         </ul>
+        <p className="col-span-full mt-2 text-right font-sans text-[0.82rem] leading-[1.4] text-surface/65 md:col-start-2 md:col-span-1 md:mt-0">
+          Website by{" "}
+          <a
+            className="underline decoration-surface/35 underline-offset-4 hover:text-surface"
+            href="https://bosa.mk"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Marino
+          </a>
+        </p>
       </section>
 
       <SiteNavigation ref={navigationRef} current="home" position="bottom" />
