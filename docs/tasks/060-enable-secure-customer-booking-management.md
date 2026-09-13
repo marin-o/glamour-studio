@@ -325,3 +325,22 @@ mutation, and uncertain provider state must remain fail-closed.
 - Owner verification pending: rendered browser behavior, including visual fit,
   focus movement, keyboard operation, and the customer-visible email rendering.
   Completion approval remains with the owner.
+- Owner correction (2026-09-13): New online booking events now include the
+  submitted phone beside the customer name in the private Google Calendar
+  description for staff lookup. The phone remains absent from event titles,
+  public responses, management storage, branded email templates, Google
+  Calendar URLs, and app-generated `.ics` attachments. Because the customer
+  remains an event attendee, description visibility follows existing Google
+  Calendar permissions and is not staff-only. Review posture remains
+  `adversarial` because this adds customer-phone data to the Calendar surface.
+  Focused orchestration and Calendar adapter mocks passed 57/57, targeted
+  ESLint passed, and `git diff --check` passed; no live Calendar call,
+  deployment, browser check, or build was run.
+- Sol review correction (2026-09-13): Recovered `creation_intent` records now
+  accept only the exact pre-phone Calendar description as a narrowly scoped
+  compatibility path; new records still require the phone-bearing description,
+  and any identity, marker, timing, summary, work-track, or other description
+  mismatch remains fail-closed without mutating the existing event. The focused
+  suite now passes 59/59 (prior total: 57/57), with targeted ESLint and
+  `git diff --check` passing; no browser, live call, build, commit, or deploy
+  was run.

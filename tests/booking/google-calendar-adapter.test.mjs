@@ -136,10 +136,11 @@ test('management updates require an exact snapshot, use If-Match, and fail close
   assert.equal(calls[1].init.headers['if-match'], '"old"');
 
   const movedCalls = [];
-  const moved = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), json(eventFor({ etag: '"new"', start: { dateTime: changedStart }, end: { dateTime: changedEnd }, attendees: [{ email: 'client@example.com' }] }))], movedCalls) });
+  const moved = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), empty(), json(eventFor({ etag: '"new"', start: { dateTime: changedStart }, end: { dateTime: changedEnd }, description: 'Customer: Ana\nPhone: +38970000000', attendees: [{ email: 'client@example.com' }] }))], movedCalls) });
   assert.deepEqual(await moved.reschedulePrivateEvent({ eventId, serviceId: 'makeup', workTrack: 'makeup', marker, previousStart: expected.start, previousEnd: expected.end, attendee: 'client@example.com', etag: '"old"', start: changedStart, end: changedEnd }), { eventId, start: changedStart, end: changedEnd });
   assert.equal(movedCalls[1].init.method, 'PATCH');
   assert.match(movedCalls[1].url, /sendUpdates=all/);
+  assert.deepEqual(JSON.parse(movedCalls[1].init.body), { start: { dateTime: changedStart }, end: { dateTime: changedEnd } });
 
   const exact = createGoogleCalendarAdapter({ env, fetch: mockFetch([token(), json(eventFor({ etag: '"current"', attendees: [{ email: 'client@example.com' }] }))]) });
   assert.deepEqual(await exact.getVerifiedAttendee({ eventId, start: expected.start, end: expected.end, workTrack: 'makeup', marker }), { email: 'client@example.com', etag: '"current"' });

@@ -15,9 +15,18 @@ survive restarts, or provide durable recovery.
   online slots.
 - A booking is rechecked while holding the local single-process lock, then a
   private event is created on the configured calendar.
+- New online booking events show the submitted phone beside the customer name
+  in the private event description so studio staff can contact the bookee.
+  The description follows existing Google Calendar permissions and may also be
+  visible to the booking attendee; the phone is not placed in the event title,
+  public API response, branded email template, or app-generated calendar
+  attachment.
 - Customer email is required. Google Calendar is asked to add that address as
-  an attendee with `sendUpdates=all`. The invitation is an
-  email/calendar invitation, not proof of delivery or acceptance.
+  an attendee with `sendUpdates=none`. The branded bilingual email remains the
+  booking confirmation; no separate initial Google invitation is requested.
+- Later Google-generated Calendar updates may include the event description,
+  including the submitted phone, because rescheduling uses `sendUpdates=all`;
+  this is distinct from the branded messages.
 - Staff move and cancel appointments in the same Google Calendar. The next
   availability request sees the current Calendar state.
 - Production management additionally uses server-only Resend branded mail,

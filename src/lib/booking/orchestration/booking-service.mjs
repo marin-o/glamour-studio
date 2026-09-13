@@ -95,7 +95,8 @@ export function createBookingService({ calendar, ports, policy, management, now 
     } catch { throw new BookingError('BOOKING_UNAVAILABLE', 503); }
     const keyDigest = digest(idempotencyKey); const fingerprint = digest(JSON.stringify({ serviceId: service.id, start: start.toString(), contactDigest }));
     const workTrack = getServiceWorkTrack(service.id);
-    const expected = { idempotencyKey, start: start.toString(), end: end.toString(), summary: `Glamour Studio: ${service.name}`, description: `Customer: ${input.name}`, workTrack };
+    const expected = { idempotencyKey, start: start.toString(), end: end.toString(), summary: `Glamour Studio: ${service.name}`, description: `Customer: ${input.name}\nPhone: ${input.phone}`, workTrack };
+    const legacyExpected = { ...expected, description: `Customer: ${input.name}` };
     const replayExpected = { serviceId: service.id, start: expected.start, end: expected.end };
     try {
       await ports.lock.assertOwnership({ scope: 'studio-booking', owner: lease.owner, fencingToken: lease.fencingToken });
@@ -118,7 +119,13 @@ export function createBookingService({ calendar, ports, policy, management, now 
         await protectOperation(lease);
         if (creationIntentIsRecovered) {
           try {
-            const reconciled = await calendar.reconcilePrivateEvent(expected);
+            let reconciled;
+            try { reconciled = await calendar.reconcilePrivateEvent(expected); }
+            catch (error) {
+              if (error?.code !== 'VERIFICATION_FAILED') throw error;
+              await protectOperation(lease);
+              reconciled = await calendar.reconcilePrivateEvent(legacyExpected);
+            }
             record = await transition(keyDigest, record, 'event_created', { eventId: reconciled.event.id });
           } catch (error) {
             if (error?.code !== 'NOT_FOUND') throw asBookingError(error);

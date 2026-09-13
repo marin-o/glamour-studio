@@ -39,7 +39,7 @@ function fakes({ staffBlocker = false, productionTransition = false } = {}) {
   };
   const calendar = {
     async getBusyIntervals(request) { busyQueries.push(request); return [...events.values()].map(({ start: eventStart, end: eventEnd, workTrack }) => ({ start: eventStart, end: eventEnd, track: workTrack ?? 'unknown' })); },
-    async reconcilePrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; if (!events.has(id)) throw Object.assign(new Error('event absent'), { code: 'NOT_FOUND' }); return { event: events.get(id) }; },
+    async reconcilePrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; const existing = events.get(id); if (!existing) throw Object.assign(new Error('event absent'), { code: 'NOT_FOUND' }); if (existing.start !== event.start || existing.end !== event.end || existing.summary !== event.summary || existing.description !== event.description || existing.workTrack !== event.workTrack) throw Object.assign(new Error('event mismatch'), { code: 'VERIFICATION_FAILED' }); return { event: existing }; },
     async createPrivateEvent(event) { const id = `b${event.idempotencyKey.replace(/[^a-v0-9]/g, 'a').padEnd(64, 'a').slice(0, 64)}`; if (!events.has(id)) { inserts += 1; events.set(id, { id, ...event, workTrack: event.workTrack ?? 'unknown' }); } return { event: events.get(id) }; },
     async listBlockingEvents(request) { blockingQueries.push(request); return [...events.values()].map(({ id, start: eventStart, end: eventEnd, workTrack }) => ({ id, start: eventStart, end: eventEnd, track: workTrack ?? 'unknown' })).concat(staffBlocker ? [{ id: 'staff', start, end, allDay: false, track: 'unknown' }] : []); },
     async deleteEventForCompensation(id) { deleted = events.delete(id); return { deleted }; },
@@ -53,6 +53,8 @@ test('occupancy end drives Calendar event, conflict-query, and public-response b
   const result = await service.book({ ...input, serviceId: 'highlights' }, 'booking-key-occupancy-boundaries', context);
   assert.equal(result.end, '2026-07-24T05:15:00Z');
   assert.equal([...fake.events.values()][0].end, '2026-07-24T05:15:00Z');
+  assert.equal([...fake.events.values()][0].description, 'Customer: Ana\nPhone: +38970000000');
+  assert.deepEqual(Object.keys(result).sort(), ['end', 'notification', 'serviceId', 'start', 'status']);
   assert.deepEqual(fake.busyQueries[0], { timeMin: '2026-07-24T03:45:00Z', timeMax: '2026-07-24T05:15:00Z' });
   assert.deepEqual(fake.blockingQueries[0], { timeMin: start, timeMax: '2026-07-24T05:15:00Z' });
 });
@@ -182,17 +184,39 @@ test('a recovered creation intent with the deterministic event confirms without 
   const key = 'booking-key-recovered-event'; const fake = fakes(); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
   const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
   const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
-  await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end, summary: 'Glamour Studio: Makeup', description: 'Customer: Ana', workTrack: 'makeup' });
+  await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end: '2026-07-24T05:15:00Z', summary: 'Glamour Studio: Makeup', description: 'Customer: Ana\nPhone: +38970000000', workTrack: 'makeup' });
   fake.records.set(keyDigest, { fingerprint, state: 'creation_intent', version: 2 });
   const result = await createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context);
   assert.equal(result.status, 'confirmed'); assert.equal(fake.inserts, 1);
+});
+
+test('a recovered creation intent with the exact legacy description confirms without a duplicate insert', async () => {
+  const key = 'booking-key-recovered-legacy-event'; const fake = fakes(); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
+  const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
+  await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end: '2026-07-24T05:15:00Z', summary: 'Glamour Studio: Makeup', description: 'Customer: Ana', workTrack: 'makeup' });
+  fake.records.set(keyDigest, { fingerprint, state: 'creation_intent', version: 2 });
+  const result = await createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context);
+  assert.equal(result.status, 'confirmed'); assert.equal(fake.inserts, 1);
+});
+
+test('a recovered creation intent rejects mismatched legacy identity or description without inserting a duplicate', async () => {
+  for (const description of ['Customer: Bora', 'Customer: Ana\nPhone: +38979999999']) {
+    const key = `booking-key-recovered-mismatch-${description.length}`; const fake = fakes(); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
+    const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
+    const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
+    await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end: '2026-07-24T05:15:00Z', summary: 'Glamour Studio: Makeup', description, workTrack: 'makeup' });
+    fake.records.set(keyDigest, { fingerprint, state: 'creation_intent', version: 2 });
+    await assert.rejects(createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context), { code: 'CALENDAR_UNAVAILABLE' });
+    assert.equal(fake.inserts, 1);
+  }
 });
 
 test('a recovered event-created record preserves its event through notification and confirmation transitions', async () => {
   const key = 'booking-key-recovered-event-created'; const fake = fakes({ productionTransition: true }); const keyDigest = createHash('sha256').update(key, 'utf8').digest('hex');
   const contactDigest = createHash('sha256').update(`${input.name}\u0000${input.phone}\u0000${input.email}`, 'utf8').digest('hex');
   const fingerprint = createHash('sha256').update(JSON.stringify({ serviceId: input.serviceId, start, contactDigest }), 'utf8').digest('hex');
-  const { event } = await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end, summary: 'Glamour Studio: Makeup', description: 'Customer: Ana', workTrack: 'makeup' });
+  const { event } = await fake.calendar.createPrivateEvent({ idempotencyKey: key, start, end, summary: 'Glamour Studio: Makeup', description: 'Customer: Ana\nPhone: +38970000000', workTrack: 'makeup' });
   fake.records.set(keyDigest, { fingerprint, state: 'event_created', version: 3, eventId: event.id });
 
   const result = await createBookingService({ calendar: fake.calendar, ports: fake.ports, policy, now }).book(input, key, context);
