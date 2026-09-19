@@ -63,6 +63,29 @@ export const beautySalonJsonLd = Object.freeze({
     addressLocality: "Радовиш",
     addressCountry: "MK",
   },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 41.637664965288806,
+    longitude: 22.465876285984912,
+  },
+  priceRange: "400-4500 MKD",
+  // Seasonal hours (Sep-Mar 10:00-18:00, Apr-Aug 06:00-18:00) have no clean
+  // recurring-annual schema.org representation, so this must be hand-flipped
+  // twice a year alongside the Google Business Profile hours.
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ],
+    opens: "10:00",
+    closes: "18:00",
+  },
   sameAs: ["https://www.instagram.com/glamourrstudiio/"],
 });
 
