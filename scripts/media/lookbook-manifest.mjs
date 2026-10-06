@@ -9,7 +9,7 @@ import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
 
-const MEDIA_ROOT = path.resolve("public/media/lookbook/instagram-dev");
+const MEDIA_ROOT = path.resolve("public/media/lookbook/approved");
 const MANIFEST_PATH = path.resolve(
   "src/generated/lookbook-media-manifest.js",
 );

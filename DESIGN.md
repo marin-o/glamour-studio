@@ -311,7 +311,7 @@ heavy gradients, neon glow, or ornate glamour effects.
 than a general gallery. Its media should move sideways from one
 large image to the next with stable cover crops and warm cream breathing room.
 Keep `Lookbook` as the untranslated product label. Its surrounding interface,
-instructions, source links, and accessibility copy follow the root-level
+instructions, and accessibility copy follow the root-level
 language selected on the homepage; a direct or refreshed route load uses
 Macedonian by default.
 A route-local horizontal Lenis instance owns continuous wheel and trackpad
@@ -352,27 +352,27 @@ the top rather than the bottom. Preserve its arrow-only Studio return action as
 the leading control inside that shared bar, while removing the old header's
 duplicate language, Services, Studio, and Call controls. Mark Lookbook as the
 current item in the shared bar. Keep the progress rail and image count in the
-footer without a separate input-method legend. Linked images must
-not enlarge on hover or keyboard focus, and their focus-visible treatment must
-remain clear.
+footer without a separate input-method legend. The non-linked images stay
+static without enlargement; keep keyboard access on the horizontal scroller
+clear with a visible focus state.
 
-The current nine local Instagram frames are development-only media. Keep the
-route noindex until the owner records website-reuse approval,
-recognizable-person permissions, and production-resolution replacements. The
-owner directed removal of the visible development disclosure on 2026-07-24;
-that content decision does not itself record or imply media permission.
-Descriptive alt text must describe only the visible frame and
-must never reuse Instagram captions or make unverified service claims. Each
-visual links to its original source and identifies Reel cover frames as stills
-rather than local video. The route uses the top-positioned shared navigation and
-retains its route-specific progress footer.
+The eight local Lookbook photographs are owner-supplied approved media in
+numeric order from `lookbook0.jpg` through `lookbook7.jpg`. The owner approved
+public website use and recognizable-person consent for this set. Descriptive
+alt text must describe only the visible frame and must not make unverified
+service claims. The visuals have no external source links or Reel badges; the
+route uses the top-positioned shared navigation and retains its route-specific
+progress footer.
 
-Lookbook raster delivery follows the Gyroid media contract: preserve source
-pixels, generate and validate intrinsic dimensions, request quality 100 through
-`next/image`, and let responsive `sizes` plus browser format negotiation control
-transfer cost. The current development frames are only 640px wide, so this
-contract prevents additional degradation but does not make them
-production-crisp; approved higher-resolution originals remain required.
+Keep `/lookbook` noindex as a separate search-indexing decision until the owner
+requests and reviews indexing.
+
+Lookbook raster delivery follows the Gyroid media contract: preserve the
+approved owner source pixels, generate and validate intrinsic dimensions,
+request quality 100 through `next/image`, and let responsive `sizes` plus
+browser format negotiation control transfer cost. The approved set contains
+1200 × 1600 originals except for `lookbook3.jpg` and `lookbook6.jpg`, which are
+900 × 1600; the manifest is generated from those files.
 
 ## Accessibility And Fallbacks
 

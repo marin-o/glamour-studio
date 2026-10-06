@@ -1,6 +1,6 @@
 # Secure Customer Booking Management
 
-Status: IN PROGRESS
+Status: SUPERSEDED
 Depends on: 059
 Owner: AI-assisted implementation
 Approver: Owner
@@ -224,6 +224,13 @@ mutation, and uncertain provider state must remain fail-closed.
   to `jakimoskimarino@gmail.com` with a non-functional example management URL.
 
 ## Completion notes
+
+- Transition: supersede at 2026-10-06T11:35:11.625Z
+- Superseded by: 061-replace-lookbook-development-images-with-approved-owner-images.md
+- Reprioritized on 2026-10-06 for the owner-supplied Lookbook photography.
+  The local booking-management implementation remains in the repository, but
+  rendered owner acceptance and deployment were not completed by this task.
+  Reopen that outcome as a separate task if the owner returns to it.
 
 - Transition: start at 2026-08-23T18:16:26.478Z
 

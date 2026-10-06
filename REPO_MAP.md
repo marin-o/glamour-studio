@@ -12,14 +12,14 @@ common work so agents can inspect the smallest relevant file set.
 - `src/app/layout.jsx`: root metadata/app shell, visit-local language provider, and pre-hydration browser-history transition bridge.
 - `src/app/page.jsx`: typography-led homepage at `/`.
 - `src/app/booking/page.jsx`: server route entry for the customer booking experience.
-- `src/app/lookbook/page.jsx`: noindex lookbook route and development-media handoff to the client sequence.
+- `src/app/lookbook/page.jsx`: noindex lookbook route and approved-media handoff to the client sequence.
 - `src/app/globals.css`: Tailwind v4 tokens, base styles, and progressive-enhancement reveal guard.
 - `next.config.mjs`: Next image quality allowlist for quality-100 responsive delivery.
 - `src/components/TypographySalonPage.jsx`: homepage composition with a brand-led hero, role-separated work-area studio media band, localized three-group service overview, salon introduction, contact booking action, and shared bottom navigation placement.
 - `src/components/LanguageProvider.jsx`: root-persistent in-memory language state and document-language synchronization across client-side routes.
 - `src/components/SiteNavigation.jsx`: shared language-aware site navigation, bottom-positioned on standard routes and top-positioned with current-route state on Lookbook.
 - `src/components/lookbook/HorizontalLookbook.jsx`: full-viewport horizontal media sequence with shared top navigation, route-local Lenis momentum/settling, responsive quality-100 images, input handling, and brushstroke progress.
-- `src/lib/lookbook-media.js`: development-only lookbook image metadata, source links, bilingual alt text, and crop positions.
+- `src/lib/lookbook-media.js`: approved owner lookbook image metadata, bilingual alt text, and crop positions.
 - `src/lib/booking/`: server-owned, provider-neutral ordered service catalog, studio rules, mandatory customer-email validation, and pure availability calculation from supplied busy intervals.
 - `src/lib/booking/google/`: server-only Google Calendar/OAuth adapter with strict secret configuration, injected-fetch REST boundary, deterministic event IDs, and sanitized operational errors.
 - `src/lib/booking/orchestration/`: server-only dependency-injected booking coordination, safe public failure mapping, and test-only fakes.

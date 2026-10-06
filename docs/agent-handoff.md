@@ -1,12 +1,12 @@
 # Agent Handoff
 
 <!-- BEGIN:sitewright-handoff-state -->
-<!-- sitewright:fingerprint=5fe94e1b015ddb1f -->
+<!-- sitewright:fingerprint=41d86c0d1b8c417e -->
 ## Sitewright state
 
 - Sitewright Doctor reports `IMPLEMENTATION_READY` using `nextjs-app-router` policy pack.
 - The repository has structured intent, coherent planning, and an executable task.
-- Active task: 060-enable-secure-customer-booking-management.md.
+- Active task: 061-replace-lookbook-development-images-with-approved-owner-images.md.
 <!-- END:sitewright-handoff-state -->
 
 ## Current state
@@ -30,19 +30,12 @@
   verified work-track marker; public request and response schemas remain
   track-free. The focused post-review suite and production build pass. The
   change is not deployed and no live booking write was performed.
-- Task 060 is implemented and adversarially reviewed in source: accepted
-  bookings issue digest-backed accountless management links through Resend;
-  customers can reschedule or cancel only more than twelve hours before the
-  appointment while Google Calendar remains authoritative. The app/server keep
-  a non-advertised fifteen-minute grace and accept either mutation while at
-  least 11:45 remains, including the exact boundary; customer copy continues to
-  state twelve hours. Confirmation and
-  rescheduling mail now include bilingual Google Calendar actions and a generic
-  `.ics` attachment that contains no capability or customer contact data.
-  Focused tests, targeted lint, and the production build pass. The earlier
-  pre-attachment bilingual confirmation template reached the owner-authorized
-  inbox; attachment-bearing live email and end-to-end verification, rendered
-  owner acceptance, and deployment remain pending.
+- Task 060's accountless customer booking management remains implemented and
+  adversarially reviewed in source, with digest-backed links, Google Calendar
+  authority, bilingual Resend mail, and a generic `.ics` attachment. It was
+  superseded for the owner-prioritized Lookbook update; rendered owner
+  acceptance, attachment-bearing live email verification, and deployment were
+  not completed. Resume that outcome in a separate task when requested.
 - Booking availability uses the owner-confirmed seasonal schedule in
   `Europe/Skopje`: 10:00–18:00 from September through March and 06:00–18:00
   from April through August. The August/September boundary is covered by the
@@ -67,10 +60,12 @@
   the apex. Homepage and booking canonicals/Open Graph URLs, robots, sitemap,
   structured data, and live booking availability were reverified after the
   switch. The adversarial infrastructure review found no actionable issue.
-- `/lookbook` retains its noindex horizontal sequence, source tracing,
-  meaningful bilingual alt text, quality-100 responsive images, route-local
-  Lenis, and exact progress. Owner-directed customer copy removes visible
-  development/disclosure wording without recording media permissions.
+- `/lookbook` now uses the eight owner-supplied JPEGs in numeric order. The
+  owner approved public website use and recognizable-person consent for this
+  set. The route retains its noindex horizontal sequence, bilingual alt text,
+  quality-100 responsive images, route-local Lenis, and exact progress. The
+  production build and privacy/content review pass; rendered order and crops
+  await owner review under the conservative validation policy.
 - Homepage scroll position is held in visit-local transition memory and
   restored behind the closed curtain on arrow or browser-history returns.
 - The browser-history transition bridge remains a `beforeInteractive` script
@@ -84,12 +79,9 @@
   profile are owner-confirmed. Current Macedonian copy, services, prices,
   durations, and mandatory booking email are owner-directed; English editorial
   copy and any additional messaging channels remain open.
-- All nine development lookbook JPEGs are only 640px wide; approved
-  production-resolution originals remain required for true high-density
-  crispness.
-- Website reuse and recognizable-person permissions remain unapproved; keep the
-  route noindex. The owner explicitly removed the visible development
-  disclosure, which does not itself approve the media.
+- The eight approved Lookbook originals are 900-1200px wide. Keep the route
+  noindex until the owner separately requests and reviews search indexing.
+  Rendered crops and bilingual descriptions still need owner acceptance.
 - The owner rejected managed booking services and approved the phased custom
   Next.js and Google Calendar direction in
   `docs/booking-google-calendar-implementation-plan.md`. The earlier Vercel
@@ -115,7 +107,7 @@
   do not produce a new App Router pathname or reveal trigger.
 - A root `beforeInteractive` history script must live inside the explicit
   `<head>`, never as a direct `<html>` child.
-- When the planned dynamic Lookbook is defined, replace the fixed
-  `lookbookMedia` sequence with a content model that preserves source tracing,
-  per-item Macedonian/English alt text, permission state, intrinsic dimensions,
-  crop intent, and the current noindex gate until reuse approvals are recorded.
+- When a dynamic Lookbook is defined, replace the fixed `lookbookMedia` sequence
+  with a content model that preserves provenance, per-item Macedonian/English
+  alt text, permission state, intrinsic dimensions, crop intent, and the
+  separately controlled noindex setting.

@@ -171,7 +171,6 @@ export default function HorizontalLookbook({ items }) {
           className="relative m-0 flex h-full w-max list-none gap-[clamp(18px,3.2vw,48px)] px-[calc((100vw-var(--lookbook-card-width))/2)] pt-[148px] pb-[94px] [--lookbook-card-width:82vw] md:pt-[132px] md:pb-[86px] md:[--lookbook-card-width:min(62vw,690px)]"
         >
           {items.map((item, index) => {
-            const isReelCover = item.kind === "reel-cover";
             const itemNumber = String(index + 1).padStart(2, "0");
             const dimensions = lookbookMediaDimensions[item.src];
 
@@ -190,17 +189,7 @@ export default function HorizontalLookbook({ items }) {
                 data-lookbook-item
               >
                 <figure className="grid h-full grid-rows-[minmax(0,1fr)_auto] gap-3">
-                  <a
-                    className="relative block min-h-0 overflow-hidden bg-surface-muted outline-offset-4 focus-visible:outline-3 focus-visible:outline-accent"
-                    href={item.permalink}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={
-                      isReelCover
-                        ? copy.originalReelLabel(index + 1)
-                        : copy.originalPostLabel(index + 1)
-                    }
-                  >
+                  <div className="relative block min-h-0 overflow-hidden bg-surface-muted">
                     <Image
                       className="block h-full w-full object-cover"
                       src={item.src}
@@ -212,25 +201,12 @@ export default function HorizontalLookbook({ items }) {
                       sizes="(max-width: 767px) 82vw, min(62vw, 690px)"
                       style={{ objectPosition: item.objectPosition }}
                     />
-                    {isReelCover ? (
-                      <span className="absolute top-3 right-3 bg-ink/88 px-2.5 py-1.5 text-[0.7rem] font-extrabold text-surface">
-                        {copy.reelBadge}
-                      </span>
-                    ) : null}
-                  </a>
+                  </div>
 
-                  <figcaption className="flex items-baseline justify-between gap-5 text-[0.8rem] leading-[1.35] text-muted">
+                  <figcaption className="text-[0.8rem] leading-[1.35] text-muted">
                     <span className="font-extrabold tracking-[0.12em] text-accent uppercase">
                       {itemNumber}
                     </span>
-                    <a
-                      className="rounded-sm font-bold text-accent underline decoration-accent/40 underline-offset-4"
-                      href={item.permalink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {isReelCover ? copy.reelSource : copy.postSource}
-                    </a>
                   </figcaption>
                 </figure>
               </li>
